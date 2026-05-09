@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formation RAG — 7 Jours</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --ink: #1a1612;
+    --ink2: #4a4035;
+    --muted: #8a7a6a;
+    --primary: #c85a1e;
+    --primary-light: #f0d4c4;
+    --green: #2d6a4f;
+    --green-light: #d8f3dc;
+    --blue: #1d4e89;
+    --blue-light: #dbeafe;
+    --yellow: #d4a017;
+    --yellow-light: #fef9c3;
+    --surface: #faf6ef;
+    --border: #d4c9b8;
+    --border2: #e8e0d0;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background: var(–bg);
+color: var(–ink);
+font-family: ‘Outfit’, sans-serif;
+font-size: 15px;
+line-height: 1.65;
+}
+
+/* GRAIN OVERLAY */
+body::after {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 9999;
+opacity: 0.5;
+}
+
+.page {
+max-width: 900px;
+margin: 0 auto;
+padding: 56px 28px 80px;
+}
+
+/* HEADER */
+.header {
+border: 2px solid var(–ink);
+border-radius: 4px;
+padding: 40px 44px;
+margin-bottom: 48px;
+background: var(–surface);
+position: relative;
+overflow: hidden;
+animation: slideIn 0.5s ease both;
+}
+
+.header::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 5px;
+background: repeating-linear-gradient(
+90deg,
+var(–primary) 0px,
+var(–primary) 20px,
+transparent 20px,
+transparent 28px
+);
+}
+
+.header-top {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+gap: 20px;
+flex-wrap: wrap;
+}
+
+.label-tag {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+font-weight: 700;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+color: var(–primary);
+border: 1.5px solid var(–primary);
+padding: 4px 10px;
+border-radius: 2px;
+display: inline-block;
+margin-bottom: 14px;
+}
+
+h1 {
+font-size: clamp(2rem, 4.5vw, 3.2rem);
+font-weight: 800;
+line-height: 1.08;
+color: var(–ink);
+letter-spacing: -0.02em;
+}
+
+h1 em {
+color: var(–primary);
+font-style: normal;
+}
+
+.header-meta {
+display: flex;
+gap: 24px;
+flex-wrap: wrap;
+margin-top: 24px;
+padding-top: 24px;
+border-top: 1px solid var(–border);
+}
+
+.meta-item {
+display: flex;
+flex-direction: column;
+gap: 2px;
+}
+
+.meta-item span:first-child {
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.12em;
+}
+
+.meta-item span:last-child {
+font-weight: 700;
+font-size: 0.95rem;
+color: var(–ink);
+}
+
+/* PROGRESS BAR */
+.progress-section {
+background: var(–surface);
+border: 1.5px solid var(–border);
+border-radius: 4px;
+padding: 20px 28px;
+margin-bottom: 40px;
+animation: slideIn 0.5s ease 0.1s both;
+}
+
+.progress-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 14px;
+}
+
+.progress-header span {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.1em;
+}
+
+.progress-header strong {
+font-family: ‘Space Mono’, monospace;
+font-size: 13px;
+color: var(–primary);
+}
+
+.progress-days {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 6px;
+}
+
+.prog-day {
+background: var(–border2);
+border-radius: 3px;
+height: 8px;
+cursor: pointer;
+transition: all 0.2s;
+position: relative;
+}
+
+.prog-day.done { background: var(–green); }
+.prog-day.active { background: var(–primary); }
+.prog-day:hover { transform: scaleY(1.5); }
+
+.prog-labels {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+gap: 6px;
+margin-top: 8px;
+}
+
+.prog-labels span {
+text-align: center;
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+color: var(–muted);
+}
+
+/* WEEK OVERVIEW */
+.overview-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+gap: 14px;
+margin-bottom: 48px;
+animation: slideIn 0.5s ease 0.15s both;
+}
+
+.overview-card {
+background: var(–surface);
+border: 1.5px solid var(–border);
+border-radius: 4px;
+padding: 18px 20px;
+display: flex;
+gap: 14px;
+align-items: flex-start;
+}
+
+.ov-icon {
+width: 36px; height: 36px;
+border-radius: 4px;
+display: flex; align-items: center; justify-content: center;
+font-size: 1.1rem;
+flex-shrink: 0;
+}
+
+.ov-content h4 {
+font-weight: 700;
+font-size: 0.88rem;
+margin-bottom: 3px;
+color: var(–ink);
+}
+
+.ov-content p {
+font-size: 0.78rem;
+color: var(–muted);
+line-height: 1.4;
+}
+
+/* DAY CARDS */
+.days-container { display: flex; flex-direction: column; gap: 20px; }
+
+.day-card {
+background: var(–surface);
+border: 1.5px solid var(–border);
+border-radius: 4px;
+overflow: hidden;
+animation: slideIn 0.5s ease both;
+transition: box-shadow 0.2s;
+}
+
+.day-card:hover { box-shadow: 4px 4px 0 var(–border); }
+
+.day-header {
+display: flex;
+align-items: stretch;
+cursor: pointer;
+user-select: none;
+}
+
+.day-number {
+width: 72px;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 20px 12px;
+border-right: 1.5px solid var(–border);
+flex-shrink: 0;
+}
+
+.day-number .num {
+font-family: ‘Space Mono’, monospace;
+font-size: 1.8rem;
+font-weight: 700;
+line-height: 1;
+}
+
+.day-number .lbl {
+font-family: ‘Space Mono’, monospace;
+font-size: 8px;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.1em;
+margin-top: 2px;
+}
+
+.day-title-block {
+flex: 1;
+padding: 18px 22px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+}
+
+.day-title-block h3 {
+font-size: 1.05rem;
+font-weight: 700;
+color: var(–ink);
+line-height: 1.3;
+}
+
+.day-title-block .subtitle {
+font-size: 0.8rem;
+color: var(–muted);
+margin-top: 3px;
+font-weight: 400;
+}
+
+.chevron {
+font-size: 1rem;
+color: var(–muted);
+transition: transform 0.25s;
+flex-shrink: 0;
+}
+
+.day-card.open .chevron { transform: rotate(180deg); }
+
+/* DAY TAGS */
+.day-tags {
+display: flex;
+gap: 6px;
+flex-wrap: wrap;
+padding: 0 22px 16px 94px;
+}
+
+.tag {
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+font-weight: 700;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+padding: 3px 9px;
+border-radius: 2px;
+border: 1px solid;
+}
+
+.tag.theory { color: var(–blue); border-color: var(–blue); background: var(–blue-light); }
+.tag.code { color: var(–green); border-color: var(–green); background: var(–green-light); }
+.tag.project { color: var(–primary); border-color: var(–primary); background: var(–primary-light); }
+.tag.eval { color: var(–yellow); border-color: var(–yellow); background: var(–yellow-light); }
+
+/* DAY CONTENT */
+.day-content {
+display: none;
+padding: 0 28px 28px 28px;
+border-top: 1.5px solid var(–border2);
+margin-top: 0;
+}
+
+.day-card.open .day-content { display: block; }
+
+.content-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 20px;
+margin-top: 24px;
+}
+
+@media (max-width: 600px) {
+.content-grid { grid-template-columns: 1fr; }
+}
+
+.content-block h4 {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.12em;
+color: var(–muted);
+margin-bottom: 12px;
+padding-bottom: 8px;
+border-bottom: 1px solid var(–border2);
+}
+
+.content-block ul {
+list-style: none;
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+
+.content-block li {
+display: flex;
+gap: 10px;
+font-size: 0.87rem;
+color: var(–ink2);
+line-height: 1.45;
+}
+
+.content-block li::before {
+content: ‘›’;
+color: var(–primary);
+font-weight: 700;
+flex-shrink: 0;
+margin-top: 1px;
+}
+
+/* LIVRABLE */
+.livrable {
+margin-top: 20px;
+background: var(–primary-light);
+border: 1.5px solid var(–primary);
+border-radius: 3px;
+padding: 14px 18px;
+display: flex;
+gap: 12px;
+align-items: flex-start;
+}
+
+.livrable-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+.livrable-text strong {
+display: block;
+font-size: 0.82rem;
+font-weight: 700;
+color: var(–primary);
+font-family: ‘Space Mono’, monospace;
+text-transform: uppercase;
+font-size: 9px;
+letter-spacing: 0.1em;
+margin-bottom: 4px;
+}
+
+.livrable-text p { font-size: 0.87rem; color: var(–ink2); }
+
+/* DURATION BADGE */
+.duration-badge {
+background: var(–ink);
+color: var(–bg);
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+font-weight: 700;
+padding: 4px 10px;
+border-radius: 2px;
+white-space: nowrap;
+}
+
+/* CODE SNIPPET */
+.snippet {
+background: #1a1612;
+border-radius: 3px;
+padding: 16px 20px;
+margin-top: 16px;
+overflow-x: auto;
+border: 1px solid rgba(255,255,255,0.06);
+}
+
+.snippet pre {
+font-family: ‘Space Mono’, monospace;
+font-size: 0.75rem;
+line-height: 1.7;
+color: #d4c9b8;
+white-space: pre;
+}
+
+.sk { color: #c084fc; }
+.ss { color: #fbbf24; }
+.sc { color: #86efac; opacity: 0.7; }
+.sf { color: #60a5fa; }
+.sn { color: #c85a1e; }
+
+/* FINAL SECTION */
+.final-project {
+margin-top: 48px;
+background: var(–ink);
+color: var(–bg);
+border-radius: 4px;
+padding: 40px 44px;
+position: relative;
+overflow: hidden;
+animation: slideIn 0.5s ease 0.3s both;
+}
+
+.final-project::before {
+content: ‘PROJET FINAL’;
+position: absolute;
+top: 20px; right: 28px;
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+letter-spacing: 0.2em;
+color: rgba(245,240,232,0.2);
+font-weight: 700;
+}
+
+.final-project h2 {
+font-size: 1.6rem;
+font-weight: 800;
+margin-bottom: 16px;
+color: var(–bg);
+}
+
+.final-project h2 span { color: var(–primary); }
+
+.project-steps {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+gap: 14px;
+margin-top: 24px;
+}
+
+.proj-step {
+background: rgba(255,255,255,0.06);
+border: 1px solid rgba(255,255,255,0.1);
+border-radius: 3px;
+padding: 14px 16px;
+}
+
+.proj-step .step-num {
+font-family: ‘Space Mono’, monospace;
+font-size: 1.4rem;
+font-weight: 700;
+color: var(–primary);
+line-height: 1;
+margin-bottom: 6px;
+}
+
+.proj-step p {
+font-size: 0.82rem;
+color: rgba(245,240,232,0.75);
+line-height: 1.4;
+}
+
+/* RESSOURCES */
+.resources {
+margin-top: 48px;
+animation: slideIn 0.5s ease 0.35s both;
+}
+
+.section-title {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.14em;
+color: var(–muted);
+margin-bottom: 20px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.section-title::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: var(–border);
+}
+
+.res-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 12px;
+}
+
+.res-card {
+background: var(–surface);
+border: 1.5px solid var(–border);
+border-radius: 3px;
+padding: 14px 16px;
+display: flex;
+gap: 12px;
+transition: border-color 0.2s, box-shadow 0.2s;
+cursor: default;
+}
+
+.res-card:hover {
+border-color: var(–primary);
+box-shadow: 3px 3px 0 var(–primary-light);
+}
+
+.res-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+.res-name {
+font-weight: 700;
+font-size: 0.85rem;
+color: var(–ink);
+margin-bottom: 2px;
+}
+
+.res-desc {
+font-size: 0.75rem;
+color: var(–muted);
+}
+
+@keyframes slideIn {
+from { opacity: 0; transform: translateY(16px); }
+to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger day cards */
+.day-card:nth-child(1) { animation-delay: 0.05s; }
+.day-card:nth-child(2) { animation-delay: 0.1s; }
+.day-card:nth-child(3) { animation-delay: 0.15s; }
+.day-card:nth-child(4) { animation-delay: 0.2s; }
+.day-card:nth-child(5) { animation-delay: 0.25s; }
+.day-card:nth-child(6) { animation-delay: 0.3s; }
+.day-card:nth-child(7) { animation-delay: 0.35s; }
+</style>
+
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+
+  <div class="header">
+    <div class="label-tag">Programme d'apprentissage</div>
+    <div class="header-top">
+      <div>
+        <h1>Maîtriser le <em>RAG</em><br>en 7 jours</h1>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-item">
+        <span>Durée</span>
+        <span>7 jours</span>
+      </div>
+      <div class="meta-item">
+        <span>Niveau</span>
+        <span>Débutant → Avancé</span>
+      </div>
+      <div class="meta-item">
+        <span>Effort / jour</span>
+        <span>1 à 2 heures</span>
+      </div>
+      <div class="meta-item">
+        <span>Livrable final</span>
+        <span>RAG complet déployable</span>
+      </div>
+      <div class="meta-item">
+        <span>Stack</span>
+        <span>Python · LangChain · ChromaDB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+
+  <div class="progress-section">
+    <div class="progress-header">
+      <span>Ta progression</span>
+      <strong id="prog-text">Coche les jours au fur et à mesure →</strong>
+    </div>
+    <div class="progress-days" id="prog-bars">
+      <div class="prog-day" data-day="1" onclick="toggleDay(1)" title="Jour 1"></div>
+      <div class="prog-day" data-day="2" onclick="toggleDay(2)" title="Jour 2"></div>
+      <div class="prog-day" data-day="3" onclick="toggleDay(3)" title="Jour 3"></div>
+      <div class="prog-day" data-day="4" onclick="toggleDay(4)" title="Jour 4"></div>
+      <div class="prog-day" data-day="5" onclick="toggleDay(5)" title="Jour 5"></div>
+      <div class="prog-day" data-day="6" onclick="toggleDay(6)" title="Jour 6"></div>
+      <div class="prog-day" data-day="7" onclick="toggleDay(7)" title="Jour 7"></div>
+    </div>
+    <div class="prog-labels">
+      <span>J1</span><span>J2</span><span>J3</span><span>J4</span><span>J5</span><span>J6</span><span>J7</span>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+
+  <div class="overview-grid">
+    <div class="overview-card">
+      <div class="ov-icon" style="background:#dbeafe;">🧠</div>
+      <div class="ov-content">
+        <h4>J1–J2 : Fondations</h4>
+        <p>Concepts, embeddings, bases vectorielles. Tu comprends le « pourquoi ».</p>
+      </div>
+    </div>
+    <div class="overview-card">
+      <div class="ov-icon" style="background:#d8f3dc;">⚙️</div>
+      <div class="ov-content">
+        <h4>J3–J4 : Construction</h4>
+        <p>Tu construis ton premier RAG fonctionnel, étape par étape.</p>
+      </div>
+    </div>
+    <div class="overview-card">
+      <div class="ov-icon" style="background:#fef9c3;">🔧</div>
+      <div class="ov-content">
+        <h4>J5–J6 : Optimisation</h4>
+        <p>Chunking avancé, reranking, évaluation de la qualité des réponses.</p>
+      </div>
+    </div>
+    <div class="overview-card">
+      <div class="ov-icon" style="background:#f0d4c4;">🚀</div>
+      <div class="ov-content">
+        <h4>J7 : Projet final</h4>
+        <p>Tu assembles un RAG complet sur tes propres documents, prêt à déployer.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY CARDS -->
+
+  <div class="days-container">
+
+```
+<!-- J1 -->
+<div class="day-card" id="day1">
+  <div class="day-header" onclick="toggleCard(1)">
+    <div class="day-number" style="background:#dbeafe20;">
+      <div class="num" style="color:var(--blue)">01</div>
+      <div class="lbl">Jour</div>
+    </div>
+    <div class="day-title-block">
+      <div>
+        <h3>Comprendre les Embeddings & la Recherche Sémantique</h3>
+        <div class="subtitle">La brique fondamentale du RAG</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="duration-badge">~1h30</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+  </div>
+  <div class="day-tags">
+    <span class="tag theory">Théorie</span>
+    <span class="tag code">Code</span>
+  </div>
+  <div class="day-content">
+    <div class="content-grid">
+      <div class="content-block">
+        <h4>📖 Ce que tu vas apprendre</h4>
+        <ul>
+          <li>Qu'est-ce qu'un embedding (vecteur de texte) ?</li>
+          <li>Pourquoi la recherche sémantique > recherche par mots-clés</li>
+          <li>Similarité cosinus : comment les vecteurs se comparent</li>
+          <li>Les modèles d'embedding (OpenAI, Sentence-Transformers)</li>
+          <li>Visualiser des embeddings dans l'espace 2D</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4>💻 Exercice pratique</h4>
+        <ul>
+          <li>Installer <code>sentence-transformers</code> et générer tes premiers embeddings</li>
+          <li>Comparer la similarité entre 5 phrases sur un même thème</li>
+          <li>Observer comment des phrases proches ont des vecteurs proches</li>
+          <li>Mini-défi : trouver la phrase la plus proche d'une requête</li>
+        </ul>
+      </div>
+    </div>
+    <div class="snippet">
+      <pre><span class="sc"># Jour 1 — Tes premiers embeddings</span>
+```
+
+<span class="sk">from</span> sentence_transformers <span class="sk">import</span> SentenceTransformer
+<span class="sk">from</span> sklearn.metrics.pairwise <span class="sk">import</span> cosine_similarity
+<span class="sk">import</span> numpy <span class="sk">as</span> np
+
+<span class="sc"># Charger un modèle léger (gratuit, tourne en local)</span>
+<span class="sf">model</span> = SentenceTransformer(<span class="ss">‘all-MiniLM-L6-v2’</span>)
+
+<span class="sf">phrases</span> = [
+<span class="ss">“Le chat dort sur le canapé”</span>,
+<span class="ss">“Un félin se repose sur le sofa”</span>,
+<span class="ss">“Python est un langage de programmation”</span>,
+<span class="ss">“Il pleut beaucoup en automne”</span>,
+]
+
+<span class="sc"># Générer les embeddings</span>
+<span class="sf">vecteurs</span> = model.encode(<span class="sf">phrases</span>)
+<span class="sf">print</span>(<span class="ss">f”Forme du vecteur : {vecteurs.shape}”</span>)  <span class="sc"># (4, 384)</span>
+
+<span class="sc"># Calculer la similarité entre la phrase 0 et toutes les autres</span>
+<span class="sf">scores</span> = cosine_similarity([<span class="sf">vecteurs</span>[<span class="sn">0</span>]], <span class="sf">vecteurs</span>)[<span class="sn">0</span>]
+<span class="sk">for</span> i, score <span class="sk">in</span> enumerate(<span class="sf">scores</span>):
+<span class="sf">print</span>(<span class="ss">f”Similarité avec ‘{phrases[i][:30]}…’ : {score:.3f}”</span>)</pre>
+</div>
+<div class="livrable">
+<div class="livrable-icon">📦</div>
+<div class="livrable-text">
+<strong>Livrable du jour</strong>
+<p>Un script Python qui génère des embeddings sur 10 phrases de ton choix et affiche les 3 plus proches de ta requête.</p>
+</div>
+</div>
+</div>
+</div>
+
+```
+<!-- J2 -->
+<div class="day-card" id="day2">
+  <div class="day-header" onclick="toggleCard(2)">
+    <div class="day-number" style="background:#dbeafe20;">
+      <div class="num" style="color:var(--blue)">02</div>
+      <div class="lbl">Jour</div>
+    </div>
+    <div class="day-title-block">
+      <div>
+        <h3>Bases Vectorielles — Stocker & Indexer tes Documents</h3>
+        <div class="subtitle">ChromaDB, FAISS et la mémoire du RAG</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="duration-badge">~1h45</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+  </div>
+  <div class="day-tags">
+    <span class="tag theory">Théorie</span>
+    <span class="tag code">Code</span>
+  </div>
+  <div class="day-content">
+    <div class="content-grid">
+      <div class="content-block">
+        <h4>📖 Ce que tu vas apprendre</h4>
+        <ul>
+          <li>Qu'est-ce qu'une base vectorielle ? (vs base SQL)</li>
+          <li>Comment ChromaDB stocke et indexe les vecteurs</li>
+          <li>Les opérations CRUD sur une collection Chroma</li>
+          <li>FAISS (Facebook) : base vectorielle en mémoire ultra-rapide</li>
+          <li>Quand utiliser quelle base (local vs cloud)</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4>💻 Exercice pratique</h4>
+        <ul>
+          <li>Créer une collection ChromaDB locale</li>
+          <li>Insérer 20 phrases avec leurs embeddings</li>
+          <li>Faire 3 requêtes de recherche sémantique</li>
+          <li>Persister la base sur disque et la recharger</li>
+          <li>Comparer la vitesse ChromaDB vs FAISS</li>
+        </ul>
+      </div>
+    </div>
+    <div class="snippet">
+      <pre><span class="sc"># Jour 2 — Ta première base vectorielle ChromaDB</span>
+```
+
+<span class="sk">import</span> chromadb
+<span class="sk">from</span> sentence_transformers <span class="sk">import</span> SentenceTransformer
+
+<span class="sf">client</span> = chromadb.PersistentClient(path=<span class="ss">”./ma_base”</span>)
+<span class="sf">collection</span> = client.get_or_create_collection(<span class="ss">“mes_docs”</span>)
+<span class="sf">model</span> = SentenceTransformer(<span class="ss">‘all-MiniLM-L6-v2’</span>)
+
+<span class="sf">documents</span> = [
+<span class="ss">“L’IA générative révolutionne le développement logiciel”</span>,
+<span class="ss">“Python est idéal pour le machine learning”</span>,
+<span class="ss">“Docker facilite le déploiement des applications”</span>,
+<span class="ss">“Le RAG améliore la précision des LLM sur des données privées”</span>,
+]
+
+<span class="sc"># Ajouter les documents avec leurs embeddings</span>
+<span class="sf">embeddings</span> = model.encode(<span class="sf">documents</span>).tolist()
+collection.add(
+documents=<span class="sf">documents</span>,
+embeddings=<span class="sf">embeddings</span>,
+ids=[<span class="ss">f”doc_{i}”</span> <span class="sk">for</span> i <span class="sk">in</span> range(len(<span class="sf">documents</span>))]
+)
+
+<span class="sc"># Rechercher</span>
+<span class="sf">query</span> = <span class="ss">“Comment améliorer la précision d’un chatbot ?”</span>
+<span class="sf">results</span> = collection.query(
+query_embeddings=model.encode([<span class="sf">query</span>]).tolist(),
+n_results=<span class="sn">2</span>
+)
+<span class="sf">print</span>(<span class="sf">results</span>[<span class="ss">‘documents’</span>])</pre>
+</div>
+<div class="livrable">
+<div class="livrable-icon">📦</div>
+<div class="livrable-text">
+<strong>Livrable du jour</strong>
+<p>Une base ChromaDB locale avec 20+ documents sur un sujet de ton choix, et un script de recherche sémantique fonctionnel.</p>
+</div>
+</div>
+</div>
+</div>
+
+```
+<!-- J3 -->
+<div class="day-card" id="day3">
+  <div class="day-header" onclick="toggleCard(3)">
+    <div class="day-number" style="background:#d8f3dc20;">
+      <div class="num" style="color:var(--green)">03</div>
+      <div class="lbl">Jour</div>
+    </div>
+    <div class="day-title-block">
+      <div>
+        <h3>Construire ton Premier RAG de Bout en Bout</h3>
+        <div class="subtitle">Load → Split → Embed → Retrieve → Generate</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="duration-badge">~2h</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+  </div>
+  <div class="day-tags">
+    <span class="tag code">Code</span>
+    <span class="tag project">Projet</span>
+  </div>
+  <div class="day-content">
+    <div class="content-grid">
+      <div class="content-block">
+        <h4>📖 Ce que tu vas apprendre</h4>
+        <ul>
+          <li>Le pipeline RAG complet avec LangChain</li>
+          <li>Charger des PDFs, TXT, CSV avec les DocumentLoaders</li>
+          <li>Stratégies de découpage (chunking) : taille, overlap</li>
+          <li>Construire une chain RetrievalQA complète</li>
+          <li>Le prompt template : comment guider le LLM</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4>💻 Exercice pratique</h4>
+        <ul>
+          <li>Choisir un PDF de ton choix (cours, article, doc technique)</li>
+          <li>Construire le pipeline complet de A à Z</li>
+          <li>Poser 5 questions variées à ton RAG</li>
+          <li>Observer les sources retournées avec <code>return_source_documents=True</code></li>
+          <li>Comparer les réponses avec/sans contexte RAG</li>
+        </ul>
+      </div>
+    </div>
+    <div class="livrable">
+      <div class="livrable-icon">🎉</div>
+      <div class="livrable-text">
+        <strong>Livrable du jour — MILESTONE</strong>
+        <p>Ton premier RAG complet qui répond à des questions sur un PDF réel. C'est le cœur de tout le reste !</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- J4 -->
+<div class="day-card" id="day4">
+  <div class="day-header" onclick="toggleCard(4)">
+    <div class="day-number" style="background:#d8f3dc20;">
+      <div class="num" style="color:var(--green)">04</div>
+      <div class="lbl">Jour</div>
+    </div>
+    <div class="day-title-block">
+      <div>
+        <h3>Chunking Intelligent & Métadonnées</h3>
+        <div class="subtitle">La qualité de tes réponses dépend de ça !</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="duration-badge">~1h45</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+  </div>
+  <div class="day-tags">
+    <span class="tag code">Code</span>
+    <span class="tag theory">Théorie</span>
+  </div>
+  <div class="day-content">
+    <div class="content-grid">
+      <div class="content-block">
+        <h4>📖 Ce que tu vas apprendre</h4>
+        <ul>
+          <li>Pourquoi le chunking est critique pour la qualité du RAG</li>
+          <li>RecursiveCharacterTextSplitter vs MarkdownSplitter vs SemanticChunker</li>
+          <li>Trouver la bonne taille de chunk pour ton use case</li>
+          <li>Ajouter des métadonnées (source, date, auteur) à chaque chunk</li>
+          <li>Filtrer les résultats par métadonnées lors de la recherche</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4>💻 Exercice pratique</h4>
+        <ul>
+          <li>Tester 3 tailles de chunks (200, 500, 1000) et comparer les résultats</li>
+          <li>Indexer plusieurs documents avec leurs métadonnées</li>
+          <li>Faire une recherche filtrée par source</li>
+          <li>Implémenter un parent-document retriever</li>
+          <li>Écrire tes observations sur l'impact du chunking</li>
+        </ul>
+      </div>
+    </div>
+    <div class="livrable">
+      <div class="livrable-icon">📦</div>
+      <div class="livrable-text">
+        <strong>Livrable du jour</strong>
+        <p>Un RAG multi-documents avec métadonnées, capable de filtrer par source et de citer précisément d'où vient chaque réponse.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- J5 -->
+<div class="day-card" id="day5">
+  <div class="day-header" onclick="toggleCard(5)">
+    <div class="day-number" style="background:#fef9c320;">
+      <div class="num" style="color:var(--yellow)">05</div>
+      <div class="lbl">Jour</div>
+    </div>
+    <div class="day-title-block">
+      <div>
+        <h3>Optimisation Avancée — Reranking & Hybrid Search</h3>
+        <div class="subtitle">Passer d'un bon RAG à un excellent RAG</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="duration-badge">~2h</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+  </div>
+  <div class="day-tags">
+    <span class="tag theory">Théorie</span>
+    <span class="tag code">Code</span>
+    <span class="tag eval">Optimisation</span>
+  </div>
+  <div class="day-content">
+    <div class="content-grid">
+      <div class="content-block">
+        <h4>📖 Ce que tu vas apprendre</h4>
+        <ul>
+          <li>Limites de la recherche vectorielle pure</li>
+          <li>Hybrid search : combiner vectoriel + BM25 (mots-clés)</li>
+          <li>Reranking avec un Cross-Encoder pour affiner les résultats</li>
+          <li>MMR (Maximal Marginal Relevance) : diversifier les chunks</li>
+          <li>Query expansion : reformuler la question pour mieux chercher</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4>💻 Exercice pratique</h4>
+        <ul>
+          <li>Implémenter BM25 avec <code>rank_bm25</code></li>
+          <li>Combiner les scores vectoriels + BM25 (Reciprocal Rank Fusion)</li>
+          <li>Utiliser un Cross-Encoder de HuggingFace pour reranker</li>
+          <li>Comparer les résultats avant/après reranking sur 10 questions</li>
+          <li>Mesurer l'impact sur la pertinence des réponses</li>
+        </ul>
+      </div>
+    </div>
+    <div class="livrable">
+      <div class="livrable-icon">📦</div>
+      <div class="livrable-text">
+        <strong>Livrable du jour</strong>
+        <p>Un RAG hybride (vectoriel + BM25 + reranking) avec un tableau comparatif des performances avant/après optimisation.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- J6 -->
+<div class="day-card" id="day6">
+  <div class="day-header" onclick="toggleCard(6)">
+    <div class="day-number" style="background:#fef9c320;">
+      <div class="num" style="color:var(--yellow)">06</div>
+      <div class="lbl">Jour</div>
+    </div>
+    <div class="day-title-block">
+      <div>
+        <h3>Évaluer & Mesurer la Qualité de son RAG</h3>
+        <div class="subtitle">RAGAS, faithfulness, answer relevancy</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="duration-badge">~1h30</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+  </div>
+  <div class="day-tags">
+    <span class="tag eval">Évaluation</span>
+    <span class="tag code">Code</span>
+  </div>
+  <div class="day-content">
+    <div class="content-grid">
+      <div class="content-block">
+        <h4>📖 Ce que tu vas apprendre</h4>
+        <ul>
+          <li>Les 4 métriques RAGAS : Faithfulness, Answer Relevancy, Context Precision, Context Recall</li>
+          <li>Créer un dataset d'évaluation (questions + réponses attendues)</li>
+          <li>Automatiser l'évaluation avec le framework RAGAS</li>
+          <li>Identifier les points faibles de ton RAG</li>
+          <li>Itérer et améliorer en fonction des métriques</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4>💻 Exercice pratique</h4>
+        <ul>
+          <li>Créer un dataset de 10 questions/réponses de référence</li>
+          <li>Lancer une évaluation RAGAS complète</li>
+          <li>Interpréter les scores obtenus</li>
+          <li>Apporter 2 améliorations et re-évaluer</li>
+          <li>Visualiser les métriques dans un tableau de bord simple</li>
+        </ul>
+      </div>
+    </div>
+    <div class="livrable">
+      <div class="livrable-icon">📦</div>
+      <div class="livrable-text">
+        <strong>Livrable du jour</strong>
+        <p>Un rapport d'évaluation RAGAS avec scores, analyse des faiblesses et plan d'amélioration documenté.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- J7 -->
+<div class="day-card" id="day7">
+  <div class="day-header" onclick="toggleCard(7)">
+    <div class="day-number" style="background:#f0d4c420;">
+      <div class="num" style="color:var(--primary)">07</div>
+      <div class="lbl">Jour</div>
+    </div>
+    <div class="day-title-block">
+      <div>
+        <h3>Projet Final — RAG Production-Ready avec Interface</h3>
+        <div class="subtitle">Assembler tout ce que tu as appris</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="duration-badge">~3h</span>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+  </div>
+  <div class="day-tags">
+    <span class="tag project">Projet</span>
+    <span class="tag code">Code</span>
+    <span class="tag eval">Déploiement</span>
+  </div>
+  <div class="day-content">
+    <div class="content-grid">
+      <div class="content-block">
+        <h4>📖 Ce que tu vas construire</h4>
+        <ul>
+          <li>Un RAG complet avec tous les éléments optimisés</li>
+          <li>Interface web avec Streamlit ou Gradio</li>
+          <li>Upload de documents directement depuis l'interface</li>
+          <li>Affichage des sources citées pour chaque réponse</li>
+          <li>Historique de conversation (mémoire)</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4>💻 Fonctionnalités à implémenter</h4>
+        <ul>
+          <li>Chargement multi-formats (PDF, TXT, MD)</li>
+          <li>Pipeline hybrid search + reranking</li>
+          <li>Prompt template personnalisé avec instructions</li>
+          <li>Affichage de la confiance et des sources</li>
+          <li>Export de la session en rapport</li>
+        </ul>
+      </div>
+    </div>
+    <div class="livrable">
+      <div class="livrable-icon">🏆</div>
+      <div class="livrable-text">
+        <strong>Livrable Final</strong>
+        <p>Une application RAG complète, fonctionnelle avec interface web, documentée et prête à être montrée. Tu peux l'adapter à n'importe quel domaine !</p>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div><!-- /days-container -->
+
+  <!-- PROJET FINAL -->
+
+  <div class="final-project">
+    <h2>Le Projet Final :<br><span>ton Chatbot RAG Personnel</span></h2>
+    <p style="color:rgba(245,240,232,0.75); max-width:560px; font-size:0.92rem; margin-top:8px;">À la fin des 7 jours, tu auras construit une application concrète que tu peux réutiliser sur n'importe quel corpus de documents.</p>
+    <div class="project-steps">
+      <div class="proj-step">
+        <div class="step-num">01</div>
+        <p>Ingestion multi-formats (PDF, TXT, MD, CSV)</p>
+      </div>
+      <div class="proj-step">
+        <div class="step-num">02</div>
+        <p>Chunking intelligent + métadonnées</p>
+      </div>
+      <div class="proj-step">
+        <div class="step-num">03</div>
+        <p>Base vectorielle persistante (ChromaDB)</p>
+      </div>
+      <div class="proj-step">
+        <div class="step-num">04</div>
+        <p>Hybrid search + reranking</p>
+      </div>
+      <div class="proj-step">
+        <div class="step-num">05</div>
+        <p>Interface Streamlit avec historique</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESSOURCES -->
+
+  <div class="resources" style="margin-top:48px;">
+    <div class="section-title">Stack & Ressources recommandées</div>
+    <div class="res-grid">
+      <div class="res-card">
+        <div class="res-icon">🦜</div>
+        <div>
+          <div class="res-name">LangChain</div>
+          <div class="res-desc">Framework principal pour le RAG (docs.langchain.com)</div>
+        </div>
+      </div>
+      <div class="res-card">
+        <div class="res-icon">🗄️</div>
+        <div>
+          <div class="res-name">ChromaDB</div>
+          <div class="res-desc">Base vectorielle locale gratuite (trychroma.com)</div>
+        </div>
+      </div>
+      <div class="res-card">
+        <div class="res-icon">🤗</div>
+        <div>
+          <div class="res-name">Sentence Transformers</div>
+          <div class="res-desc">Embeddings gratuits et locaux (HuggingFace)</div>
+        </div>
+      </div>
+      <div class="res-card">
+        <div class="res-icon">📊</div>
+        <div>
+          <div class="res-name">RAGAS</div>
+          <div class="res-desc">Évaluation automatique de la qualité RAG</div>
+        </div>
+      </div>
+      <div class="res-card">
+        <div class="res-icon">🖥️</div>
+        <div>
+          <div class="res-name">Streamlit</div>
+          <div class="res-desc">Interface web Python en 20 lignes (streamlit.io)</div>
+        </div>
+      </div>
+      <div class="res-card">
+        <div class="res-icon">🆓</div>
+        <div>
+          <div class="res-name">Groq / Mistral API</div>
+          <div class="res-desc">LLM gratuits pour tester sans frais OpenAI</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+  function toggleCard(n) {
+    const card = document.getElementById('day' + n);
+    card.classList.toggle('open');
+  }
+
+  const done = new Set();
+  function toggleDay(n) {
+    const bar = document.querySelector(`.prog-day[data-day="${n}"]`);
+    if (done.has(n)) { done.delete(n); bar.classList.remove('done'); }
+    else { done.add(n); bar.classList.add('done'); }
+    const pct = Math.round((done.size / 7) * 100);
+    document.getElementById('prog-text').textContent = pct === 0 ? 'Coche les jours au fur et à mesure →' : pct === 100 ? '🎉 Formation complète !' : `${pct}% complété — ${done.size}/7 jours`;
+  }
+
+  // Open first card by default
+  document.getElementById('day1').classList.add('open');
+</script>
+
+</body>
+</html>

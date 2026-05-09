@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Mastery — Méthode Pareto</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #252535;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --code-bg: #0d0d14;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: var(–sans);
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* Grid noise overlay */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(124,58,237,.03) 1px, transparent 1px),
+linear-gradient(90deg, rgba(124,58,237,.03) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: 0;
+}
+
+/* HEADER */
+header {
+position: relative;
+padding: 60px 40px 40px;
+border-bottom: 1px solid var(–border);
+background: linear-gradient(135deg, rgba(124,58,237,.12) 0%, transparent 60%);
+z-index: 1;
+}
+
+.header-badge {
+display: inline-flex;
+align-items: center;
+gap: 8px;
+background: rgba(124,58,237,.2);
+border: 1px solid rgba(124,58,237,.4);
+color: #a78bfa;
+font-family: var(–mono);
+font-size: 11px;
+letter-spacing: 2px;
+text-transform: uppercase;
+padding: 6px 14px;
+border-radius: 2px;
+margin-bottom: 20px;
+}
+
+header h1 {
+font-size: clamp(2.5rem, 6vw, 4.5rem);
+font-weight: 800;
+line-height: 1.05;
+letter-spacing: -2px;
+margin-bottom: 16px;
+}
+
+header h1 span { color: var(–accent); }
+
+header p {
+font-size: 1.1rem;
+color: var(–muted);
+max-width: 600px;
+line-height: 1.7;
+}
+
+.pareto-bar {
+display: flex;
+gap: 12px;
+margin-top: 32px;
+flex-wrap: wrap;
+}
+
+.pareto-pill {
+background: var(–card);
+border: 1px solid var(–border);
+padding: 8px 18px;
+border-radius: 2px;
+font-family: var(–mono);
+font-size: 12px;
+color: var(–muted);
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.pareto-pill .dot {
+width: 6px; height: 6px; border-radius: 50%;
+background: var(–accent2);
+animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+0%,100% { opacity: 1; transform: scale(1); }
+50% { opacity: .5; transform: scale(1.4); }
+}
+
+/* LAYOUT */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+/* PROGRESS TRACKER */
+.progress-tracker {
+background: var(–surface);
+border-bottom: 1px solid var(–border);
+padding: 16px 40px;
+display: flex;
+align-items: center;
+gap: 20px;
+position: sticky;
+top: 0;
+z-index: 100;
+}
+
+.progress-label {
+font-family: var(–mono);
+font-size: 11px;
+color: var(–muted);
+letter-spacing: 1px;
+white-space: nowrap;
+}
+
+.progress-bar-wrap {
+flex: 1;
+height: 4px;
+background: var(–border);
+border-radius: 2px;
+overflow: hidden;
+max-width: 400px;
+}
+
+.progress-bar-fill {
+height: 100%;
+background: linear-gradient(90deg, var(–accent), var(–accent2));
+border-radius: 2px;
+transition: width .5s ease;
+width: 0%;
+}
+
+.progress-score {
+font-family: var(–mono);
+font-size: 12px;
+color: var(–accent2);
+}
+
+/* MODULE NAV */
+.module-nav {
+padding: 32px 40px 0;
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+position: relative;
+z-index: 1;
+}
+
+.mod-btn {
+background: var(–card);
+border: 1px solid var(–border);
+color: var(–muted);
+font-family: var(–mono);
+font-size: 12px;
+padding: 8px 16px;
+cursor: pointer;
+border-radius: 2px;
+transition: all .2s;
+position: relative;
+}
+
+.mod-btn:hover { border-color: var(–accent); color: var(–text); }
+.mod-btn.active { background: var(–accent); border-color: var(–accent); color: white; }
+.mod-btn.completed::after {
+content: ‘✓’;
+position: absolute;
+top: -6px; right: -6px;
+width: 14px; height: 14px;
+background: var(–green);
+border-radius: 50%;
+font-size: 9px;
+display: flex; align-items: center; justify-content: center;
+color: white;
+line-height: 14px;
+text-align: center;
+}
+
+/* MAIN CONTENT */
+main { padding: 32px 40px 80px; }
+
+.module-section { display: none; }
+.module-section.active { display: block; }
+
+/* MODULE HEADER */
+.module-header {
+display: flex;
+align-items: flex-start;
+gap: 24px;
+margin-bottom: 40px;
+padding: 32px;
+background: var(–card);
+border: 1px solid var(–border);
+border-left: 4px solid var(–accent);
+}
+
+.module-num {
+font-family: var(–mono);
+font-size: 3rem;
+font-weight: 700;
+color: var(–accent);
+opacity: .3;
+line-height: 1;
+flex-shrink: 0;
+}
+
+.module-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
+.module-subtitle { color: var(–muted); font-size: .95rem; line-height: 1.6; }
+
+.pareto-tag {
+margin-left: auto;
+flex-shrink: 0;
+background: rgba(245,158,11,.1);
+border: 1px solid rgba(245,158,11,.3);
+color: var(–accent3);
+font-family: var(–mono);
+font-size: 11px;
+padding: 4px 10px;
+letter-spacing: 1px;
+}
+
+/* LESSON CARDS */
+.lesson-grid { display: grid; gap: 20px; margin-bottom: 40px; }
+
+.lesson-card {
+background: var(–card);
+border: 1px solid var(–border);
+padding: 28px;
+transition: border-color .2s;
+}
+
+.lesson-card:hover { border-color: rgba(124,58,237,.4); }
+
+.lesson-label {
+font-family: var(–mono);
+font-size: 10px;
+color: var(–accent2);
+letter-spacing: 2px;
+text-transform: uppercase;
+margin-bottom: 12px;
+}
+
+.lesson-card h3 {
+font-size: 1.1rem;
+font-weight: 700;
+margin-bottom: 12px;
+color: var(–text);
+}
+
+.lesson-card p {
+color: var(–muted);
+font-size: .9rem;
+line-height: 1.7;
+margin-bottom: 16px;
+}
+
+/* CODE BLOCKS */
+.code-block {
+background: var(–code-bg);
+border: 1px solid var(–border);
+border-radius: 2px;
+overflow: hidden;
+margin: 16px 0;
+position: relative;
+}
+
+.code-header {
+background: #0f0f1a;
+border-bottom: 1px solid var(–border);
+padding: 8px 16px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.code-dots { display: flex; gap: 6px; }
+.code-dot { width: 10px; height: 10px; border-radius: 50%; }
+.code-dot:nth-child(1) { background: #ef4444; }
+.code-dot:nth-child(2) { background: #f59e0b; }
+.code-dot:nth-child(3) { background: #10b981; }
+
+.code-lang {
+margin-left: auto;
+font-family: var(–mono);
+font-size: 10px;
+color: var(–muted);
+letter-spacing: 1px;
+}
+
+.code-body {
+padding: 20px;
+font-family: var(–mono);
+font-size: 13px;
+line-height: 1.8;
+overflow-x: auto;
+color: #c9d1d9;
+}
+
+.code-body .kw { color: #ff79c6; }
+.code-body .fn { color: #50fa7b; }
+.code-body .str { color: #f1fa8c; }
+.code-body .cm { color: #6272a4; font-style: italic; }
+.code-body .num { color: #bd93f9; }
+.code-body .op { color: #ff79c6; }
+.code-body .var { color: #8be9fd; }
+
+/* CAROUSEL */
+.carousel-wrap {
+background: var(–surface);
+border: 1px solid var(–border);
+overflow: hidden;
+margin: 24px 0;
+}
+
+.carousel-header {
+background: var(–card);
+border-bottom: 1px solid var(–border);
+padding: 14px 20px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+
+.carousel-title {
+font-family: var(–mono);
+font-size: 12px;
+color: var(–accent2);
+letter-spacing: 1px;
+}
+
+.carousel-controls { display: flex; gap: 8px; align-items: center; }
+
+.carousel-btn {
+background: var(–card);
+border: 1px solid var(–border);
+color: var(–text);
+width: 32px; height: 32px;
+cursor: pointer;
+font-size: 14px;
+display: flex; align-items: center; justify-content: center;
+transition: all .2s;
+border-radius: 2px;
+}
+
+.carousel-btn:hover { background: var(–accent); border-color: var(–accent); }
+
+.carousel-counter {
+font-family: var(–mono);
+font-size: 12px;
+color: var(–muted);
+}
+
+.carousel-track {
+display: flex;
+transition: transform .4s cubic-bezier(.25,.46,.45,.94);
+}
+
+.carousel-slide {
+min-width: 100%;
+padding: 28px;
+}
+
+.slide-label {
+font-family: var(–mono);
+font-size: 10px;
+letter-spacing: 2px;
+text-transform: uppercase;
+margin-bottom: 12px;
+padding: 4px 8px;
+display: inline-block;
+}
+
+.slide-label.exercice { color: var(–accent3); background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.2); }
+.slide-label.correction { color: var(–green); background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); }
+
+.slide-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+.slide-desc { color: var(–muted); font-size: .9rem; line-height: 1.6; margin-bottom: 16px; }
+
+.reveal-btn {
+background: transparent;
+border: 1px dashed var(–border);
+color: var(–muted);
+padding: 10px 20px;
+font-family: var(–mono);
+font-size: 12px;
+cursor: pointer;
+transition: all .2s;
+width: 100%;
+text-align: center;
+}
+
+.reveal-btn:hover { border-color: var(–accent); color: var(–accent); }
+
+.correction-content { display: none; }
+.correction-content.revealed { display: block; animation: fadeIn .3s ease; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* QUIZ */
+.quiz-section {
+background: linear-gradient(135deg, rgba(124,58,237,.08) 0%, rgba(6,182,212,.05) 100%);
+border: 1px solid rgba(124,58,237,.2);
+padding: 32px;
+margin-top: 40px;
+}
+
+.quiz-header {
+display: flex;
+align-items: center;
+gap: 16px;
+margin-bottom: 28px;
+padding-bottom: 20px;
+border-bottom: 1px solid var(–border);
+}
+
+.quiz-icon {
+width: 44px; height: 44px;
+background: var(–accent);
+display: flex; align-items: center; justify-content: center;
+font-size: 20px;
+flex-shrink: 0;
+}
+
+.quiz-header h3 { font-size: 1.2rem; font-weight: 700; }
+.quiz-header p { font-size: .85rem; color: var(–muted); margin-top: 2px; }
+
+.question-block { margin-bottom: 28px; }
+
+.question-text {
+font-weight: 600;
+font-size: .95rem;
+margin-bottom: 14px;
+display: flex;
+gap: 10px;
+}
+
+.q-num {
+font-family: var(–mono);
+color: var(–accent);
+flex-shrink: 0;
+}
+
+.options { display: grid; gap: 8px; }
+
+.option-btn {
+background: var(–card);
+border: 1px solid var(–border);
+color: var(–text);
+padding: 12px 18px;
+text-align: left;
+cursor: pointer;
+font-family: var(–sans);
+font-size: .88rem;
+line-height: 1.4;
+transition: all .2s;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.option-btn:hover:not(:disabled) { border-color: var(–accent); background: rgba(124,58,237,.08); }
+
+.option-letter {
+font-family: var(–mono);
+font-size: 11px;
+color: var(–muted);
+flex-shrink: 0;
+width: 20px;
+}
+
+.option-btn.correct { border-color: var(–green); background: rgba(16,185,129,.1); }
+.option-btn.correct .option-letter { color: var(–green); }
+.option-btn.wrong { border-color: var(–red); background: rgba(239,68,68,.1); }
+.option-btn.wrong .option-letter { color: var(–red); }
+
+.feedback {
+margin-top: 8px;
+padding: 10px 14px;
+font-size: .85rem;
+font-family: var(–mono);
+display: none;
+}
+
+.feedback.show { display: block; animation: fadeIn .2s ease; }
+.feedback.ok { background: rgba(16,185,129,.1); border-left: 3px solid var(–green); color: var(–green); }
+.feedback.ko { background: rgba(239,68,68,.1); border-left: 3px solid var(–red); color: #fca5a5; }
+
+.quiz-submit {
+background: var(–accent);
+border: none;
+color: white;
+padding: 14px 32px;
+font-family: var(–sans);
+font-size: .95rem;
+font-weight: 700;
+cursor: pointer;
+transition: all .2s;
+letter-spacing: .5px;
+margin-top: 8px;
+}
+
+.quiz-submit:hover { background: #6d28d9; transform: translateY(-1px); }
+.quiz-submit:disabled { background: var(–border); cursor: not-allowed; transform: none; }
+
+.quiz-result {
+display: none;
+margin-top: 20px;
+padding: 20px 24px;
+background: var(–card);
+border: 1px solid var(–border);
+}
+
+.quiz-result.show { display: block; animation: fadeIn .3s ease; }
+
+.result-score {
+font-size: 2.5rem;
+font-weight: 800;
+font-family: var(–mono);
+line-height: 1;
+margin-bottom: 8px;
+}
+
+.result-score.great { color: var(–green); }
+.result-score.ok { color: var(–accent3); }
+.result-score.retry { color: var(–red); }
+
+.result-msg { color: var(–muted); font-size: .9rem; }
+
+.retry-btn {
+background: transparent;
+border: 1px solid var(–border);
+color: var(–muted);
+padding: 8px 20px;
+font-family: var(–mono);
+font-size: 12px;
+cursor: pointer;
+margin-top: 12px;
+transition: all .2s;
+}
+
+.retry-btn:hover { border-color: var(–accent); color: var(–accent); }
+
+/* NEXT MODULE BTN */
+.next-module-btn {
+display: flex;
+align-items: center;
+gap: 12px;
+background: transparent;
+border: 1px solid var(–accent);
+color: var(–accent);
+padding: 16px 32px;
+font-family: var(–sans);
+font-size: .95rem;
+font-weight: 700;
+cursor: pointer;
+transition: all .2s;
+margin-top: 32px;
+letter-spacing: .5px;
+}
+
+.next-module-btn:hover { background: var(–accent); color: white; }
+.next-module-btn span { font-family: var(–mono); }
+
+/* TAGS */
+.key-concept {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+background: rgba(6,182,212,.08);
+border: 1px solid rgba(6,182,212,.2);
+color: var(–accent2);
+font-family: var(–mono);
+font-size: 11px;
+padding: 3px 10px;
+border-radius: 2px;
+margin: 3px;
+}
+
+.concepts-row { margin: 12px 0; }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+header, .progress-tracker, .module-nav, main { padding-left: 20px; padding-right: 20px; }
+header h1 { font-size: 2rem; }
+.module-header { flex-wrap: wrap; gap: 16px; }
+.module-num { font-size: 2rem; }
+.pareto-tag { margin-left: 0; }
+}
+
+/* TROPHY */
+.trophy-section {
+display: none;
+text-align: center;
+padding: 80px 40px;
+background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(6,182,212,.1));
+border: 1px solid rgba(124,58,237,.3);
+margin-top: 40px;
+}
+
+.trophy-section.show { display: block; animation: fadeIn .5s ease; }
+.trophy-emoji { font-size: 5rem; margin-bottom: 20px; }
+.trophy-title { font-size: 2rem; font-weight: 800; margin-bottom: 12px; }
+.trophy-msg { color: var(–muted); font-size: 1rem; line-height: 1.7; }
+
+.final-score-badge {
+display: inline-block;
+background: var(–accent);
+color: white;
+font-family: var(–mono);
+font-size: 1.5rem;
+font-weight: 700;
+padding: 12px 32px;
+margin: 20px auto;
+letter-spacing: 2px;
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="header-badge">
+    <span class="dot"></span>
+    Méthode Pareto — 20% pour 80% des résultats
+  </div>
+  <h1>Maîtrise<br><span>Python</span></h1>
+  <p>De zéro à expert avec la méthode Pareto. Chaque module couvre les 20% de concepts qui vous donnent 80% de la puissance de Python.</p>
+  <div class="pareto-bar">
+    <div class="pareto-pill"><span class="dot"></span>6 Modules Essentiels</div>
+    <div class="pareto-pill"><span class="dot"></span>Quiz interactifs</div>
+    <div class="pareto-pill"><span class="dot"></span>Exercices + Corrections</div>
+    <div class="pareto-pill"><span class="dot"></span>Progression trackée</div>
+  </div>
+</header>
+
+<div class="progress-tracker">
+  <span class="progress-label">PROGRESSION</span>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="mainProgressBar"></div>
+  </div>
+  <span class="progress-score" id="totalScore">0 / 0 pts</span>
+</div>
+
+<nav class="module-nav" id="moduleNav">
+  <button class="mod-btn active" onclick="goToModule(0)">01 — Bases</button>
+  <button class="mod-btn" onclick="goToModule(1)">02 — Structures</button>
+  <button class="mod-btn" onclick="goToModule(2)">03 — Fonctions</button>
+  <button class="mod-btn" onclick="goToModule(3)">04 — Collections</button>
+  <button class="mod-btn" onclick="goToModule(4)">05 — POO</button>
+  <button class="mod-btn" onclick="goToModule(5)">06 — Avancé</button>
+</nav>
+
+<main class="container">
+
+<!-- ===================== MODULE 1 ===================== -->
+
+<section class="module-section active" id="module-0">
+  <div class="module-header">
+    <div class="module-num">01</div>
+    <div>
+      <div class="module-title">Les Fondations Python</div>
+      <div class="module-subtitle">Variables, types, opérateurs et premières interactions. Ces concepts sont utilisés dans 100% des programmes Python.</div>
+    </div>
+    <div class="pareto-tag">⚡ ESSENTIEL</div>
+  </div>
+
+  <div class="lesson-grid">
+    <div class="lesson-card">
+      <div class="lesson-label">CONCEPT 01.A — Variables & Types</div>
+      <h3>Variables et Types de Données</h3>
+      <p>Python est un langage à typage dynamique. Vous déclarez une variable simplement en lui assignant une valeur. Les 4 types essentiels à maîtriser :</p>
+      <div class="concepts-row">
+        <span class="key-concept">int — entier</span>
+        <span class="key-concept">float — décimal</span>
+        <span class="key-concept">str — texte</span>
+        <span class="key-concept">bool — vrai/faux</span>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+        <div class="code-body"><span class="cm"># Variables — pas besoin de déclarer le type</span>
+<span class="var">age</span> = <span class="num">25</span>           <span class="cm"># int</span>
+<span class="var">prix</span> = <span class="num">19.99</span>        <span class="cm"># float</span>
+<span class="var">nom</span> = <span class="str">"Alice"</span>       <span class="cm"># str</span>
+<span class="var">actif</span> = <span class="kw">True</span>        <span class="cm"># bool</span>
+
+<span class="cm"># Vérifier le type</span>
+<span class="fn">print</span>(<span class="fn">type</span>(<span class="var">age</span>))      <span class="cm"># <class ‘int’></span>
+
+<span class="cm"># Conversion de type (casting)</span>
+<span class="var">age_str</span> = <span class="fn">str</span>(<span class="var">age</span>)   <span class="cm"># “25”</span>
+<span class="var">prix_int</span> = <span class="fn">int</span>(<span class="var">prix</span>) <span class="cm"># 19</span></div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 01.B — Strings</div>
+  <h3>Manipulation de Chaînes de Caractères</h3>
+  <p>Les f-strings (Python 3.6+) sont la façon moderne et puissante de formater du texte. À utiliser par défaut.</p>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="var">prenom</span> = <span class="str">"Alice"</span>
+```
+
+<span class="var">age</span> = <span class="num">25</span>
+
+<span class="cm"># f-string — la méthode à retenir</span>
+<span class="fn">print</span>(<span class="str">f”Bonjour {<span class="var">prenom</span>}, tu as {<span class="var">age</span>} ans”</span>)
+
+<span class="cm"># Méthodes essentielles</span>
+<span class="var">texte</span> = <span class="str">”  Python est génial  “</span>
+<span class="fn">print</span>(<span class="var">texte</span>.<span class="fn">strip</span>())      <span class="cm"># “Python est génial”</span>
+<span class="fn">print</span>(<span class="var">texte</span>.<span class="fn">upper</span>())      <span class="cm"># “  PYTHON EST GÉNIAL  “</span>
+<span class="fn">print</span>(<span class="var">texte</span>.<span class="fn">replace</span>(<span class="str">“génial”</span>, <span class="str">“super”</span>))
+<span class="fn">print</span>(<span class="var">texte</span>.<span class="fn">split</span>())       <span class="cm"># [‘Python’, ‘est’, ‘génial’]</span></div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 01.C — Input/Output</div>
+  <h3>Entrées Utilisateur</h3>
+  <p>La fonction <code style="color:var(--accent2);font-family:var(--mono)">input()</code> retourne toujours une chaîne. Pensez à convertir si vous avez besoin d'un nombre.</p>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="var">nom</span> = <span class="fn">input</span>(<span class="str">"Quel est votre nom ? "</span>)
+```
+
+<span class="var">age</span> = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">“Quel est votre âge ? “</span>))
+
+<span class="fn">print</span>(<span class="str">f”Vous avez {<span class="var">age</span>} ans, {<span class="var">nom</span>}!”</span>)
+
+<span class="cm"># Dans 5 ans</span>
+<span class="fn">print</span>(<span class="str">f”Dans 5 ans vous en aurez {<span class="var">age</span> + <span class="num">5</span>}”</span>)</div>
+</div>
+</div>
+
+  </div>
+
+  <!-- CAROUSEL MODULE 1 -->
+
+  <div class="carousel-wrap">
+    <div class="carousel-header">
+      <span class="carousel-title">⚡ EXERCICES & CORRECTIONS</span>
+      <div class="carousel-controls">
+        <button class="carousel-btn" onclick="prevSlide('c1')">←</button>
+        <span class="carousel-counter" id="c1-counter">1 / 3</span>
+        <button class="carousel-btn" onclick="nextSlide('c1')">→</button>
+      </div>
+    </div>
+    <div style="overflow:hidden">
+      <div class="carousel-track" id="c1-track">
+        <!-- Slide 1 -->
+        <div class="carousel-slide">
+          <span class="slide-label exercice">Exercice 1</span>
+          <div class="slide-title">Carte de visite</div>
+          <div class="slide-desc">Demandez à l'utilisateur son nom, son métier et son âge. Affichez une carte de visite formatée avec toutes ces informations et une phrase du type "Il/Elle a X ans d'expérience si X > 5 sinon 'débutant(e)'".</div>
+          <button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+          <div class="correction-content">
+            <span class="slide-label correction">Correction</span>
+            <div class="code-block">
+              <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+              <div class="code-body"><span class="var">nom</span> = <span class="fn">input</span>(<span class="str">"Votre nom : "</span>)
+<span class="var">metier</span> = <span class="fn">input</span>(<span class="str">"Votre métier : "</span>)
+<span class="var">age</span> = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Votre âge : "</span>))
+<span class="var">experience</span> = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Années d'expérience : "</span>))
+
+<span class="var">niveau</span> = <span class="str">“expérimenté(e)”</span> <span class="kw">if</span> <span class="var">experience</span> > <span class="num">5</span> <span class="kw">else</span> <span class="str">“débutant(e)”</span>
+
+<span class="fn">print</span>(<span class="str">f”””
+╔══════════════════════╗
+{<span class="var">nom</span>.<span class="fn">upper</span>()}
+{<span class="var">metier</span>}
+{<span class="var">age</span>} ans — {<span class="var">niveau</span>}
+╚══════════════════════╝”””</span>)</div>
+</div>
+</div>
+</div>
+<!-- Slide 2 -->
+<div class="carousel-slide">
+<span class="slide-label exercice">Exercice 2</span>
+<div class="slide-title">Calculateur IMC</div>
+<div class="slide-desc">Créez un programme qui demande le poids (kg) et la taille (cm), calcule l’IMC (poids / taille²) et affiche le résultat arrondi à 2 décimales avec la catégorie (Maigreur, Normal, Surpoids, Obésité).</div>
+<button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+<div class="correction-content">
+<span class="slide-label correction">Correction</span>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+<div class="code-body"><span class="var">poids</span> = <span class="fn">float</span>(<span class="fn">input</span>(<span class="str">“Poids en kg : “</span>))
+<span class="var">taille</span> = <span class="fn">float</span>(<span class="fn">input</span>(<span class="str">“Taille en cm : “</span>)) / <span class="num">100</span>
+
+<span class="var">imc</span> = <span class="fn">round</span>(<span class="var">poids</span> / (<span class="var">taille</span> ** <span class="num">2</span>), <span class="num">2</span>)
+
+<span class="kw">if</span> <span class="var">imc</span> < <span class="num">18.5</span>:
+<span class="var">cat</span> = <span class="str">“Maigreur”</span>
+<span class="kw">elif</span> <span class="var">imc</span> < <span class="num">25</span>:
+<span class="var">cat</span> = <span class="str">“Normal ✅”</span>
+<span class="kw">elif</span> <span class="var">imc</span> < <span class="num">30</span>:
+<span class="var">cat</span> = <span class="str">“Surpoids”</span>
+<span class="kw">else</span>:
+<span class="var">cat</span> = <span class="str">“Obésité”</span>
+
+<span class="fn">print</span>(<span class="str">f”IMC : {<span class="var">imc</span>} → {<span class="var">cat</span>}”</span>)</div>
+</div>
+</div>
+</div>
+<!-- Slide 3 -->
+<div class="carousel-slide">
+<span class="slide-label exercice">Exercice 3</span>
+<div class="slide-title">Convertisseur de température</div>
+<div class="slide-desc">Créez un convertisseur qui demande une température en Celsius et affiche l’équivalent en Fahrenheit (F = C × 9/5 + 32) et en Kelvin (K = C + 273.15). Formatez avec 2 décimales.</div>
+<button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+<div class="correction-content">
+<span class="slide-label correction">Correction</span>
+<div class="code-block">
+<div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+<div class="code-body"><span class="var">celsius</span> = <span class="fn">float</span>(<span class="fn">input</span>(<span class="str">“Température en °C : “</span>))
+
+<span class="var">fahrenheit</span> = <span class="var">celsius</span> * <span class="num">9</span>/<span class="num">5</span> + <span class="num">32</span>
+<span class="var">kelvin</span> = <span class="var">celsius</span> + <span class="num">273.15</span>
+
+<span class="fn">print</span>(<span class="str">f”””
+{<span class="var">celsius</span>}°C =
+→ {<span class="var">fahrenheit</span>:.2f}°F
+→ {<span class="var">kelvin</span>:.2f} K”””</span>)</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+  </div>
+
+  <!-- QUIZ MODULE 1 -->
+
+  <div class="quiz-section" id="quiz-0">
+    <div class="quiz-header">
+      <div class="quiz-icon">🎯</div>
+      <div>
+        <h3>Quiz — Module 01</h3>
+        <p>4 questions · Validez votre compréhension des bases</p>
+      </div>
+    </div>
+
+```
+<div class="question-block">
+  <div class="question-text"><span class="q-num">Q1.</span> Quel est le type de <code style="color:var(--accent2);font-family:var(--mono)">x = 3.14</code> en Python ?</div>
+  <div class="options">
+    <button class="option-btn" onclick="selectOption(this,'q0_1','A','B')"><span class="option-letter">A</span>int</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_1','B','B')"><span class="option-letter">B</span>float</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_1','C','B')"><span class="option-letter">C</span>double</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_1','D','B')"><span class="option-letter">D</span>str</button>
+  </div>
+  <div class="feedback" id="fb_q0_1"></div>
+</div>
+
+<div class="question-block">
+  <div class="question-text"><span class="q-num">Q2.</span> Que retourne <code style="color:var(--accent2);font-family:var(--mono)">int("42")</code> ?</div>
+  <div class="options">
+    <button class="option-btn" onclick="selectOption(this,'q0_2','A','A')"><span class="option-letter">A</span>42 (entier)</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_2','B','A')"><span class="option-letter">B</span>"42" (chaîne)</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_2','C','A')"><span class="option-letter">C</span>Une erreur</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_2','D','A')"><span class="option-letter">D</span>42.0 (float)</button>
+  </div>
+  <div class="feedback" id="fb_q0_2"></div>
+</div>
+
+<div class="question-block">
+  <div class="question-text"><span class="q-num">Q3.</span> Quelle syntaxe est une f-string valide ?</div>
+  <div class="options">
+    <button class="option-btn" onclick="selectOption(this,'q0_3','A','C')"><span class="option-letter">A</span>"Bonjour {nom}"</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_3','B','C')"><span class="option-letter">B</span>'Bonjour' + nom</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_3','C','C')"><span class="option-letter">C</span>f"Bonjour {nom}"</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_3','D','C')"><span class="option-letter">D</span>format("Bonjour", nom)</button>
+  </div>
+  <div class="feedback" id="fb_q0_3"></div>
+</div>
+
+<div class="question-block">
+  <div class="question-text"><span class="q-num">Q4.</span> <code style="color:var(--accent2);font-family:var(--mono)">input()</code> retourne toujours quel type ?</div>
+  <div class="options">
+    <button class="option-btn" onclick="selectOption(this,'q0_4','A','B')"><span class="option-letter">A</span>int</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_4','B','B')"><span class="option-letter">B</span>str</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_4','C','B')"><span class="option-letter">C</span>Le type de ce qu'on saisit</button>
+    <button class="option-btn" onclick="selectOption(this,'q0_4','D','B')"><span class="option-letter">D</span>float</button>
+  </div>
+  <div class="feedback" id="fb_q0_4"></div>
+</div>
+
+<button class="quiz-submit" id="submit-0" onclick="submitQuiz(0,4)">Valider le Quiz</button>
+<div class="quiz-result" id="result-0"></div>
+```
+
+  </div>
+
+<button class="next-module-btn" onclick="goToModule(1)">Module suivant — Structures de contrôle <span>→</span></button>
+
+</section>
+
+<!-- ===================== MODULE 2 ===================== -->
+
+<section class="module-section" id="module-1">
+  <div class="module-header">
+    <div class="module-num">02</div>
+    <div>
+      <div class="module-title">Structures de Contrôle</div>
+      <div class="module-subtitle">Conditions et boucles — le moteur de tout programme. Maîtriser if/elif/else et for/while vous donne le contrôle total du flux d'exécution.</div>
+    </div>
+    <div class="pareto-tag">⚡ ESSENTIEL</div>
+  </div>
+
+  <div class="lesson-grid">
+    <div class="lesson-card">
+      <div class="lesson-label">CONCEPT 02.A — Conditions</div>
+      <h3>if / elif / else</h3>
+      <p>Les conditions permettent d'exécuter du code différent selon des situations. L'indentation (4 espaces) est obligatoire en Python.</p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+        <div class="code-body"><span class="var">note</span> = <span class="num">75</span>
+
+<span class="kw">if</span> <span class="var">note</span> >= <span class="num">90</span>:
+<span class="fn">print</span>(<span class="str">“Excellent — A”</span>)
+<span class="kw">elif</span> <span class="var">note</span> >= <span class="num">75</span>:
+<span class="fn">print</span>(<span class="str">“Bien — B”</span>)
+<span class="kw">elif</span> <span class="var">note</span> >= <span class="num">60</span>:
+<span class="fn">print</span>(<span class="str">“Passable — C”</span>)
+<span class="kw">else</span>:
+<span class="fn">print</span>(<span class="str">“Insuffisant — F”</span>)
+
+<span class="cm"># Opérateurs : and, or, not</span>
+<span class="kw">if</span> <span class="var">note</span> >= <span class="num">60</span> <span class="kw">and</span> <span class="var">note</span> < <span class="num">100</span>:
+<span class="fn">print</span>(<span class="str">“Note valide”</span>)
+
+<span class="cm"># Ternaire (1 ligne)</span>
+<span class="var">resultat</span> = <span class="str">“Reçu”</span> <span class="kw">if</span> <span class="var">note</span> >= <span class="num">60</span> <span class="kw">else</span> <span class="str">“Recalé”</span></div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 02.B — Boucle for</div>
+  <h3>La Boucle for</h3>
+  <p>La boucle <code style="color:var(--accent2);font-family:var(--mono)">for</code> itère sur n'importe quelle séquence. <code style="color:var(--accent2);font-family:var(--mono)">range()</code> est votre meilleur ami pour les répétitions.</p>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="cm"># range(stop) | range(start, stop) | range(start, stop, step)</span>
+```
+
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>):
+<span class="fn">print</span>(<span class="var">i</span>)  <span class="cm"># 0, 1, 2, 3, 4</span>
+
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">10</span>, <span class="num">2</span>):
+<span class="fn">print</span>(<span class="var">i</span>)  <span class="cm"># 1, 3, 5, 7, 9</span>
+
+<span class="cm"># Itérer sur une liste</span>
+<span class="var">fruits</span> = [<span class="str">“pomme”</span>, <span class="str">“banane”</span>, <span class="str">“cerise”</span>]
+<span class="kw">for</span> <span class="var">fruit</span> <span class="kw">in</span> <span class="var">fruits</span>:
+<span class="fn">print</span>(<span class="str">f”J’aime les {<span class="var">fruit</span>}s”</span>)
+
+<span class="cm"># enumerate() — index + valeur</span>
+<span class="kw">for</span> <span class="var">i</span>, <span class="var">fruit</span> <span class="kw">in</span> <span class="fn">enumerate</span>(<span class="var">fruits</span>):
+<span class="fn">print</span>(<span class="str">f”{<span class="var">i</span>}: {<span class="var">fruit</span>}”</span>)</div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 02.C — Boucle while</div>
+  <h3>La Boucle while</h3>
+  <p>Utilisez <code style="color:var(--accent2);font-family:var(--mono)">while</code> quand vous ne connaissez pas le nombre d'itérations à l'avance. Toujours prévoir une condition de sortie !</p>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="cm"># Compte à rebours</span>
+```
+
+<span class="var">compte</span> = <span class="num">5</span>
+<span class="kw">while</span> <span class="var">compte</span> > <span class="num">0</span>:
+<span class="fn">print</span>(<span class="str">f”Décompte : {<span class="var">compte</span>}”</span>)
+<span class="var">compte</span> -= <span class="num">1</span>  <span class="cm"># -= : raccourci pour compte = compte - 1</span>
+<span class="fn">print</span>(<span class="str">“🚀 Décollage !”</span>)
+
+<span class="cm"># Boucle de validation</span>
+<span class="kw">while</span> <span class="kw">True</span>:
+<span class="var">reponse</span> = <span class="fn">input</span>(<span class="str">“Tapez ‘oui’ pour continuer : “</span>)
+<span class="kw">if</span> <span class="var">reponse</span> == <span class="str">“oui”</span>:
+<span class="kw">break</span>  <span class="cm"># Sortie de boucle</span>
+<span class="fn">print</span>(<span class="str">“Réessayez…”</span>)</div>
+</div>
+</div>
+
+  </div>
+
+  <!-- CAROUSEL MODULE 2 -->
+
+  <div class="carousel-wrap">
+    <div class="carousel-header">
+      <span class="carousel-title">⚡ EXERCICES & CORRECTIONS</span>
+      <div class="carousel-controls">
+        <button class="carousel-btn" onclick="prevSlide('c2')">←</button>
+        <span class="carousel-counter" id="c2-counter">1 / 3</span>
+        <button class="carousel-btn" onclick="nextSlide('c2')">→</button>
+      </div>
+    </div>
+    <div style="overflow:hidden">
+      <div class="carousel-track" id="c2-track">
+        <div class="carousel-slide">
+          <span class="slide-label exercice">Exercice 1</span>
+          <div class="slide-title">FizzBuzz</div>
+          <div class="slide-desc">Affichez les nombres de 1 à 50. Pour les multiples de 3 affichez "Fizz", pour les multiples de 5 "Buzz", et pour les multiples des deux "FizzBuzz".</div>
+          <button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+          <div class="correction-content">
+            <span class="slide-label correction">Correction</span>
+            <div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+            <div class="code-body"><span class="kw">for</span> <span class="var">n</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">51</span>):
+    <span class="kw">if</span> <span class="var">n</span> % <span class="num">15</span> == <span class="num">0</span>:   <span class="cm"># Multiple de 3 ET 5</span>
+        <span class="fn">print</span>(<span class="str">"FizzBuzz"</span>)
+    <span class="kw">elif</span> <span class="var">n</span> % <span class="num">3</span> == <span class="num">0</span>:
+        <span class="fn">print</span>(<span class="str">"Fizz"</span>)
+    <span class="kw">elif</span> <span class="var">n</span> % <span class="num">5</span> == <span class="num">0</span>:
+        <span class="fn">print</span>(<span class="str">"Buzz"</span>)
+    <span class="kw">else</span>:
+        <span class="fn">print</span>(<span class="var">n</span>)</div></div>
+          </div>
+        </div>
+        <div class="carousel-slide">
+          <span class="slide-label exercice">Exercice 2</span>
+          <div class="slide-title">Devine le nombre</div>
+          <div class="slide-desc">Créez un jeu où l'ordinateur choisit un nombre entre 1 et 100 (utilisez random.randint) et l'utilisateur doit le deviner. Donnez des indices "Plus grand" / "Plus petit" jusqu'à la bonne réponse. Comptez les tentatives.</div>
+          <button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+          <div class="correction-content">
+            <span class="slide-label correction">Correction</span>
+            <div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+            <div class="code-body"><span class="kw">import</span> random
+
+<span class="var">secret</span> = <span class="var">random</span>.<span class="fn">randint</span>(<span class="num">1</span>, <span class="num">100</span>)
+<span class="var">tentatives</span> = <span class="num">0</span>
+
+<span class="fn">print</span>(<span class="str">“🎲 Devine le nombre (1-100) !”</span>)
+
+<span class="kw">while</span> <span class="kw">True</span>:
+<span class="var">guess</span> = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">“Ton choix : “</span>))
+<span class="var">tentatives</span> += <span class="num">1</span>
+
+```
+<span class="kw">if</span> <span class="var">guess</span> < <span class="var">secret</span>:
+    <span class="fn">print</span>(<span class="str">"📈 Plus grand !"</span>)
+<span class="kw">elif</span> <span class="var">guess</span> > <span class="var">secret</span>:
+    <span class="fn">print</span>(<span class="str">"📉 Plus petit !"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">f"🏆 Bravo ! Trouvé en {<span class="var">tentatives</span>} coups !"</span>)
+    <span class="kw">break</span></div></div>
+      </div>
+    </div>
+    <div class="carousel-slide">
+      <span class="slide-label exercice">Exercice 3</span>
+      <div class="slide-title">Table de multiplication</div>
+      <div class="slide-desc">Utilisez une double boucle for pour afficher les tables de multiplication de 1 à 10 dans un format tableau aligné et lisible.</div>
+      <button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+      <div class="correction-content">
+        <span class="slide-label correction">Correction</span>
+        <div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+        <div class="code-body"><span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">11</span>):
+<span class="fn">print</span>(<span class="str">f"\n── Table de {<span class="var">i</span>} ──"</span>)
+<span class="kw">for</span> <span class="var">j</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">11</span>):
+    <span class="fn">print</span>(<span class="str">f"  {<span class="var">i</span>} × {<span class="var">j</span>:2d} = {<span class="var">i</span>*<span class="var">j</span>:3d}"</span>)</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- QUIZ MODULE 2 -->
+
+  <div class="quiz-section" id="quiz-1">
+    <div class="quiz-header">
+      <div class="quiz-icon">🎯</div>
+      <div><h3>Quiz — Module 02</h3><p>4 questions · Structures de contrôle</p></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q1.</span> Que produit <code style="color:var(--accent2);font-family:var(--mono)">range(2, 10, 3)</code> ?</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q1_1','A','B')"><span class="option-letter">A</span>2, 4, 6, 8, 10</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_1','B','B')"><span class="option-letter">B</span>2, 5, 8</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_1','C','B')"><span class="option-letter">C</span>2, 3, 10</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_1','D','B')"><span class="option-letter">D</span>2, 5, 8, 11</button>
+      </div>
+      <div class="feedback" id="fb_q1_1"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q2.</span> Le mot-clé pour sortir d'une boucle immédiatement est :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q1_2','A','C')"><span class="option-letter">A</span>exit</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_2','B','C')"><span class="option-letter">B</span>stop</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_2','C','C')"><span class="option-letter">C</span>break</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_2','D','C')"><span class="option-letter">D</span>return</button>
+      </div>
+      <div class="feedback" id="fb_q1_2"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q3.</span> Quelle est l'expression ternaire Python correcte ?</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q1_3','A','D')"><span class="option-letter">A</span>x = (a > b) ? a : b</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_3','B','D')"><span class="option-letter">B</span>x = if a > b then a else b</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_3','C','D')"><span class="option-letter">C</span>x = a if else b > a</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_3','D','D')"><span class="option-letter">D</span>x = a if a > b else b</button>
+      </div>
+      <div class="feedback" id="fb_q1_3"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q4.</span> <code style="color:var(--accent2);font-family:var(--mono)">enumerate(["a","b","c"])</code> produit :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q1_4','A','C')"><span class="option-letter">A</span>["a","b","c"] avec indices</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_4','B','C')"><span class="option-letter">B</span>(0,"a") seulement</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_4','C','C')"><span class="option-letter">C</span>Paires (0,"a"),(1,"b"),(2,"c")</button>
+        <button class="option-btn" onclick="selectOption(this,'q1_4','D','C')"><span class="option-letter">D</span>Une erreur</button>
+      </div>
+      <div class="feedback" id="fb_q1_4"></div>
+    </div>
+    <button class="quiz-submit" id="submit-1" onclick="submitQuiz(1,4)">Valider le Quiz</button>
+    <div class="quiz-result" id="result-1"></div>
+  </div>
+  <button class="next-module-btn" onclick="goToModule(2)">Module suivant — Fonctions <span>→</span></button>
+</section>
+
+<!-- ===================== MODULE 3 ===================== -->
+
+<section class="module-section" id="module-2">
+  <div class="module-header">
+    <div class="module-num">03</div>
+    <div>
+      <div class="module-title">Fonctions</div>
+      <div class="module-subtitle">Le principe DRY : Don't Repeat Yourself. Les fonctions sont le cœur de la programmation modulaire et réutilisable.</div>
+    </div>
+    <div class="pareto-tag">⚡ CRITIQUE</div>
+  </div>
+
+  <div class="lesson-grid">
+    <div class="lesson-card">
+      <div class="lesson-label">CONCEPT 03.A — Définir une fonction</div>
+      <h3>Syntaxe et Paramètres</h3>
+      <p>Une fonction prend des entrées (paramètres), fait un traitement, et retourne un résultat. Les paramètres avec valeur par défaut rendent vos fonctions flexibles.</p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+        <div class="code-body"><span class="kw">def</span> <span class="fn">saluer</span>(<span class="var">nom</span>, <span class="var">langue</span>=<span class="str">"fr"</span>):
+    <span class="str">"""Docstring : décrit la fonction."""</span>
+    <span class="kw">if</span> <span class="var">langue</span> == <span class="str">"fr"</span>:
+        <span class="kw">return</span> <span class="str">f"Bonjour {<span class="var">nom</span>} !"</span>
+    <span class="kw">return</span> <span class="str">f"Hello {<span class="var">nom</span>}!"</span>
+
+<span class="fn">print</span>(<span class="fn">saluer</span>(<span class="str">“Alice”</span>))         <span class="cm"># “Bonjour Alice !”</span>
+<span class="fn">print</span>(<span class="fn">saluer</span>(<span class="str">“Bob”</span>, <span class="str">“en”</span>))    <span class="cm"># “Hello Bob!”</span>
+
+<span class="cm"># Retourner plusieurs valeurs</span>
+<span class="kw">def</span> <span class="fn">min_max</span>(<span class="var">nombres</span>):
+<span class="kw">return</span> <span class="fn">min</span>(<span class="var">nombres</span>), <span class="fn">max</span>(<span class="var">nombres</span>)
+
+<span class="var">mini</span>, <span class="var">maxi</span> = <span class="fn">min_max</span>([<span class="num">3</span>, <span class="num">1</span>, <span class="num">7</span>, <span class="num">2</span>])
+<span class="fn">print</span>(<span class="str">f”Min={<span class="var">mini</span>}, Max={<span class="var">maxi</span>}”</span>)  <span class="cm"># Min=1, Max=7</span></div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 03.B — *args & **kwargs</div>
+  <h3>Arguments Variables</h3>
+  <p><code style="color:var(--accent2);font-family:var(--mono)">*args</code> accepte un nombre variable d'arguments positionnels. <code style="color:var(--accent2);font-family:var(--mono)">**kwargs</code> accepte des arguments nommés.</p>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="kw">def</span> <span class="fn">somme</span>(*<span class="var">args</span>):
+<span class="kw">return</span> <span class="fn">sum</span>(<span class="var">args</span>)
+```
+
+<span class="fn">print</span>(<span class="fn">somme</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>))        <span class="cm"># 6</span>
+<span class="fn">print</span>(<span class="fn">somme</span>(<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>)) <span class="cm"># 100</span>
+
+<span class="kw">def</span> <span class="fn">profil</span>(**<span class="var">kwargs</span>):
+<span class="kw">for</span> <span class="var">cle</span>, <span class="var">val</span> <span class="kw">in</span> <span class="var">kwargs</span>.<span class="fn">items</span>():
+<span class="fn">print</span>(<span class="str">f”  {<span class="var">cle</span>}: {<span class="var">val</span>}”</span>)
+
+<span class="fn">profil</span>(<span class="var">nom</span>=<span class="str">“Alice”</span>, <span class="var">age</span>=<span class="num">25</span>, <span class="var">ville</span>=<span class="str">“Paris”</span>)</div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 03.C — Lambda & Fonctions d'ordre supérieur</div>
+  <h3>Lambda, map, filter</h3>
+  <p>Les lambdas sont des micro-fonctions anonymes. <code style="color:var(--accent2);font-family:var(--mono)">map()</code> et <code style="color:var(--accent2);font-family:var(--mono)">filter()</code> les utilisent pour transformer des collections.</p>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="cm"># Lambda = fonction anonyme 1 ligne</span>
+```
+
+<span class="var">carre</span> = <span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span> ** <span class="num">2</span>
+<span class="fn">print</span>(<span class="fn">carre</span>(<span class="num">5</span>))   <span class="cm"># 25</span>
+
+<span class="var">nums</span> = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>]
+
+<span class="cm"># map() : appliquer une fonction à chaque élément</span>
+<span class="var">carres</span> = <span class="fn">list</span>(<span class="fn">map</span>(<span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span>**<span class="num">2</span>, <span class="var">nums</span>))
+<span class="cm"># [1, 4, 9, 16, 25]</span>
+
+<span class="cm"># filter() : garder les éléments qui passent le test</span>
+<span class="var">pairs</span> = <span class="fn">list</span>(<span class="fn">filter</span>(<span class="kw">lambda</span> <span class="var">x</span>: <span class="var">x</span>%<span class="num">2</span>==<span class="num">0</span>, <span class="var">nums</span>))
+<span class="cm"># [2, 4]</span>
+
+<span class="cm"># Tri avec clé personnalisée</span>
+<span class="var">mots</span> = [<span class="str">“banana”</span>, <span class="str">“kiwi”</span>, <span class="str">“ananas”</span>]
+<span class="fn">sorted</span>(<span class="var">mots</span>, <span class="var">key</span>=<span class="kw">lambda</span> <span class="var">x</span>: <span class="fn">len</span>(<span class="var">x</span>))  <span class="cm"># par longueur</span></div>
+</div>
+</div>
+
+  </div>
+
+  <!-- CAROUSEL MODULE 3 -->
+
+  <div class="carousel-wrap">
+    <div class="carousel-header">
+      <span class="carousel-title">⚡ EXERCICES & CORRECTIONS</span>
+      <div class="carousel-controls">
+        <button class="carousel-btn" onclick="prevSlide('c3')">←</button>
+        <span class="carousel-counter" id="c3-counter">1 / 3</span>
+        <button class="carousel-btn" onclick="nextSlide('c3')">→</button>
+      </div>
+    </div>
+    <div style="overflow:hidden">
+      <div class="carousel-track" id="c3-track">
+        <div class="carousel-slide">
+          <span class="slide-label exercice">Exercice 1</span>
+          <div class="slide-title">Factorielle récursive</div>
+          <div class="slide-desc">Écrivez une fonction <code style="color:var(--accent2);font-family:var(--mono)">factorielle(n)</code> récursive qui calcule n! (ex: 5! = 5×4×3×2×1 = 120). Gérez le cas n=0 et n=1.</div>
+          <button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+          <div class="correction-content">
+            <span class="slide-label correction">Correction</span>
+            <div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+            <div class="code-body"><span class="kw">def</span> <span class="fn">factorielle</span>(<span class="var">n</span>):
+    <span class="str">"""Calcule n! de façon récursive."""</span>
+    <span class="kw">if</span> <span class="var">n</span> <= <span class="num">1</span>:      <span class="cm"># Cas de base</span>
+        <span class="kw">return</span> <span class="num">1</span>
+    <span class="kw">return</span> <span class="var">n</span> * <span class="fn">factorielle</span>(<span class="var">n</span> - <span class="num">1</span>)  <span class="cm"># Appel récursif</span>
+
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, <span class="num">8</span>):
+<span class="fn">print</span>(<span class="str">f”{<span class="var">i</span>}! = {<span class="fn">factorielle</span>(<span class="var">i</span>)}”</span>)</div></div>
+</div>
+</div>
+<div class="carousel-slide">
+<span class="slide-label exercice">Exercice 2</span>
+<div class="slide-title">Validateur de mot de passe</div>
+<div class="slide-desc">Créez une fonction <code style="color:var(--accent2);font-family:var(--mono)">valider_mdp(mdp)</code> qui retourne True si le mot de passe fait plus de 8 caractères, contient une majuscule, un chiffre et un caractère spécial.</div>
+<button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+<div class="correction-content">
+<span class="slide-label correction">Correction</span>
+<div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+<div class="code-body"><span class="kw">def</span> <span class="fn">valider_mdp</span>(<span class="var">mdp</span>):
+<span class="var">specials</span> = <span class="str">”!@#$%^&*”</span>
+<span class="var">checks</span> = {
+<span class="str">“longueur”</span>: <span class="fn">len</span>(<span class="var">mdp</span>) >= <span class="num">8</span>,
+<span class="str">“majuscule”</span>: <span class="fn">any</span>(<span class="var">c</span>.<span class="fn">isupper</span>() <span class="kw">for</span> <span class="var">c</span> <span class="kw">in</span> <span class="var">mdp</span>),
+<span class="str">“chiffre”</span>: <span class="fn">any</span>(<span class="var">c</span>.<span class="fn">isdigit</span>() <span class="kw">for</span> <span class="var">c</span> <span class="kw">in</span> <span class="var">mdp</span>),
+<span class="str">“spécial”</span>: <span class="fn">any</span>(<span class="var">c</span> <span class="kw">in</span> <span class="var">specials</span> <span class="kw">for</span> <span class="var">c</span> <span class="kw">in</span> <span class="var">mdp</span>)
+}
+<span class="kw">for</span> <span class="var">nom</span>, <span class="var">ok</span> <span class="kw">in</span> <span class="var">checks</span>.<span class="fn">items</span>():
+<span class="var">icone</span> = <span class="str">“✅”</span> <span class="kw">if</span> <span class="var">ok</span> <span class="kw">else</span> <span class="str">“❌”</span>
+<span class="fn">print</span>(<span class="str">f”  {<span class="var">icone</span>} {<span class="var">nom</span>}”</span>)
+<span class="kw">return</span> <span class="fn">all</span>(<span class="var">checks</span>.<span class="fn">values</span>())
+
+<span class="fn">print</span>(<span class="fn">valider_mdp</span>(<span class="str">“MonMdp@1”</span>))</div></div>
+</div>
+</div>
+<div class="carousel-slide">
+<span class="slide-label exercice">Exercice 3</span>
+<div class="slide-title">Pipeline de traitement</div>
+<div class="slide-desc">Utilisez map et filter pour traiter une liste de prix : filtrez les prix > 10€, appliquez une réduction de 20%, et affichez les résultats arrondis à 2 décimales.</div>
+<button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+<div class="correction-content">
+<span class="slide-label correction">Correction</span>
+<div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+<div class="code-body"><span class="var">prix</span> = [<span class="num">5.99</span>, <span class="num">12.50</span>, <span class="num">8.00</span>, <span class="num">25.00</span>, <span class="num">3.49</span>, <span class="num">15.99</span>]
+
+<span class="cm"># Étape 1 : Filtrer > 10€</span>
+<span class="var">eligibles</span> = <span class="fn">filter</span>(<span class="kw">lambda</span> <span class="var">p</span>: <span class="var">p</span> > <span class="num">10</span>, <span class="var">prix</span>)
+
+<span class="cm"># Étape 2 : Appliquer -20%</span>
+<span class="var">reduits</span> = <span class="fn">map</span>(<span class="kw">lambda</span> <span class="var">p</span>: <span class="fn">round</span>(<span class="var">p</span> * <span class="num">0.8</span>, <span class="num">2</span>), <span class="var">eligibles</span>)
+
+<span class="cm"># Étape 3 : Afficher</span>
+<span class="fn">print</span>(<span class="str">“Prix après réduction :”</span>)
+<span class="kw">for</span> <span class="var">p</span> <span class="kw">in</span> <span class="var">reduits</span>:
+<span class="fn">print</span>(<span class="str">f”  {<span class="var">p</span>}€”</span>)</div></div>
+</div>
+</div>
+</div>
+</div>
+
+  </div>
+
+  <div class="quiz-section" id="quiz-2">
+    <div class="quiz-header">
+      <div class="quiz-icon">🎯</div>
+      <div><h3>Quiz — Module 03</h3><p>4 questions · Fonctions</p></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q1.</span> Que fait <code style="color:var(--accent2);font-family:var(--mono)">def f(x=5)</code> ?</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q2_1','A','B')"><span class="option-letter">A</span>x vaut toujours 5</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_1','B','B')"><span class="option-letter">B</span>x vaut 5 si non fourni</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_1','C','B')"><span class="option-letter">C</span>Erreur de syntaxe</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_1','D','B')"><span class="option-letter">D</span>x est une constante</button>
+      </div>
+      <div class="feedback" id="fb_q2_1"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q2.</span> <code style="color:var(--accent2);font-family:var(--mono)">lambda x, y: x + y</code> est équivalent à :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q2_2','A','C')"><span class="option-letter">A</span>def f(x, y) return x + y</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_2','B','C')"><span class="option-letter">B</span>function(x, y) { x + y }</span></button>
+        <button class="option-btn" onclick="selectOption(this,'q2_2','C','C')"><span class="option-letter">C</span>def f(x, y): return x + y</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_2','D','C')"><span class="option-letter">D</span>def f(x, y): x + y</button>
+      </div>
+      <div class="feedback" id="fb_q2_2"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q3.</span> <code style="color:var(--accent2);font-family:var(--mono)">*args</code> permet de :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q2_3','A','A')"><span class="option-letter">A</span>Accepter un nombre variable d'arguments positionnels</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_3','B','A')"><span class="option-letter">B</span>Multiplier des arguments</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_3','C','A')"><span class="option-letter">C</span>Accepter des arguments nommés</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_3','D','A')"><span class="option-letter">D</span>Pointer vers un argument</button>
+      </div>
+      <div class="feedback" id="fb_q2_3"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q4.</span> <code style="color:var(--accent2);font-family:var(--mono)">filter(lambda x: x>0, [-1,2,-3,4])</code> retourne :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q2_4','A','D')"><span class="option-letter">A</span>[-1, -3]</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_4','B','D')"><span class="option-letter">B</span>[1, 3]</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_4','C','D')"><span class="option-letter">C</span>[False, True, False, True]</button>
+        <button class="option-btn" onclick="selectOption(this,'q2_4','D','D')"><span class="option-letter">D</span>[2, 4]</button>
+      </div>
+      <div class="feedback" id="fb_q2_4"></div>
+    </div>
+    <button class="quiz-submit" id="submit-2" onclick="submitQuiz(2,4)">Valider le Quiz</button>
+    <div class="quiz-result" id="result-2"></div>
+  </div>
+  <button class="next-module-btn" onclick="goToModule(3)">Module suivant — Collections <span>→</span></button>
+</section>
+
+<!-- ===================== MODULE 4 ===================== -->
+
+<section class="module-section" id="module-3">
+  <div class="module-header">
+    <div class="module-num">04</div>
+    <div>
+      <div class="module-title">Collections Python</div>
+      <div class="module-subtitle">Listes, dictionnaires et sets — les structures de données qui gèrent 90% des problèmes du quotidien du développeur Python.</div>
+    </div>
+    <div class="pareto-tag">⚡ CRITIQUE</div>
+  </div>
+
+  <div class="lesson-grid">
+    <div class="lesson-card">
+      <div class="lesson-label">CONCEPT 04.A — Listes</div>
+      <h3>Listes & List Comprehensions</h3>
+      <p>Les list comprehensions sont la façon "pythonique" de créer des listes. Plus lisibles et plus rapides que les boucles.</p>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+        <div class="code-body"><span class="var">nums</span> = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>]
+
+<span class="cm"># Slicing [début:fin:pas]</span>
+<span class="fn">print</span>(<span class="var">nums</span>[<span class="num">1</span>:<span class="num">4</span>])    <span class="cm"># [2, 3, 4]</span>
+<span class="fn">print</span>(<span class="var">nums</span>[::-<span class="num">1</span>])   <span class="cm"># [5, 4, 3, 2, 1] inversé</span>
+<span class="fn">print</span>(<span class="var">nums</span>[-<span class="num">2</span>:])    <span class="cm"># [4, 5] 2 derniers</span>
+
+<span class="cm"># List comprehension [expr for item in list if condition]</span>
+<span class="var">carres_pairs</span> = [<span class="var">x</span>**<span class="num">2</span> <span class="kw">for</span> <span class="var">x</span> <span class="kw">in</span> <span class="var">nums</span> <span class="kw">if</span> <span class="var">x</span> % <span class="num">2</span> == <span class="num">0</span>]
+<span class="cm"># [4, 16]</span>
+
+<span class="cm"># Méthodes essentielles</span>
+<span class="var">nums</span>.<span class="fn">append</span>(<span class="num">6</span>)        <span class="cm"># ajouter en fin</span>
+<span class="var">nums</span>.<span class="fn">insert</span>(<span class="num">0</span>, <span class="num">0</span>)     <span class="cm"># insérer à position</span>
+<span class="var">nums</span>.<span class="fn">remove</span>(<span class="num">3</span>)       <span class="cm"># supprimer valeur</span>
+<span class="var">nums</span>.<span class="fn">sort</span>(<span class="var">reverse</span>=<span class="kw">True</span>)  <span class="cm"># trier décroissant</span></div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 04.B — Dictionnaires</div>
+  <h3>Dictionnaires — Structure Clé/Valeur</h3>
+  <p>Le dictionnaire est la structure la plus puissante de Python. Accès en O(1), parfait pour structurer des données.</p>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="var">user</span> = {
+<span class="str">"nom"</span>: <span class="str">"Alice"</span>,
+<span class="str">"age"</span>: <span class="num">25</span>,
+<span class="str">"skills"</span>: [<span class="str">"Python"</span>, <span class="str">"SQL"</span>]
+```
+
+}
+
+<span class="cm"># Accès sécurisé</span>
+<span class="fn">print</span>(<span class="var">user</span>.<span class="fn">get</span>(<span class="str">“email”</span>, <span class="str">“Non renseigné”</span>))
+
+<span class="cm"># Itération</span>
+<span class="kw">for</span> <span class="var">cle</span>, <span class="var">val</span> <span class="kw">in</span> <span class="var">user</span>.<span class="fn">items</span>():
+<span class="fn">print</span>(<span class="str">f”{<span class="var">cle</span>}: {<span class="var">val</span>}”</span>)
+
+<span class="cm"># Dict comprehension</span>
+<span class="var">carres</span> = {<span class="var">x</span>: <span class="var">x</span>**<span class="num">2</span> <span class="kw">for</span> <span class="var">x</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="num">5</span>)}
+<span class="cm"># {0:0, 1:1, 2:4, 3:9, 4:16}</span>
+
+<span class="cm"># Fusion (Python 3.9+)</span>
+<span class="var">infos</span> = <span class="var">user</span> | {<span class="str">“ville”</span>: <span class="str">“Paris”</span>}</div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 04.C — Sets & Tuples</div>
+  <h3>Sets et Tuples</h3>
+  <p>Les <strong>sets</strong> garantissent l'unicité et permettent des opérations mathématiques. Les <strong>tuples</strong> sont des listes immuables.</p>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="cm"># SET — éléments uniques, non ordonnés</span>
+```
+
+<span class="var">a</span> = {<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>}
+<span class="var">b</span> = {<span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>}
+
+<span class="fn">print</span>(<span class="var">a</span> & <span class="var">b</span>)   <span class="cm"># Intersection : {3, 4}</span>
+<span class="fn">print</span>(<span class="var">a</span> | <span class="var">b</span>)   <span class="cm"># Union : {1,2,3,4,5,6}</span>
+<span class="fn">print</span>(<span class="var">a</span> - <span class="var">b</span>)   <span class="cm"># Différence : {1, 2}</span>
+
+<span class="cm"># Dédoublonner une liste</span>
+<span class="var">doublons</span> = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">3</span>, <span class="num">4</span>]
+<span class="var">unique</span> = <span class="fn">list</span>(<span class="fn">set</span>(<span class="var">doublons</span>))  <span class="cm"># [1, 2, 3, 4]</span>
+
+<span class="cm"># TUPLE — immuable, plus rapide</span>
+<span class="var">point</span> = (<span class="num">10</span>, <span class="num">20</span>)
+<span class="var">x</span>, <span class="var">y</span> = <span class="var">point</span>  <span class="cm"># déstructuration</span></div>
+</div>
+</div>
+
+  </div>
+
+  <div class="carousel-wrap">
+    <div class="carousel-header">
+      <span class="carousel-title">⚡ EXERCICES & CORRECTIONS</span>
+      <div class="carousel-controls">
+        <button class="carousel-btn" onclick="prevSlide('c4')">←</button>
+        <span class="carousel-counter" id="c4-counter">1 / 3</span>
+        <button class="carousel-btn" onclick="nextSlide('c4')">→</button>
+      </div>
+    </div>
+    <div style="overflow:hidden">
+      <div class="carousel-track" id="c4-track">
+        <div class="carousel-slide">
+          <span class="slide-label exercice">Exercice 1</span>
+          <div class="slide-title">Analyse de texte</div>
+          <div class="slide-desc">Écrivez une fonction qui prend un texte et retourne un dictionnaire avec le nombre d'occurrences de chaque mot (ignorez la casse). Affichez les 3 mots les plus fréquents.</div>
+          <button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+          <div class="correction-content">
+            <span class="slide-label correction">Correction</span>
+            <div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+            <div class="code-body"><span class="kw">def</span> <span class="fn">analyser_texte</span>(<span class="var">texte</span>):
+    <span class="var">mots</span> = <span class="var">texte</span>.<span class="fn">lower</span>().<span class="fn">split</span>()
+    <span class="var">compteur</span> = {}
+    <span class="kw">for</span> <span class="var">mot</span> <span class="kw">in</span> <span class="var">mots</span>:
+        <span class="var">compteur</span>[<span class="var">mot</span>] = <span class="var">compteur</span>.<span class="fn">get</span>(<span class="var">mot</span>, <span class="num">0</span>) + <span class="num">1</span>
+    <span class="kw">return</span> <span class="var">compteur</span>
+
+<span class="var">texte</span> = <span class="str">“le python est super le python est génial”</span>
+<span class="var">freq</span> = <span class="fn">analyser_texte</span>(<span class="var">texte</span>)
+
+<span class="cm"># Top 3 mots</span>
+<span class="var">top3</span> = <span class="fn">sorted</span>(<span class="var">freq</span>, <span class="var">key</span>=<span class="var">freq</span>.<span class="fn">get</span>, <span class="var">reverse</span>=<span class="kw">True</span>)[:<span class="num">3</span>]
+<span class="kw">for</span> <span class="var">m</span> <span class="kw">in</span> <span class="var">top3</span>:
+<span class="fn">print</span>(<span class="str">f”’{<span class="var">m</span>}’: {<span class="var">freq</span>[<span class="var">m</span>]} fois”</span>)</div></div>
+</div>
+</div>
+<div class="carousel-slide">
+<span class="slide-label exercice">Exercice 2</span>
+<div class="slide-title">Gestion d’inventaire</div>
+<div class="slide-desc">Créez un système d’inventaire de magasin avec un dictionnaire. Ajoutez des articles, mettez à jour les stocks, supprimez des articles épuisés, et affichez un rapport formaté.</div>
+<button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+<div class="correction-content">
+<span class="slide-label correction">Correction</span>
+<div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+<div class="code-body"><span class="var">inventaire</span> = {
+<span class="str">“pommes”</span>: {<span class="str">“stock”</span>: <span class="num">50</span>, <span class="str">“prix”</span>: <span class="num">0.5</span>},
+<span class="str">“bananes”</span>: {<span class="str">“stock”</span>: <span class="num">30</span>, <span class="str">“prix”</span>: <span class="num">0.3</span>},
+<span class="str">“cerises”</span>: {<span class="str">“stock”</span>: <span class="num">0</span>, <span class="str">“prix”</span>: <span class="num">2.0</span>}
+}
+
+<span class="cm"># Supprimer les épuisés</span>
+<span class="var">inventaire</span> = {
+<span class="var">k</span>: <span class="var">v</span> <span class="kw">for</span> <span class="var">k</span>, <span class="var">v</span> <span class="kw">in</span> <span class="var">inventaire</span>.<span class="fn">items</span>()
+<span class="kw">if</span> <span class="var">v</span>[<span class="str">“stock”</span>] > <span class="num">0</span>
+}
+
+<span class="fn">print</span>(<span class="str">”=== INVENTAIRE ===”</span>)
+<span class="kw">for</span> <span class="var">art</span>, <span class="var">info</span> <span class="kw">in</span> <span class="var">inventaire</span>.<span class="fn">items</span>():
+<span class="var">val</span> = <span class="var">info</span>[<span class="str">“stock”</span>] * <span class="var">info</span>[<span class="str">“prix”</span>]
+<span class="fn">print</span>(<span class="str">f”  {<span class="var">art</span>:10} | stock={<span class="var">info</span>[<span class="str">‘stock’</span>]:3d} | {<span class="var">val</span>:.2f}€”</span>)</div></div>
+</div>
+</div>
+<div class="carousel-slide">
+<span class="slide-label exercice">Exercice 3</span>
+<div class="slide-title">Matrice avec list comprehension</div>
+<div class="slide-desc">Créez une matrice identité 5×5 (1 sur la diagonale, 0 ailleurs) en utilisant une seule list comprehension imbriquée. Affichez-la joliment.</div>
+<button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+<div class="correction-content">
+<span class="slide-label correction">Correction</span>
+<div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+<div class="code-body"><span class="var">n</span> = <span class="num">5</span>
+<span class="var">matrice</span> = [[<span class="num">1</span> <span class="kw">if</span> <span class="var">i</span>==<span class="var">j</span> <span class="kw">else</span> <span class="num">0</span>
+<span class="kw">for</span> <span class="var">j</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="var">n</span>)]
+<span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="var">n</span>)]
+
+<span class="kw">for</span> <span class="var">ligne</span> <span class="kw">in</span> <span class="var">matrice</span>:
+<span class="fn">print</span>(<span class="str">” “</span>.<span class="fn">join</span>(<span class="fn">str</span>(<span class="var">x</span>) <span class="kw">for</span> <span class="var">x</span> <span class="kw">in</span> <span class="var">ligne</span>))</div></div>
+</div>
+</div>
+</div>
+</div>
+
+  </div>
+
+  <div class="quiz-section" id="quiz-3">
+    <div class="quiz-header">
+      <div class="quiz-icon">🎯</div>
+      <div><h3>Quiz — Module 04</h3><p>4 questions · Collections</p></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q1.</span> <code style="color:var(--accent2);font-family:var(--mono)">[x*2 for x in range(4)]</code> produit :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q3_1','A','C')"><span class="option-letter">A</span>[1, 2, 3, 4]</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_1','B','C')"><span class="option-letter">B</span>[2, 4, 6, 8]</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_1','C','C')"><span class="option-letter">C</span>[0, 2, 4, 6]</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_1','D','C')"><span class="option-letter">D</span>[0, 1, 2, 3, 4]</button>
+      </div>
+      <div class="feedback" id="fb_q3_1"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q2.</span> Pour accéder à "Non trouvé" si une clé dict n'existe pas :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q3_2','A','B')"><span class="option-letter">A</span>d["clé"]</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_2','B','B')"><span class="option-letter">B</span>d.get("clé", "Non trouvé")</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_2','C','B')"><span class="option-letter">C</span>d.find("clé")</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_2','D','B')"><span class="option-letter">D</span>d.search("clé")</button>
+      </div>
+      <div class="feedback" id="fb_q3_2"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q3.</span> <code style="color:var(--accent2);font-family:var(--mono)">{1,2,3} & {2,3,4}</code> vaut :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q3_3','A','C')"><span class="option-letter">A</span>{1, 2, 3, 4}</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_3','B','C')"><span class="option-letter">B</span>{1, 4}</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_3','C','C')"><span class="option-letter">C</span>{2, 3}</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_3','D','C')"><span class="option-letter">D</span>True</button>
+      </div>
+      <div class="feedback" id="fb_q3_3"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q4.</span> <code style="color:var(--accent2);font-family:var(--mono)">[1,2,3,4,5][-2:]</code> retourne :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q3_4','A','C')"><span class="option-letter">A</span>[1, 2]</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_4','B','C')"><span class="option-letter">B</span>[3]</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_4','C','C')"><span class="option-letter">C</span>[4, 5]</button>
+        <button class="option-btn" onclick="selectOption(this,'q3_4','D','C')"><span class="option-letter">D</span>[5]</button>
+      </div>
+      <div class="feedback" id="fb_q3_4"></div>
+    </div>
+    <button class="quiz-submit" id="submit-3" onclick="submitQuiz(3,4)">Valider le Quiz</button>
+    <div class="quiz-result" id="result-3"></div>
+  </div>
+  <button class="next-module-btn" onclick="goToModule(4)">Module suivant — POO <span>→</span></button>
+</section>
+
+<!-- ===================== MODULE 5 ===================== -->
+
+<section class="module-section" id="module-4">
+  <div class="module-header">
+    <div class="module-num">05</div>
+    <div>
+      <div class="module-title">Programmation Orientée Objet</div>
+      <div class="module-subtitle">Classes, héritage et encapsulation. La POO permet de modéliser le monde réel et de structurer des projets complexes.</div>
+    </div>
+    <div class="pareto-tag">🚀 AVANCÉ</div>
+  </div>
+
+  <div class="lesson-grid">
+    <div class="lesson-card">
+      <div class="lesson-label">CONCEPT 05.A — Classes & Instances</div>
+      <h3>Créer ses propres types</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+        <div class="code-body"><span class="kw">class</span> <span class="fn">Compte</span>:
+    <span class="cm">"""Modèle de compte bancaire."""</span>
+    <span class="var">banque</span> = <span class="str">"PyBank"</span>  <span class="cm"># Attribut de classe</span>
+
+```
+<span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, <span class="var">titulaire</span>, <span class="var">solde</span>=<span class="num">0</span>):
+    <span class="kw">self</span>.<span class="var">titulaire</span> = <span class="var">titulaire</span>  <span class="cm"># attribut d'instance</span>
+    <span class="kw">self</span>.<span class="var">solde</span> = <span class="var">solde</span>
+    <span class="kw">self</span>.<span class="var">_historique</span> = []       <span class="cm"># _ = privé par convention</span>
+
+<span class="kw">def</span> <span class="fn">deposer</span>(<span class="kw">self</span>, <span class="var">montant</span>):
+    <span class="kw">if</span> <span class="var">montant</span> > <span class="num">0</span>:
+        <span class="kw">self</span>.<span class="var">solde</span> += <span class="var">montant</span>
+        <span class="kw">self</span>.<span class="var">_historique</span>.<span class="fn">append</span>(<span class="str">f"+{<span class="var">montant</span>}€"</span>)
+
+<span class="kw">def</span> <span class="fn">__repr__</span>(<span class="kw">self</span>):
+    <span class="kw">return</span> <span class="str">f"Compte({<span class="kw">self</span>.<span class="var">titulaire</span>}, {<span class="kw">self</span>.<span class="var">solde</span>}€)"</span>
+```
+
+<span class="var">c</span> = <span class="fn">Compte</span>(<span class="str">“Alice”</span>, <span class="num">1000</span>)
+<span class="var">c</span>.<span class="fn">deposer</span>(<span class="num">500</span>)
+<span class="fn">print</span>(<span class="var">c</span>)  <span class="cm"># Compte(Alice, 1500€)</span></div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 05.B — Héritage</div>
+  <h3>Héritage et Polymorphisme</h3>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="kw">class</span> <span class="fn">Animal</span>:
+<span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, <span class="var">nom</span>):
+    <span class="kw">self</span>.<span class="var">nom</span> = <span class="var">nom</span>
+
+<span class="kw">def</span> <span class="fn">parler</span>(<span class="kw">self</span>):
+    <span class="kw">return</span> <span class="str">"..."</span>
+```
+
+<span class="kw">class</span> <span class="fn">Chien</span>(<span class="fn">Animal</span>):       <span class="cm"># Hérite de Animal</span>
+<span class="kw">def</span> <span class="fn">parler</span>(<span class="kw">self</span>):        <span class="cm"># Surcharge (override)</span>
+<span class="kw">return</span> <span class="str">“Woof !”</span>
+
+```
+<span class="kw">def</span> <span class="fn">chercher</span>(<span class="kw">self</span>):
+    <span class="kw">return</span> <span class="str">f"{<span class="kw">self</span>.<span class="var">nom</span>} cherche la balle !"</span>
+```
+
+<span class="kw">class</span> <span class="fn">Chat</span>(<span class="fn">Animal</span>):
+<span class="kw">def</span> <span class="fn">parler</span>(<span class="kw">self</span>):
+<span class="kw">return</span> <span class="str">“Miaou !”</span>
+
+<span class="cm"># Polymorphisme</span>
+<span class="var">animaux</span> = [<span class="fn">Chien</span>(<span class="str">“Rex”</span>), <span class="fn">Chat</span>(<span class="str">“Luna”</span>)]
+<span class="kw">for</span> <span class="var">a</span> <span class="kw">in</span> <span class="var">animaux</span>:
+<span class="fn">print</span>(<span class="str">f”{<span class="var">a</span>.<span class="var">nom</span>}: {<span class="var">a</span>.<span class="fn">parler</span>()}”</span>)</div>
+</div>
+</div>
+
+  </div>
+
+  <div class="carousel-wrap">
+    <div class="carousel-header">
+      <span class="carousel-title">⚡ EXERCICES & CORRECTIONS</span>
+      <div class="carousel-controls">
+        <button class="carousel-btn" onclick="prevSlide('c5')">←</button>
+        <span class="carousel-counter" id="c5-counter">1 / 2</span>
+        <button class="carousel-btn" onclick="nextSlide('c5')">→</button>
+      </div>
+    </div>
+    <div style="overflow:hidden">
+      <div class="carousel-track" id="c5-track">
+        <div class="carousel-slide">
+          <span class="slide-label exercice">Exercice 1</span>
+          <div class="slide-title">Classe Étudiant</div>
+          <div class="slide-desc">Créez une classe <code style="color:var(--accent2);font-family:var(--mono)">Etudiant</code> avec nom, notes (liste), et méthodes : ajouter_note(), moyenne(), mention() qui retourne "Très bien" si moy≥16, "Bien" si ≥14, "Assez bien" si ≥12, "Passable" si ≥10, sinon "Insuffisant".</div>
+          <button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+          <div class="correction-content">
+            <span class="slide-label correction">Correction</span>
+            <div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+            <div class="code-body"><span class="kw">class</span> <span class="fn">Etudiant</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, <span class="var">nom</span>):
+        <span class="kw">self</span>.<span class="var">nom</span> = <span class="var">nom</span>
+        <span class="kw">self</span>.<span class="var">notes</span> = []
+
+```
+<span class="kw">def</span> <span class="fn">ajouter_note</span>(<span class="kw">self</span>, <span class="var">note</span>):
+    <span class="kw">if</span> <span class="num">0</span> <= <span class="var">note</span> <= <span class="num">20</span>:
+        <span class="kw">self</span>.<span class="var">notes</span>.<span class="fn">append</span>(<span class="var">note</span>)
+
+<span class="kw">def</span> <span class="fn">moyenne</span>(<span class="kw">self</span>):
+    <span class="kw">if</span> <span class="kw">not</span> <span class="kw">self</span>.<span class="var">notes</span>: <span class="kw">return</span> <span class="num">0</span>
+    <span class="kw">return</span> <span class="fn">sum</span>(<span class="kw">self</span>.<span class="var">notes</span>) / <span class="fn">len</span>(<span class="kw">self</span>.<span class="var">notes</span>)
+
+<span class="kw">def</span> <span class="fn">mention</span>(<span class="kw">self</span>):
+    <span class="var">m</span> = <span class="kw">self</span>.<span class="fn">moyenne</span>()
+    <span class="kw">if</span> <span class="var">m</span> >= <span class="num">16</span>: <span class="kw">return</span> <span class="str">"Très bien 🏆"</span>
+    <span class="kw">elif</span> <span class="var">m</span> >= <span class="num">14</span>: <span class="kw">return</span> <span class="str">"Bien ✅"</span>
+    <span class="kw">elif</span> <span class="var">m</span> >= <span class="num">12</span>: <span class="kw">return</span> <span class="str">"Assez bien"</span>
+    <span class="kw">elif</span> <span class="var">m</span> >= <span class="num">10</span>: <span class="kw">return</span> <span class="str">"Passable"</span>
+    <span class="kw">return</span> <span class="str">"Insuffisant ❌"</span>
+
+<span class="kw">def</span> <span class="fn">__repr__</span>(<span class="kw">self</span>):
+    <span class="kw">return</span> <span class="str">f"{<span class="kw">self</span>.<span class="var">nom</span>} | moy={<span class="kw">self</span>.<span class="fn">moyenne</span>():.1f} | {<span class="kw">self</span>.<span class="fn">mention</span>()}"</span>
+```
+
+<span class="var">e</span> = <span class="fn">Etudiant</span>(<span class="str">“Alice”</span>)
+<span class="kw">for</span> <span class="var">n</span> <span class="kw">in</span> [<span class="num">15</span>, <span class="num">17</span>, <span class="num">14</span>, <span class="num">18</span>]: <span class="var">e</span>.<span class="fn">ajouter_note</span>(<span class="var">n</span>)
+<span class="fn">print</span>(<span class="var">e</span>)</div></div>
+</div>
+</div>
+<div class="carousel-slide">
+<span class="slide-label exercice">Exercice 2</span>
+<div class="slide-title">Hiérarchie de Véhicules</div>
+<div class="slide-desc">Créez une classe parente <code style="color:var(--accent2);font-family:var(--mono)">Vehicule</code> (marque, vitesse_max) et deux sous-classes <code style="color:var(--accent2);font-family:var(--mono)">Voiture</code> (nb_portes) et <code style="color:var(--accent2);font-family:var(--mono)">Moto</code> (type=“sportive”/“cruiser”). Ajoutez une méthode describe() dans chaque classe.</div>
+<button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+<div class="correction-content">
+<span class="slide-label correction">Correction</span>
+<div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+<div class="code-body"><span class="kw">class</span> <span class="fn">Vehicule</span>:
+<span class="kw">def</span> <span class="fn">**init**</span>(<span class="kw">self</span>, <span class="var">marque</span>, <span class="var">vmax</span>):
+<span class="kw">self</span>.<span class="var">marque</span> = <span class="var">marque</span>
+<span class="kw">self</span>.<span class="var">vmax</span> = <span class="var">vmax</span>
+<span class="kw">def</span> <span class="fn">describe</span>(<span class="kw">self</span>):
+<span class="kw">return</span> <span class="str">f”{<span class="kw">self</span>.<span class="var">marque</span>} — {<span class="kw">self</span>.<span class="var">vmax</span>} km/h”</span>
+
+<span class="kw">class</span> <span class="fn">Voiture</span>(<span class="fn">Vehicule</span>):
+<span class="kw">def</span> <span class="fn">**init**</span>(<span class="kw">self</span>, <span class="var">marque</span>, <span class="var">vmax</span>, <span class="var">portes</span>=<span class="num">4</span>):
+<span class="fn">super</span>().<span class="fn">**init**</span>(<span class="var">marque</span>, <span class="var">vmax</span>)
+<span class="kw">self</span>.<span class="var">portes</span> = <span class="var">portes</span>
+<span class="kw">def</span> <span class="fn">describe</span>(<span class="kw">self</span>):
+<span class="kw">return</span> <span class="fn">super</span>().<span class="fn">describe</span>() + <span class="str">f” ({<span class="kw">self</span>.<span class="var">portes</span>} portes)”</span>
+
+<span class="kw">class</span> <span class="fn">Moto</span>(<span class="fn">Vehicule</span>):
+<span class="kw">def</span> <span class="fn">**init**</span>(<span class="kw">self</span>, <span class="var">marque</span>, <span class="var">vmax</span>, <span class="var">type_</span>=<span class="str">“sportive”</span>):
+<span class="fn">super</span>().<span class="fn">**init**</span>(<span class="var">marque</span>, <span class="var">vmax</span>)
+<span class="kw">self</span>.<span class="var">type_</span> = <span class="var">type_</span>
+<span class="kw">def</span> <span class="fn">describe</span>(<span class="kw">self</span>):
+<span class="kw">return</span> <span class="fn">super</span>().<span class="fn">describe</span>() + <span class="str">f” [{<span class="kw">self</span>.<span class="var">type_</span>}]”</span>
+
+<span class="var">flotte</span> = [<span class="fn">Voiture</span>(<span class="str">“Peugeot”</span>,<span class="num">180</span>), <span class="fn">Moto</span>(<span class="str">“Ducati”</span>,<span class="num">280</span>)]
+<span class="kw">for</span> <span class="var">v</span> <span class="kw">in</span> <span class="var">flotte</span>: <span class="fn">print</span>(<span class="var">v</span>.<span class="fn">describe</span>())</div></div>
+</div>
+</div>
+</div>
+</div>
+
+  </div>
+
+  <div class="quiz-section" id="quiz-4">
+    <div class="quiz-header">
+      <div class="quiz-icon">🎯</div>
+      <div><h3>Quiz — Module 05</h3><p>4 questions · POO</p></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q1.</span> Le premier paramètre d'une méthode d'instance est toujours :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q4_1','A','B')"><span class="option-letter">A</span>this</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_1','B','B')"><span class="option-letter">B</span>self</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_1','C','B')"><span class="option-letter">C</span>cls</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_1','D','B')"><span class="option-letter">D</span>me</button>
+      </div>
+      <div class="feedback" id="fb_q4_1"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q2.</span> Pour appeler le constructeur parent dans une sous-classe :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q4_2','A','C')"><span class="option-letter">A</span>parent.__init__(self)</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_2','B','C')"><span class="option-letter">B</span>base().__init__()</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_2','C','C')"><span class="option-letter">C</span>super().__init__()</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_2','D','C')"><span class="option-letter">D</span>inherit().__init__()</button>
+      </div>
+      <div class="feedback" id="fb_q4_2"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q3.</span> La convention pour un attribut "privé" en Python est :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q4_3','A','B')"><span class="option-letter">A</span>private.attribut</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_3','B','B')"><span class="option-letter">B</span>_attribut</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_3','C','B')"><span class="option-letter">C</span>#attribut</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_3','D','B')"><span class="option-letter">D</span>@private attribut</button>
+      </div>
+      <div class="feedback" id="fb_q4_3"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q4.</span> <code style="color:var(--accent2);font-family:var(--mono)">__repr__</code> sert à :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q4_4','A','A')"><span class="option-letter">A</span>Définir la représentation textuelle de l'objet</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_4','B','A')"><span class="option-letter">B</span>Supprimer l'objet</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_4','C','A')"><span class="option-letter">C</span>Copier l'objet</button>
+        <button class="option-btn" onclick="selectOption(this,'q4_4','D','A')"><span class="option-letter">D</span>Comparer deux objets</button>
+      </div>
+      <div class="feedback" id="fb_q4_4"></div>
+    </div>
+    <button class="quiz-submit" id="submit-4" onclick="submitQuiz(4,4)">Valider le Quiz</button>
+    <div class="quiz-result" id="result-4"></div>
+  </div>
+  <button class="next-module-btn" onclick="goToModule(5)">Module final — Concepts Avancés <span>→</span></button>
+</section>
+
+<!-- ===================== MODULE 6 ===================== -->
+
+<section class="module-section" id="module-5">
+  <div class="module-header">
+    <div class="module-num">06</div>
+    <div>
+      <div class="module-title">Concepts Expert</div>
+      <div class="module-subtitle">Gestion d'erreurs, fichiers, modules et décorateurs. Le niveau qui distingue un bon développeur d'un expert.</div>
+    </div>
+    <div class="pareto-tag">🔥 EXPERT</div>
+  </div>
+
+  <div class="lesson-grid">
+    <div class="lesson-card">
+      <div class="lesson-label">CONCEPT 06.A — Exceptions</div>
+      <h3>Gestion des Erreurs</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+        <div class="code-body"><span class="kw">try</span>:
+    <span class="var">x</span> = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Entrez un nombre : "</span>))
+    <span class="var">result</span> = <span class="num">100</span> / <span class="var">x</span>
+<span class="kw">except</span> <span class="fn">ValueError</span>:
+    <span class="fn">print</span>(<span class="str">"Ce n'est pas un nombre !"</span>)
+<span class="kw">except</span> <span class="fn">ZeroDivisionError</span>:
+    <span class="fn">print</span>(<span class="str">"Division par zéro impossible !"</span>)
+<span class="kw">except</span> <span class="fn">Exception</span> <span class="kw">as</span> <span class="var">e</span>:
+    <span class="fn">print</span>(<span class="str">f"Erreur inattendue : {<span class="var">e</span>}"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">f"Résultat : {<span class="var">result</span>}"</span>)  <span class="cm"># Si aucune erreur</span>
+<span class="kw">finally</span>:
+    <span class="fn">print</span>(<span class="str">"Exécuté dans tous les cas"</span>)
+
+<span class="cm"># Lever sa propre exception</span>
+<span class="kw">def</span> <span class="fn">diviser</span>(<span class="var">a</span>, <span class="var">b</span>):
+<span class="kw">if</span> <span class="var">b</span> == <span class="num">0</span>:
+<span class="kw">raise</span> <span class="fn">ValueError</span>(<span class="str">“b ne peut pas être zéro”</span>)
+<span class="kw">return</span> <span class="var">a</span> / <span class="var">b</span></div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 06.B — Fichiers</div>
+  <h3>Lecture et Écriture de Fichiers</h3>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="cm"># with garantit la fermeture automatique du fichier</span>
+```
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">“data.txt”</span>, <span class="str">“w”</span>, <span class="var">encoding</span>=<span class="str">“utf-8”</span>) <span class="kw">as</span> <span class="var">f</span>:
+<span class="var">f</span>.<span class="fn">write</span>(<span class="str">“Ligne 1\n”</span>)
+<span class="var">f</span>.<span class="fn">writelines</span>([<span class="str">“Ligne 2\n”</span>, <span class="str">“Ligne 3\n”</span>])
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">“data.txt”</span>, <span class="str">“r”</span>, <span class="var">encoding</span>=<span class="str">“utf-8”</span>) <span class="kw">as</span> <span class="var">f</span>:
+<span class="var">contenu</span> = <span class="var">f</span>.<span class="fn">read</span>()           <span class="cm"># tout le fichier</span>
+<span class="var">lignes</span> = <span class="var">f</span>.<span class="fn">readlines</span>()       <span class="cm"># liste de lignes</span>
+
+<span class="cm"># JSON (très utilisé en pratique)</span>
+<span class="kw">import</span> json
+<span class="var">data</span> = {<span class="str">“nom”</span>: <span class="str">“Alice”</span>, <span class="str">“age”</span>: <span class="num">25</span>}
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">“user.json”</span>, <span class="str">“w”</span>) <span class="kw">as</span> <span class="var">f</span>:
+<span class="var">json</span>.<span class="fn">dump</span>(<span class="var">data</span>, <span class="var">f</span>, <span class="var">indent</span>=<span class="num">2</span>)</div>
+</div>
+</div>
+
+```
+<div class="lesson-card">
+  <div class="lesson-label">CONCEPT 06.C — Décorateurs</div>
+  <h3>Décorateurs — Métaprogrammation</h3>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+    <div class="code-body"><span class="kw">import</span> time
+```
+
+<span class="kw">def</span> <span class="fn">chronometre</span>(<span class="var">fonction</span>):
+<span class="str">””“Décorateur qui mesure le temps d’exécution.”””</span>
+<span class="kw">def</span> <span class="fn">wrapper</span>(*<span class="var">args</span>, **<span class="var">kwargs</span>):
+<span class="var">debut</span> = <span class="var">time</span>.<span class="fn">time</span>()
+<span class="var">result</span> = <span class="fn">fonction</span>(*<span class="var">args</span>, **<span class="var">kwargs</span>)
+<span class="var">fin</span> = <span class="var">time</span>.<span class="fn">time</span>()
+<span class="fn">print</span>(<span class="str">f”⏱ {<span class="var">fonction</span>.**name**}: {<span class="var">fin</span>-<span class="var">debut</span>:.4f}s”</span>)
+<span class="kw">return</span> <span class="var">result</span>
+<span class="kw">return</span> <span class="var">wrapper</span>
+
+<span class="op">@</span><span class="fn">chronometre</span>
+<span class="kw">def</span> <span class="fn">calcul_lent</span>(<span class="var">n</span>):
+<span class="kw">return</span> <span class="fn">sum</span>(<span class="var">i</span>**<span class="num">2</span> <span class="kw">for</span> <span class="var">i</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="var">n</span>))
+
+<span class="fn">calcul_lent</span>(<span class="num">100000</span>)  <span class="cm"># ⏱ calcul_lent: 0.0123s</span></div>
+</div>
+</div>
+
+  </div>
+
+  <div class="carousel-wrap">
+    <div class="carousel-header">
+      <span class="carousel-title">⚡ EXERCICES FINAUX</span>
+      <div class="carousel-controls">
+        <button class="carousel-btn" onclick="prevSlide('c6')">←</button>
+        <span class="carousel-counter" id="c6-counter">1 / 2</span>
+        <button class="carousel-btn" onclick="nextSlide('c6')">→</button>
+      </div>
+    </div>
+    <div style="overflow:hidden">
+      <div class="carousel-track" id="c6-track">
+        <div class="carousel-slide">
+          <span class="slide-label exercice">Exercice Final 1</span>
+          <div class="slide-title">Gestionnaire de tâches JSON</div>
+          <div class="slide-desc">Créez un gestionnaire de tâches complet : ajouter/supprimer/lister des tâches, sauvegarder dans un fichier JSON, gérer les erreurs si le fichier n'existe pas.</div>
+          <button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+          <div class="correction-content">
+            <span class="slide-label correction">Correction</span>
+            <div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+            <div class="code-body"><span class="kw">import</span> json
+
+<span class="var">FICHIER</span> = <span class="str">“taches.json”</span>
+
+<span class="kw">def</span> <span class="fn">charger</span>():
+<span class="kw">try</span>:
+<span class="kw">with</span> <span class="fn">open</span>(<span class="var">FICHIER</span>) <span class="kw">as</span> <span class="var">f</span>:
+<span class="kw">return</span> <span class="var">json</span>.<span class="fn">load</span>(<span class="var">f</span>)
+<span class="kw">except</span> <span class="fn">FileNotFoundError</span>:
+<span class="kw">return</span> []
+
+<span class="kw">def</span> <span class="fn">sauvegarder</span>(<span class="var">taches</span>):
+<span class="kw">with</span> <span class="fn">open</span>(<span class="var">FICHIER</span>, <span class="str">“w”</span>) <span class="kw">as</span> <span class="var">f</span>:
+<span class="var">json</span>.<span class="fn">dump</span>(<span class="var">taches</span>, <span class="var">f</span>, <span class="var">indent</span>=<span class="num">2</span>)
+
+<span class="kw">def</span> <span class="fn">ajouter</span>(<span class="var">titre</span>):
+<span class="var">taches</span> = <span class="fn">charger</span>()
+<span class="var">taches</span>.<span class="fn">append</span>({<span class="str">“id”</span>: <span class="fn">len</span>(<span class="var">taches</span>)+<span class="num">1</span>, <span class="str">“titre”</span>: <span class="var">titre</span>, <span class="str">“fait”</span>: <span class="kw">False</span>})
+<span class="fn">sauvegarder</span>(<span class="var">taches</span>)
+<span class="fn">print</span>(<span class="str">f”✅ Tâche ajoutée: {<span class="var">titre</span>}”</span>)
+
+<span class="kw">def</span> <span class="fn">lister</span>():
+<span class="kw">for</span> <span class="var">t</span> <span class="kw">in</span> <span class="fn">charger</span>():
+<span class="var">icone</span> = <span class="str">“✅”</span> <span class="kw">if</span> <span class="var">t</span>[<span class="str">“fait”</span>] <span class="kw">else</span> <span class="str">“⬜”</span>
+<span class="fn">print</span>(<span class="str">f”  {<span class="var">icone</span>} [{<span class="var">t</span>[<span class="str">‘id’</span>]}] {<span class="var">t</span>[<span class="str">‘titre’</span>]}”</span>)
+
+<span class="fn">ajouter</span>(<span class="str">“Apprendre Python”</span>)
+<span class="fn">ajouter</span>(<span class="str">“Créer un projet”</span>)
+<span class="fn">lister</span>()</div></div>
+</div>
+</div>
+<div class="carousel-slide">
+<span class="slide-label exercice">Exercice Final 2</span>
+<div class="slide-title">Décorateur de validation</div>
+<div class="slide-desc">Créez un décorateur <code style="color:var(--accent2);font-family:var(--mono)">@valider_positif</code> qui vérifie que tous les arguments numériques passés à une fonction sont positifs, et lève une ValueError sinon.</div>
+<button class="reveal-btn" onclick="revealCorrection(this)">👁 Voir la correction</button>
+<div class="correction-content">
+<span class="slide-label correction">Correction</span>
+<div class="code-block"><div class="code-header"><div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div><span class="code-lang">PYTHON</span></div>
+<div class="code-body"><span class="kw">def</span> <span class="fn">valider_positif</span>(<span class="var">func</span>):
+<span class="kw">def</span> <span class="fn">wrapper</span>(*<span class="var">args</span>, **<span class="var">kwargs</span>):
+<span class="kw">for</span> <span class="var">arg</span> <span class="kw">in</span> <span class="var">args</span>:
+<span class="kw">if</span> <span class="fn">isinstance</span>(<span class="var">arg</span>, (<span class="fn">int</span>, <span class="fn">float</span>)) <span class="kw">and</span> <span class="var">arg</span> < <span class="num">0</span>:
+<span class="kw">raise</span> <span class="fn">ValueError</span>(<span class="str">f”Argument négatif : {<span class="var">arg</span>}”</span>)
+<span class="kw">return</span> <span class="fn">func</span>(*<span class="var">args</span>, **<span class="var">kwargs</span>)
+<span class="kw">return</span> <span class="var">wrapper</span>
+
+<span class="op">@</span><span class="fn">valider_positif</span>
+<span class="kw">def</span> <span class="fn">racine</span>(<span class="var">x</span>):
+<span class="kw">return</span> <span class="var">x</span> ** <span class="num">0.5</span>
+
+<span class="kw">try</span>:
+<span class="fn">print</span>(<span class="fn">racine</span>(<span class="num">9</span>))    <span class="cm"># 3.0</span>
+<span class="fn">print</span>(<span class="fn">racine</span>(-<span class="num">4</span>))   <span class="cm"># ValueError!</span>
+<span class="kw">except</span> <span class="fn">ValueError</span> <span class="kw">as</span> <span class="var">e</span>:
+<span class="fn">print</span>(<span class="str">f”Erreur : {<span class="var">e</span>}”</span>)</div></div>
+</div>
+</div>
+</div>
+</div>
+
+  </div>
+
+  <div class="quiz-section" id="quiz-5">
+    <div class="quiz-header">
+      <div class="quiz-icon">🏆</div>
+      <div><h3>Quiz Final — Module 06</h3><p>4 questions · Niveau Expert</p></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q1.</span> Le bloc <code style="color:var(--accent2);font-family:var(--mono)">finally</code> dans un try/except s'exécute :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q5_1','A','D')"><span class="option-letter">A</span>Seulement si une exception est levée</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_1','B','D')"><span class="option-letter">B</span>Seulement si aucune exception</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_1','C','D')"><span class="option-letter">C</span>Jamais</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_1','D','D')"><span class="option-letter">D</span>Toujours, exception ou non</button>
+      </div>
+      <div class="feedback" id="fb_q5_1"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q2.</span> Pour ouvrir un fichier en lecture avec fermeture automatique, on utilise :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q5_2','A','B')"><span class="option-letter">A</span>open("f.txt").read()</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_2','B','B')"><span class="option-letter">B</span>with open("f.txt") as f:</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_2','C','B')"><span class="option-letter">C</span>file = File("f.txt")</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_2','D','B')"><span class="option-letter">D</span>read_file("f.txt")</button>
+      </div>
+      <div class="feedback" id="fb_q5_2"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q3.</span> Un décorateur Python est :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q5_3','A','C')"><span class="option-letter">A</span>Un style CSS pour le code</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_3','B','C')"><span class="option-letter">B</span>Une classe spéciale</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_3','C','C')"><span class="option-letter">C</span>Une fonction qui modifie/enveloppe une autre fonction</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_3','D','C')"><span class="option-letter">D</span>Un commentaire spécial</button>
+      </div>
+      <div class="feedback" id="fb_q5_3"></div>
+    </div>
+    <div class="question-block">
+      <div class="question-text"><span class="q-num">Q4.</span> <code style="color:var(--accent2);font-family:var(--mono)">raise ValueError("msg")</code> permet de :</div>
+      <div class="options">
+        <button class="option-btn" onclick="selectOption(this,'q5_4','A','A')"><span class="option-letter">A</span>Lever manuellement une exception</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_4','B','A')"><span class="option-letter">B</span>Ignorer une erreur</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_4','C','A')"><span class="option-letter">C</span>Afficher un message d'erreur seulement</button>
+        <button class="option-btn" onclick="selectOption(this,'q5_4','D','A')"><span class="option-letter">D</span>Créer un nouveau type d'erreur</button>
+      </div>
+      <div class="feedback" id="fb_q5_4"></div>
+    </div>
+    <button class="quiz-submit" id="submit-5" onclick="submitQuiz(5,4)">Valider le Quiz Final</button>
+    <div class="quiz-result" id="result-5"></div>
+  </div>
+
+  <!-- TROPHY -->
+
+  <div class="trophy-section" id="trophySection">
+    <div class="trophy-emoji">🏆</div>
+    <div class="trophy-title">Félicitations, Expert Python !</div>
+    <div class="final-score-badge" id="finalScoreBadge">-- / --</div>
+    <div class="trophy-msg">Vous avez complété le cours Python Pareto.<br>Vous maîtrisez maintenant les 20% de Python qui couvrent 80% des cas réels.<br>La prochaine étape : construire un vrai projet !</div>
+  </div>
+
+</section>
+
+</main>
+
+<script>
+// =================== STATE ===================
+const state = {
+  currentModule: 0,
+  quizAnswers: {},     // { "q0_1": "B", ... }
+  quizSubmitted: {},   // { 0: true, ... }
+  quizScores: {},      // { 0: 3, ... }
+  totalQuestions: 6 * 4,  // 6 modules x 4 questions
+  totalCorrect: 0,
+  completedModules: new Set()
+};
+
+// =================== NAVIGATION ===================
+function goToModule(idx) {
+  document.querySelectorAll('.module-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('module-' + idx).classList.add('active');
+  document.querySelectorAll('.mod-btn')[idx].classList.add('active');
+  state.currentModule = idx;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =================== QUIZ ===================
+function selectOption(btn, qId, chosen, correct) {
+  // If quiz already submitted, block
+  const modIdx = parseInt(qId.split('_')[0].replace('q',''));
+  if (state.quizSubmitted[modIdx]) return;
+
+  // Deselect others in same question
+  const qBlock = btn.closest('.question-block');
+  qBlock.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.quizAnswers[qId] = { chosen, correct };
+}
+
+function submitQuiz(modIdx, numQ) {
+  const submitBtn = document.getElementById('submit-' + modIdx);
+  if (state.quizSubmitted[modIdx]) return;
+
+  let correct = 0;
+  for (let i = 1; i <= numQ; i++) {
+    const qId = `q${modIdx}_${i}`;
+    const ans = state.quizAnswers[qId];
+    const fb = document.getElementById('fb_' + qId);
+    const qBlock = fb.closest('.question-block');
+
+    qBlock.querySelectorAll('.option-btn').forEach(btn => {
+      btn.disabled = true;
+      const letter = btn.querySelector('.option-letter').textContent;
+      if (!ans) return;
+      if (letter === ans.correct) btn.classList.add('correct');
+      else if (letter === ans.chosen && ans.chosen !== ans.correct) btn.classList.add('wrong');
+    });
+
+    if (ans && ans.chosen === ans.correct) {
+      correct++;
+      if (fb) { fb.textContent = '✓ Bonne réponse !'; fb.className = 'feedback show ok'; }
+    } else {
+      if (fb) {
+        fb.textContent = ans
+          ? `✗ Mauvaise réponse. La bonne était : ${ans.correct}`
+          : '✗ Aucune réponse sélectionnée. La bonne était : ' + state.quizAnswers[qId]?.correct || '?';
+        // get correct from button
+        const qBlock2 = document.getElementById('fb_' + qId).closest('.question-block');
+        const allBtns = qBlock2.querySelectorAll('.option-btn');
+        let correctLetter = '';
+        allBtns.forEach(b => { if(b.classList.contains('correct')) correctLetter = b.querySelector('.option-letter').textContent; });
+        fb.textContent = `✗ ${ans ? 'Mauvaise réponse.' : 'Pas de réponse.'} Bonne réponse : ${correctLetter}`;
+        fb.className = 'feedback show ko';
+      }
+    }
+  }
+
+  state.quizSubmitted[modIdx] = true;
+  state.quizScores[modIdx] = correct;
+  submitBtn.disabled = true;
+
+  // Show result
+  const resultDiv = document.getElementById('result-' + modIdx);
+  const pct = Math.round(correct / numQ * 100);
+  let scoreClass = pct >= 75 ? 'great' : pct >= 50 ? 'ok' : 'retry';
+  let msg = pct >= 75 ? '🚀 Excellent ! Passez au module suivant.' : pct >= 50 ? '👍 Bien, révisez les erreurs.' : '📖 Révisez le cours avant de continuer.';
+
+  resultDiv.innerHTML = `
+    <div class="result-score ${scoreClass}">${correct}/${numQ} — ${pct}%</div>
+    <div class="result-msg">${msg}</div>
+    <button class="retry-btn" onclick="retryQuiz(${modIdx}, ${numQ})">↺ Recommencer</button>
+  `;
+  resultDiv.classList.add('show');
+
+  // Mark module completed
+  if (pct >= 50) state.completedModules.add(modIdx);
+  updateProgress();
+
+  // Show trophy if all done
+  if (Object.keys(state.quizSubmitted).length === 6) {
+    document.getElementById('trophySection').classList.add('show');
+    const total = Object.values(state.quizScores).reduce((a,b)=>a+b,0);
+    document.getElementById('finalScoreBadge').textContent = `${total} / ${6*numQ} pts`;
+  }
+}
+
+function retryQuiz(modIdx, numQ) {
+  delete state.quizSubmitted[modIdx];
+  delete state.quizScores[modIdx];
+  for (let i = 1; i <= numQ; i++) delete state.quizAnswers[`q${modIdx}_${i}`];
+
+  const quizSection = document.getElementById('quiz-' + modIdx);
+  quizSection.querySelectorAll('.option-btn').forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove('correct','wrong','selected');
+  });
+  quizSection.querySelectorAll('.feedback').forEach(fb => {
+    fb.className = 'feedback';
+    fb.textContent = '';
+  });
+  document.getElementById('submit-' + modIdx).disabled = false;
+  const resultDiv = document.getElementById('result-' + modIdx);
+  resultDiv.classList.remove('show');
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = 6 * 4;
+  const scored = Object.values(state.quizScores).reduce((a,b)=>a+b,0);
+  const maxSoFar = Object.keys(state.quizScores).length * 4;
+  const pct = maxSoFar > 0 ? Math.round(scored / (6*4) * 100) : 0;
+
+  document.getElementById('mainProgressBar').style.width = pct + '%';
+  document.getElementById('totalScore').textContent = `${scored} / ${total} pts`;
+
+  // Update nav badges
+  state.completedModules.forEach(idx => {
+    document.querySelectorAll('.mod-btn')[idx].classList.add('completed');
+  });
+}
+
+// =================== CAROUSELS ===================
+const carousels = {};
+
+function initCarousel(id, total) {
+  carousels[id] = { current: 0, total };
+}
+
+function prevSlide(id) {
+  const c = carousels[id];
+  c.current = (c.current - 1 + c.total) % c.total;
+  applySlide(id);
+}
+
+function nextSlide(id) {
+  const c = carousels[id];
+  c.current = (c.current + 1) % c.total;
+  applySlide(id);
+}
+
+function applySlide(id) {
+  const c = carousels[id];
+  const track = document.getElementById(id + '-track');
+  const counter = document.getElementById(id + '-counter');
+  track.style.transform = `translateX(-${c.current * 100}%)`;
+  counter.textContent = `${c.current + 1} / ${c.total}`;
+}
+
+function revealCorrection(btn) {
+  const correction = btn.nextElementSibling;
+  if (correction) {
+    correction.classList.add('revealed');
+    btn.style.display = 'none';
+  }
+}
+
+// =================== INIT ===================
+initCarousel('c1', 3);
+initCarousel('c2', 3);
+initCarousel('c3', 3);
+initCarousel('c4', 3);
+initCarousel('c5', 2);
+initCarousel('c6', 2);
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && e.altKey) goToModule(Math.min(5, state.currentModule + 1));
+  if (e.key === 'ArrowLeft' && e.altKey) goToModule(Math.max(0, state.currentModule - 1));
+});
+</script>
+
+</body>
+</html>

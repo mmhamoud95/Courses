@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formation Évaluation — Mesurer la Qualité de tes Systèmes IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f7f3ee; --ink:#18120e; --ink2:#3d2f26; --muted:#8a7a6a;
+  --border:#ddd5c8; --surface:#fff; --surface2:#f2ede6;
+  --vital:#6b21a8;    /* violet éval */
+  --vital-l:rgba(107,33,168,.08); --vital-m:rgba(107,33,168,.18);
+  --useful:#1a6b4a;   --useful-l:rgba(26,107,74,.08);
+  --skip:#aaa;        --skip-l:rgba(0,0,0,.04);
+  --warn:#c0392b;     --warn-l:rgba(192,57,43,.08);
+  --d1:#6b21a8; --d2:#2471a3; --d3:#1a6b4a; --d4:#d4840a; --d5:#b03a2e;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',sans-serif;font-size:15px;line-height:1.6;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");pointer-events:none;z-index:0;}
+.page{max-width:920px;margin:0 auto;padding:56px 24px 88px;position:relative;z-index:1;}
+
+/* HERO */
+.hero{margin-bottom:48px;animation:up .5s ease both;}
+.suite-badge{display:inline-flex;align-items:center;gap:9px;background:var(–vital);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:5px 14px;border-radius:3px;margin-bottom:20px;}
+h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;line-height:1.05;letter-spacing:-.025em;margin-bottom:16px;}
+h1 em{font-style:italic;color:var(–vital);}
+.hero-desc{color:var(–muted);font-size:.95rem;max-width:560px;margin-bottom:28px;line-height:1.65;}
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;}
+.kpi{background:var(–surface);border:1.5px solid var(–border);border-radius:8px;padding:12px 18px;display:flex;flex-direction:column;gap:2px;}
+.kpi-v{font-family:‘JetBrains Mono’,monospace;font-size:1rem;font-weight:500;color:var(–ink);}
+.kpi-l{font-size:.68rem;color:var(–muted);text-transform:uppercase;letter-spacing:.09em;}
+
+/* CONTINUITY */
+.continuity{display:flex;align-items:center;gap:16px;background:var(–surface);border:1.5px solid var(–border);border-left:4px solid var(–vital);border-radius:10px;padding:16px 22px;margin-bottom:32px;animation:up .5s .06s ease both;}
+.continuity-icon{font-size:1.4rem;flex-shrink:0;}
+.continuity p{font-size:.85rem;color:var(–ink2);line-height:1.5;}
+.continuity strong{color:var(–vital);}
+
+/* ROADMAP */
+.roadmap{background:var(–surface);border:1.5px solid var(–border);border-radius:10px;padding:22px 26px;margin-bottom:40px;animation:up .5s .1s ease both;overflow-x:auto;}
+.roadmap h3{font-family:‘JetBrains Mono’,monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(–muted);margin-bottom:18px;}
+.rm-phases{display:flex;gap:0;align-items:stretch;}
+.rm-phase{flex:1;min-width:120px;border-radius:8px;padding:14px 12px;display:flex;flex-direction:column;gap:5px;position:relative;}
+.rm-phase+.rm-phase::before{content:‘→’;position:absolute;left:-10px;top:50%;transform:translateY(-50%);color:var(–muted);font-size:.9rem;}
+.rm-phase.p1{background:rgba(107,33,168,.08);border:1px solid rgba(107,33,168,.2);}
+.rm-phase.p2{background:rgba(36,113,163,.08);border:1px solid rgba(36,113,163,.2);}
+.rm-phase.p3{background:rgba(26,107,74,.08);border:1px solid rgba(26,107,74,.2);}
+.rm-phase.p4{background:rgba(212,132,10,.08);border:1px solid rgba(212,132,10,.2);}
+.rm-phase.p5{background:rgba(176,58,46,.08);border:1px solid rgba(176,58,46,.2);}
+.rm-title{font-family:‘JetBrains Mono’,monospace;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.rm-phase.p1 .rm-title{color:var(–d1);} .rm-phase.p2 .rm-title{color:var(–d2);}
+.rm-phase.p3 .rm-title{color:var(–d3);} .rm-phase.p4 .rm-title{color:var(–d4);}
+.rm-phase.p5 .rm-title{color:var(–d5);}
+.rm-day{font-size:.72rem;color:var(–muted);margin-bottom:3px;}
+.rm-phase ul{list-style:none;display:flex;flex-direction:column;gap:3px;}
+.rm-phase li{font-size:.72rem;color:var(–ink2);line-height:1.3;}
+
+/* TRACKER */
+.tracker{background:var(–surface);border:1.5px solid var(–border);border-radius:10px;padding:20px 24px;margin-bottom:40px;animation:up .5s .16s ease both;}
+.tracker-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.tracker-top h3{font-family:‘JetBrains Mono’,monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(–muted);}
+#pct-label{font-family:‘JetBrains Mono’,monospace;font-size:.78rem;color:var(–ink);}
+.ddots{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.ddot{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;}
+.ddot .d{width:100%;height:6px;border-radius:99px;background:var(–border);transition:all .2s;}
+.ddot:hover .d{transform:scaleY(2);}
+.ddot.done .d{background:var(–vital);}
+.ddot .dl{font-family:‘JetBrains Mono’,monospace;font-size:.62rem;color:var(–muted);}
+
+/* SECTION */
+.sh{display:flex;align-items:center;gap:12px;margin:44px 0 20px;}
+.sh span{font-family:‘JetBrains Mono’,monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(–muted);white-space:nowrap;}
+.sh .ln{flex:1;height:1px;background:var(–border);}
+
+/* DAY CARDS */
+.days{display:flex;flex-direction:column;gap:14px;}
+.dc{background:var(–surface);border:1.5px solid var(–border);border-radius:12px;overflow:hidden;animation:up .4s ease both;transition:box-shadow .2s;}
+.dc:hover{box-shadow:3px 3px 0 var(–border);}
+.dc-head{display:flex;align-items:stretch;cursor:pointer;}
+.dc-accent{width:5px;flex-shrink:0;}
+.dc-num{width:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;flex-shrink:0;}
+.dc-num .n{font-size:1.8rem;font-weight:800;line-height:1;font-family:‘Bricolage Grotesque’,sans-serif;}
+.dc-num .l{font-family:‘JetBrains Mono’,monospace;font-size:.55rem;color:var(–muted);text-transform:uppercase;letter-spacing:.1em;}
+.dc-info{flex:1;padding:16px 14px;}
+.dc-info h3{font-size:.97rem;font-weight:700;line-height:1.3;margin-bottom:3px;}
+.dc-info .sub{font-size:.77rem;color:var(–muted);}
+.dc-meta{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:7px;padding:16px 18px 16px 8px;flex-shrink:0;}
+.tbadge{font-family:‘JetBrains Mono’,monospace;font-size:.67rem;background:var(–surface2);border:1px solid var(–border);border-radius:5px;padding:3px 8px;color:var(–muted);white-space:nowrap;}
+.chev{width:24px;height:24px;border-radius:5px;background:var(–surface2);display:flex;align-items:center;justify-content:center;color:var(–muted);font-size:.7rem;transition:transform .25s;}
+.dc.open .chev{transform:rotate(180deg);}
+.dc-tags{display:flex;gap:6px;flex-wrap:wrap;padding:0 18px 12px 67px;}
+.tg{font-family:‘JetBrains Mono’,monospace;font-size:.6rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:4px;border:1px solid;}
+.dc-body{display:none;border-top:1px solid rgba(0,0,0,.06);padding:22px 22px 24px;}
+.dc.open .dc-body{display:block;}
+
+/* CONCEPTS */
+.concept-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px;}
+.concept-card{background:var(–surface);border:1.5px solid var(–border);border-radius:9px;padding:14px 16px;}
+.concept-card .cc-icon{font-size:1.3rem;margin-bottom:6px;}
+.concept-card h4{font-size:.83rem;font-weight:700;margin-bottom:4px;}
+.concept-card p{font-size:.76rem;color:var(–muted);line-height:1.45;}
+
+/* PARETO SPLIT */
+.pareto-split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+@media(max-width:580px){.pareto-split{grid-template-columns:1fr;}.dc-tags{padding-left:18px;}}
+.psplit{border-radius:9px;padding:16px 18px;border:1.5px solid;}
+.psplit.vital{background:var(–vital-l);border-color:rgba(107,33,168,.2);}
+.psplit.useful{background:var(–useful-l);border-color:rgba(26,107,74,.2);}
+.psplit.skip-box{background:var(–skip-l);border-color:rgba(0,0,0,.08);}
+.psplit.warn-box{background:var(–warn-l);border-color:rgba(192,57,43,.2);}
+.psplit-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+.psplit-head .badge{font-family:‘JetBrains Mono’,monospace;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:2px 7px;border-radius:3px;border:1px solid;}
+.psplit.vital .badge{color:var(–vital);border-color:rgba(107,33,168,.3);background:rgba(107,33,168,.08);}
+.psplit.useful .badge{color:var(–useful);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08);}
+.psplit.skip-box .badge{color:var(–skip);border-color:rgba(0,0,0,.15);background:rgba(0,0,0,.04);}
+.psplit.warn-box .badge{color:var(–warn);border-color:rgba(192,57,43,.3);background:rgba(192,57,43,.08);}
+.psplit h4{font-size:.82rem;font-weight:700;color:var(–ink2);}
+.psplit ul{list-style:none;display:flex;flex-direction:column;gap:7px;margin:0;}
+.psplit li{display:flex;gap:8px;font-size:.83rem;color:var(–ink2);line-height:1.42;align-items:flex-start;}
+.psplit li .b{width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:7px;}
+.psplit.vital li .b{background:var(–vital);} .psplit.useful li .b{background:var(–useful);}
+.psplit.skip-box li .b{background:var(–skip);} .psplit.warn-box li .b{background:var(–warn);}
+.psplit.skip-box li{color:var(–muted);text-decoration:line-through;font-size:.79rem;}
+
+/* CODE */
+.code-wrap{background:#16120e;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.06);margin-bottom:16px;}
+.code-head-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.04);}
+.code-head-bar .fn{font-family:‘JetBrains Mono’,monospace;font-size:.68rem;color:#8a7a6a;}
+pre{padding:18px 20px;overflow-x:auto;font-family:‘JetBrains Mono’,monospace;font-size:.75rem;line-height:1.78;color:#c8c0b4;white-space:pre;}
+.k{color:#c792ea;}.s{color:#f9c860;}.c{color:#3d7a4a;}.f{color:#7ec8e3;}.n{color:#f07178;}.o{color:#c3e88d;}
+.hl{background:rgba(107,33,168,.2);display:block;margin:0 -20px;padding:0 20px;}
+
+/* PIÈGE / TEACH / LIVRABLE / CHECK */
+.piege{background:#fff8f0;border:1.5px solid #f0a060;border-radius:9px;padding:14px 18px;margin-bottom:14px;display:flex;gap:11px;align-items:flex-start;}
+.piege-icon{font-size:1rem;flex-shrink:0;margin-top:2px;}
+.piege-text strong{display:block;font-family:‘JetBrains Mono’,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#c0680a;margin-bottom:4px;}
+.piege-text p{font-size:.82rem;color:#5a3a1a;line-height:1.5;}
+.teach{background:#f0f7ff;border:1.5px solid #a0c4e8;border-radius:9px;padding:14px 18px;margin-bottom:14px;display:flex;gap:11px;align-items:flex-start;}
+.teach strong{display:block;font-family:‘JetBrains Mono’,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#1a5a8a;margin-bottom:4px;}
+.teach p{font-size:.82rem;color:#1a3a5a;line-height:1.5;}
+.livrable{border-radius:9px;padding:15px 18px;display:flex;gap:12px;align-items:flex-start;border:1.5px solid;}
+.liv-icon{font-size:1.3rem;flex-shrink:0;}
+.liv-text strong{display:block;font-family:‘JetBrains Mono’,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+.liv-text p{font-size:.83rem;line-height:1.5;}
+.check80{background:var(–surface2);border-radius:9px;padding:14px 18px;margin-bottom:14px;border:1px solid var(–border);}
+.check80 h4{font-family:‘JetBrains Mono’,monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(–muted);margin-bottom:10px;}
+.check80 ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.check80 li{display:flex;gap:9px;font-size:.83rem;align-items:flex-start;}
+.check80 li input[type=checkbox]{accent-color:var(–vital);margin-top:3px;flex-shrink:0;cursor:pointer;}
+
+/* METRIC TABLE */
+.metric-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:.82rem;}
+.metric-table th{font-family:‘JetBrains Mono’,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;text-align:left;border-bottom:2px solid var(–border);color:var(–muted);}
+.metric-table td{padding:10px 12px;border-bottom:1px solid var(–border2,var(–surface2));vertical-align:top;line-height:1.45;}
+.metric-table tr:last-child td{border-bottom:none;}
+.metric-table .name{font-weight:700;color:var(–vital);font-family:‘JetBrains Mono’,monospace;font-size:.75rem;}
+.metric-table .score{font-family:‘JetBrains Mono’,monospace;font-size:.75rem;color:var(–d3);}
+.metric-table .danger{color:var(–warn);font-size:.75rem;}
+.metric-table tr:hover td{background:var(–surface2);}
+
+/* FINAL */
+.final{margin-top:52px;background:var(–ink);color:#f7f3ee;border-radius:14px;padding:44px 44px 36px;position:relative;overflow:hidden;animation:up .5s .3s ease both;}
+.final::after{content:‘EVAL’;position:absolute;bottom:-20px;right:24px;font-size:9rem;font-weight:800;letter-spacing:-.04em;color:rgba(255,255,255,.03);line-height:1;pointer-events:none;}
+.final-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(107,33,168,.25);border:1px solid rgba(107,33,168,.4);border-radius:99px;padding:5px 14px;font-family:‘JetBrains Mono’,monospace;font-size:.65rem;color:#d8b4fe;text-transform:uppercase;letter-spacing:.1em;margin-bottom:20px;}
+.final h2{font-size:1.8rem;font-weight:800;line-height:1.1;margin-bottom:12px;}
+.final h2 em{font-style:italic;color:#d8b4fe;}
+.final .fdesc{color:rgba(247,243,238,.6);font-size:.9rem;max-width:500px;margin-bottom:28px;line-height:1.6;}
+.final-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.fg{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:14px;}
+.fg .fgi{font-size:1.2rem;margin-bottom:7px;}
+.fg h4{font-size:.84rem;font-weight:700;margin-bottom:2px;}
+.fg p{font-size:.73rem;color:rgba(247,243,238,.5);line-height:1.35;}
+
+/* STACK */
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+.sc{background:var(–surface);border:1.5px solid var(–border);border-radius:10px;padding:13px 15px;display:flex;gap:11px;align-items:flex-start;transition:border-color .2s,transform .15s;cursor:default;}
+.sc:hover{border-color:var(–vital);transform:translateY(-2px);}
+.sc .si{font-size:1.2rem;flex-shrink:0;margin-top:2px;}
+.sc .sn{font-weight:700;font-size:.83rem;margin-bottom:1px;}
+.sc .sd{font-size:.7rem;color:var(–muted);line-height:1.3;}
+
+@keyframes up{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.dc:nth-child(1){animation-delay:.04s}.dc:nth-child(2){animation-delay:.08s}.dc:nth-child(3){animation-delay:.12s}
+.dc:nth-child(4){animation-delay:.16s}.dc:nth-child(5){animation-delay:.2s}
+</style>
+
+</head>
+<body>
+<div class="page">
+
+<!-- HERO -->
+
+<div class="hero">
+  <div class="suite-badge">🧪 Suite MCP — Module Évaluation</div>
+  <h1>Mesurer et <em>Garantir</em><br>la Qualité de tes IA</h1>
+  <p class="hero-desc">Un agent non évalué est une bombe à retardement. 5 jours pour maîtriser RAGAS, LLM-as-Judge, les datasets de test, la détection de régression et l'intégration CI/CD — avec Mistral local via Ollama. Zéro coût API.</p>
+  <div class="kpi-row">
+    <div class="kpi"><span class="kpi-v">5 jours</span><span class="kpi-l">Durée</span></div>
+    <div class="kpi"><span class="kpi-v">45–60 min</span><span class="kpi-l">Par jour</span></div>
+    <div class="kpi"><span class="kpi-v">RAGAS</span><span class="kpi-l">Framework éval</span></div>
+    <div class="kpi"><span class="kpi-v">LLM-as-Judge</span><span class="kpi-l">Évaluation auto</span></div>
+    <div class="kpi"><span class="kpi-v">0€</span><span class="kpi-l">Coût API (Ollama)</span></div>
+  </div>
+</div>
+
+<!-- CONTINUITY -->
+
+<div class="continuity">
+  <div class="continuity-icon">🔗</div>
+  <p><strong>Suite directe du cours MCP.</strong> Tu réutilises la base ChromaDB (cours RAG), les agents <code>create_agent()</code> (cours Agents) et les serveurs MCP (cours MCP). L'évaluation s'applique à <strong>tout</strong> ce que tu as construit — chaque jour tu mesureras un composant différent.</p>
+</div>
+
+<!-- ROADMAP -->
+
+<div class="roadmap">
+  <h3>Programme — 5 jours</h3>
+  <div class="rm-phases">
+    <div class="rm-phase p1"><div class="rm-title">J1</div><div class="rm-day">Fondations</div><ul><li>🧠 Pourquoi évaluer ?</li><li>Métriques clés</li><li>Dataset manuel</li></ul></div>
+    <div class="rm-phase p2"><div class="rm-title">J2</div><div class="rm-day">RAGAS</div><ul><li>📊 RAGAS + Ollama</li><li>4 métriques RAG</li><li>Rapport automatique</li></ul></div>
+    <div class="rm-phase p3"><div class="rm-title">J3</div><div class="rm-day">LLM-as-Judge</div><ul><li>⚖️ Juger avec un LLM</li><li>Agents &amp; multi-tours</li><li>Custom métriques</li></ul></div>
+    <div class="rm-phase p4"><div class="rm-title">J4</div><div class="rm-day">Dataset synthétique</div><ul><li>🏭 Générer des tests</li><li>TestsetGenerator</li><li>Couverture auto</li></ul></div>
+    <div class="rm-phase p5"><div class="rm-title">J5</div><div class="rm-day">CI/CD + Dashboard</div><ul><li>🚀 Tests regression</li><li>Pipeline automatisé</li><li>Dashboard Streamlit</li></ul></div>
+  </div>
+</div>
+
+<!-- TRACKER -->
+
+<div class="tracker">
+  <div class="tracker-top"><h3>Progression</h3><span id="pct-label">Clique pour cocher ✓</span></div>
+  <div class="ddots" id="ddots"></div>
+</div>
+
+<div class="sh"><span>Programme Évaluation — 5 jours</span><div class="ln"></div></div>
+<div class="days">
+
+<!-- ══ J1 ══ -->
+
+<div class="dc" id="dc1">
+  <div class="dc-head" onclick="tog(1)">
+    <div class="dc-accent" style="background:var(--d1)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d1)">1</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Fondations — Qu'est-ce qu'on mesure et pourquoi ?</h3>
+      <div class="sub">Métriques fondamentales, premier dataset de test, évaluation manuelle</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 45 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d1);border-color:rgba(107,33,168,.3);background:rgba(107,33,168,.08)">Vital</span>
+    <span class="tg" style="color:var(--d1);border-color:rgba(107,33,168,.3);background:rgba(107,33,168,.08)">Concepts</span>
+    <span class="tg" style="color:var(--d3);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Dataset</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="concept-row">
+  <div class="concept-card">
+    <div class="cc-icon">🎯</div>
+    <h4>Faithfulness (fidélité)</h4>
+    <p>La réponse est-elle fondée <em>uniquement</em> sur les documents récupérés ? Score 0–1.</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">🔍</div>
+    <h4>Context Recall</h4>
+    <p>Le retriever a-t-il récupéré <em>tous</em> les chunks nécessaires pour répondre ? Score 0–1.</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">💬</div>
+    <h4>Answer Relevancy</h4>
+    <p>La réponse répond-elle <em>vraiment</em> à la question ? Score 0–1.</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">✅</div>
+    <h4>Factual Correctness</h4>
+    <p>Les faits dans la réponse sont-ils corrects par rapport à la référence ? Score 0–1.</p>
+  </div>
+</div>
+
+<table class="metric-table">
+  <thead><tr><th>Métrique</th><th>Question posée</th><th>Besoin référence ?</th><th>Seuil recommandé</th></tr></thead>
+  <tbody>
+    <tr><td class="name">Faithfulness</td><td>Le LLM invente-t-il ?</td><td>Non ✓</td><td class="score">&gt; 0.80</td></tr>
+    <tr><td class="name">Context Recall</td><td>Le retriever est-il complet ?</td><td>Oui (référence)</td><td class="score">&gt; 0.75</td></tr>
+    <tr><td class="name">Answer Relevancy</td><td>Hors sujet ?</td><td>Non ✓</td><td class="score">&gt; 0.80</td></tr>
+    <tr><td class="name">Factual Correctness</td><td>Les faits sont-ils justes ?</td><td>Oui (référence)</td><td class="score">&gt; 0.70</td></tr>
+    <tr><td class="name">LLM-as-Judge</td><td>Score global custom</td><td>Optionnel</td><td class="score">Défini par toi</td></tr>
+  </tbody>
+</table>
+
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Structure d'un sample d'éval</span></div>
+    <ul>
+      <li><div class="b"></div><strong>user_input</strong> : la question posée</li>
+      <li><div class="b"></div><strong>retrieved_contexts</strong> : les chunks retournés par le retriever</li>
+      <li><div class="b"></div><strong>response</strong> : la réponse générée par le LLM</li>
+      <li><div class="b"></div><strong>reference</strong> : la réponse attendue (pour certaines métriques)</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer J1</span></div>
+    <ul>
+      <li><div class="b"></div>Métriques BLEU/ROUGE (NLP classique, dépassé)</li>
+      <li><div class="b"></div>Human evaluation à grande échelle</li>
+      <li><div class="b"></div>A/B testing statistique avancé</li>
+      <li><div class="b"></div>LangSmith (payant, abordé J5)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 eval/jour1_dataset_manuel.py — Construire son premier dataset de test</span></div>
+  <pre><span class="c"># pip install ragas datasets pandas
+```
+
+# On construit le dataset à la main sur les docs JEMS Group du cours RAG</span>
+
+<span class="k">import</span> json
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+
+<span class="c"># ── DATASET D’ÉVALUATION MANUEL ───────────────────────────────────────</span>
+<span class="c"># Format : question + contextes récupérés + réponse agent + réponse attendue</span>
+<span class="hl">EVAL_DATASET = [
+{
+<span class="s">“user_input”</span>: <span class="s">“Quelles sont les exigences d’authentification pour le VPN ?”</span>,
+<span class="s">“retrieved_contexts”</span>: [
+<span class="s">“Politique sécurité : tout accès VPN requiert une authentification MFA.”</span>,
+<span class="s">“Les appareils non enregistrés ne peuvent pas accéder au VPN d’entreprise.”</span>,
+],
+<span class="s">“response”</span>: <span class="s">“L’accès VPN nécessite une authentification MFA obligatoire. Seuls les appareils enregistrés sont autorisés.”</span>,
+<span class="s">“reference”</span>: <span class="s">“Le VPN exige MFA et l’appareil doit être enregistré dans le système.”</span>,
+},
+{
+<span class="s">“user_input”</span>: <span class="s">“Combien de jours de télétravail sont autorisés par semaine ?”</span>,
+<span class="s">“retrieved_contexts”</span>: [
+<span class="s">“Charte télétravail RH : 2 jours maximum par semaine, accord manager obligatoire.”</span>,
+],
+<span class="s">“response”</span>: <span class="s">“Le télétravail est autorisé 2 jours maximum par semaine avec l’accord du manager.”</span>,
+<span class="s">“reference”</span>: <span class="s">“Maximum 2 jours de télétravail par semaine, avec accord du manager.”</span>,
+},
+{
+<span class="s">“user_input”</span>: <span class="s">“Quel est le budget formation annuel par salarié ?”</span>,
+<span class="s">“retrieved_contexts”</span>: [
+<span class="s">“Budget formation : 1500€/an par salarié, CPF complémentaire possible.”</span>,
+],
+<span class="s">“response”</span>: <span class="s">“Le budget formation est de 1500€ par an et par salarié.”</span>,
+<span class="s">“reference”</span>: <span class="s">“1500€ annuels par salarié, avec possibilité de compléter via le CPF.”</span>,
+},
+{
+<span class="s">“user_input”</span>: <span class="s">“Quand doivent être posés les congés ?”</span>,
+<span class="s">“retrieved_contexts”</span>: [
+<span class="s">“RH : les congés doivent être posés avant le 31 octobre de chaque année.”</span>,
+],
+<span class="s">“response”</span>: <span class="s">“Les congés doivent être posés avant le 31 octobre.”</span>,
+<span class="s">“reference”</span>: <span class="s">“Les congés sont à poser avant le 31 octobre.”</span>,
+},
+{
+<span class="s">“user_input”</span>: <span class="s">“Quelle est la politique de backup ?”</span>,
+<span class="s">“retrieved_contexts”</span>: [
+<span class="s">“Backup : snapshots quotidiens à 2h du matin, rétention 30 jours.”</span>,
+],
+<span class="s">“response”</span>: <span class="s">“Les sauvegardes sont effectuées quotidiennement à 2h du matin avec une rétention de 30 jours.”</span>,
+<span class="s">“reference”</span>: <span class="s">“Snapshots quotidiens à 2h, conservés 30 jours.”</span>,
+},
+]</span>
+
+<span class="c"># ── SAUVEGARDER EN JSON ────────────────────────────────────────────────</span>
+Path(<span class="s">“eval/datasets”</span>).mkdir(parents=<span class="k">True</span>, exist_ok=<span class="k">True</span>)
+Path(<span class="s">“eval/datasets/dataset_v1.json”</span>).write_text(
+json.dumps(EVAL_DATASET, ensure_ascii=<span class="k">False</span>, indent=<span class="n">2</span>)
+)
+<span class="k">print</span>(<span class="s">f”✓ Dataset sauvegardé : {len(EVAL_DATASET)} samples”</span>)
+
+<span class="c"># ── ÉVALUATION MANUELLE BASIQUE (avant RAGAS) ─────────────────────────</span>
+<span class="c"># Compter combien de réponses contiennent les mots-clés de la référence</span>
+<span class="k">def</span> <span class="f">eval_keyword_match</span>(dataset):
+scores = []
+<span class="k">for</span> sample <span class="k">in</span> dataset:
+ref_words = set(sample[<span class="s">“reference”</span>].lower().split())
+resp_words = set(sample[<span class="s">“response”</span>].lower().split())
+overlap = len(ref_words & resp_words) / len(ref_words) <span class="k">if</span> ref_words <span class="k">else</span> <span class="n">0</span>
+scores.append({<span class="s">“question”</span>: sample[<span class="s">“user_input”</span>][:<span class="n">50</span>], <span class="s">“keyword_score”</span>: round(overlap, <span class="n">2</span>)})
+<span class="k">return</span> scores
+
+results = eval_keyword_match(EVAL_DATASET)
+<span class="k">print</span>(<span class="s">”\n── Évaluation manuelle (keyword match) ──”</span>)
+<span class="k">for</span> r <span class="k">in</span> results:
+<span class="k">print</span>(<span class="s">f”  {r[‘keyword_score’]:.0%}  {r[‘question’]}”</span>)
+avg = sum(r[<span class="s">‘keyword_score’</span>] <span class="k">for</span> r <span class="k">in</span> results) / len(results)
+<span class="k">print</span>(<span class="s">f”\nScore moyen : {avg:.0%}  ← limite : ces scores ne détectent pas les hallucinations !”</span>)
+
+<span class="o">
+# SORTIE :
+#   100%  Quelles sont les exigences d'authentification...
+#   100%  Combien de jours de télétravail...
+#   80%   Quel est le budget formation...
+# Score moyen : 96%  ← mais ne détecte PAS si le LLM invente !</span></pre>
+    </div>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fondamental — Le keyword match ne suffit pas</strong>
+    <p>Un score de 96% en keyword match peut cacher des hallucinations graves. Un LLM peut reprendre les bons mots-clés tout en inventant des chiffres ou des règles. C'est précisément pour ça que RAGAS et LLM-as-Judge existent — ils évaluent le <strong>sens</strong>, pas les mots.</p>
+  </div>
+</div>
+
+<div class="teach">
+  <strong>🎓 Pour enseigner l'évaluation</strong>
+  <p>Commence par montrer un exemple de "bonne réponse en apparence" qui est en fait une hallucination. Ex : la réponse dit "3 jours de télétravail" alors que la doc dit "2 jours". Le keyword score reste élevé car "jours" et "télétravail" sont présents. Ça crée l'urgence d'apprendre des métriques sémantiques.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J2</h4>
+  <ul>
+    <li><input type="checkbox"> Le fichier <code>eval/datasets/dataset_v1.json</code> est créé avec 5 samples</li>
+    <li><input type="checkbox"> Tu comprends les 4 champs d'un sample RAGAS (input, contexts, response, reference)</li>
+    <li><input type="checkbox"> Tu as vu que le keyword match ne détecte pas les hallucinations</li>
+    <li><input type="checkbox"> Tu sais expliquer la différence Faithfulness vs Factual Correctness</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(107,33,168,.06);border-color:rgba(107,33,168,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d1)">Livrable J1</strong>
+    <p>Dataset de 5 samples évalués manuellement sur tes docs JEMS Group. Base de tout le reste du cours — tu l'enrichiras chaque jour.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J2 ══ -->
+
+<div class="dc" id="dc2">
+  <div class="dc-head" onclick="tog(2)">
+    <div class="dc-accent" style="background:var(--d2)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d2)">2</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>RAGAS + Ollama — Évaluer ton RAG avec un LLM Local</h3>
+      <div class="sub">LangchainLLMWrapper, 4 métriques RAGAS, rapport JSON automatique</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 50 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d2);border-color:rgba(36,113,163,.3);background:rgba(36,113,163,.08)">Vital</span>
+    <span class="tg" style="color:var(--d2);border-color:rgba(36,113,163,.3);background:rgba(36,113,163,.08)">RAGAS</span>
+    <span class="tg" style="color:var(--d3);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Ollama local</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ RAGAS avec Ollama — les clés</span></div>
+    <ul>
+      <li><div class="b"></div>RAGAS utilise un LLM pour évaluer — on lui passe Mistral via <code>LangchainLLMWrapper</code></li>
+      <li><div class="b"></div><code>SingleTurnSample</code> = un sample RAG complet (input + contexts + response + reference)</li>
+      <li><div class="b"></div>Les métriques sont <strong>async</strong> — utiliser <code>await metric.single_turn_ascore(sample)</code></li>
+      <li><div class="b"></div><strong>Mistral 7B peut être moins précis</strong> qu'un GPT-4 pour évaluer — c'est acceptable pour du dev local</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer J2</span></div>
+    <ul>
+      <li><div class="b"></div>RAGAS TestsetGenerator (J4)</li>
+      <li><div class="b"></div>Métriques multi-tours pour agents (J3)</li>
+      <li><div class="b"></div>Intégration LangSmith avec RAGAS (J5)</li>
+      <li><div class="b"></div>Ragas App (interface web payante)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 eval/jour2_ragas_ollama.py — RAGAS complet avec Mistral local</span></div>
+  <pre><span class="c"># pip install ragas datasets langchain-ollama langchain-huggingface
+```
+
+# Prérequis : ollama serve  |  ollama pull mistral</span>
+
+<span class="k">import</span> asyncio, json
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_huggingface <span class="k">import</span> HuggingFaceEmbeddings
+<span class="k">from</span> ragas.llms <span class="k">import</span> LangchainLLMWrapper
+<span class="k">from</span> ragas.embeddings <span class="k">import</span> LangchainEmbeddingsWrapper
+<span class="k">from</span> ragas.dataset_schema <span class="k">import</span> SingleTurnSample
+<span class="k">from</span> ragas.metrics <span class="k">import</span> Faithfulness, LLMContextRecall, AnswerRelevancy, FactualCorrectness
+
+<span class="c"># ── CONFIGURER RAGAS AVEC MISTRAL LOCAL ───────────────────────────────</span>
+<span class="hl">evaluator_llm = LangchainLLMWrapper(ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>))
+evaluator_emb = LangchainEmbeddingsWrapper(HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>))</span>
+
+<span class="c"># ── INITIALISER LES MÉTRIQUES ─────────────────────────────────────────</span>
+<span class="hl">metrics = [
+Faithfulness(llm=evaluator_llm),            <span class="c"># hallucinations ?</span>
+LLMContextRecall(llm=evaluator_llm),         <span class="c"># retriever complet ?</span>
+AnswerRelevancy(llm=evaluator_llm, embeddings=evaluator_emb),  <span class="c"># hors sujet ?</span>
+FactualCorrectness(llm=evaluator_llm),       <span class="c"># faits corrects ?</span>
+]</span>
+
+<span class="c"># ── CHARGER LE DATASET DU J1 ──────────────────────────────────────────</span>
+raw = json.loads(Path(<span class="s">“eval/datasets/dataset_v1.json”</span>).read_text())
+
+<span class="k">async def</span> <span class="f">evaluer_sample</span>(sample_dict: dict) -> dict:
+<span class="s">“Évalue un sample sur toutes les métriques”</span>
+<span class="hl">sample = SingleTurnSample(
+user_input=sample_dict[<span class="s">“user_input”</span>],
+retrieved_contexts=sample_dict[<span class="s">“retrieved_contexts”</span>],
+response=sample_dict[<span class="s">“response”</span>],
+reference=sample_dict.get(<span class="s">“reference”</span>),
+)</span>
+scores = {<span class="s">“question”</span>: sample_dict[<span class="s">“user_input”</span>][:<span class="n">60</span>]}
+<span class="k">for</span> metric <span class="k">in</span> metrics:
+<span class="k">try</span>:
+<span class="hl">score = await metric.single_turn_ascore(sample)</span>
+scores[metric.name] = round(score, <span class="n">3</span>)
+<span class="k">except</span> Exception <span class="k">as</span> e:
+scores[metric.name] = <span class="s">f”ERREUR: {str(e)[:50]}”</span>
+<span class="k">return</span> scores
+
+<span class="k">async def</span> <span class="f">main</span>():
+<span class="k">print</span>(<span class="s">“🔍 Évaluation RAGAS avec Mistral local…\n”</span>)
+results = []
+<span class="k">for</span> i, sample <span class="k">in</span> enumerate(raw, <span class="n">1</span>):
+<span class="k">print</span>(<span class="s">f”  Sample {i}/{len(raw)} : {sample[‘user_input’][:50]}…”</span>)
+result = await evaluer_sample(sample)
+results.append(result)
+
+```
+<span class="c"># ── AFFICHER LE RAPPORT ────────────────────────────────────────────</span>
+metric_names = [m.name <span class="k">for</span> m <span class="k">in</span> metrics]
+<span class="k">print</span>(<span class="s">f"\n{'Question':<50} {' '.join(f'{m[:12]:>13}' for m in metric_names)}"</span>)
+<span class="k">print</span>(<span class="s">"-"</span> * <span class="n">100</span>)
+<span class="k">for</span> r <span class="k">in</span> results:
+    scores_str = <span class="s">" "</span>.join(
+        <span class="s">f"{r.get(m, '?'):>13}"</span> <span class="k">if</span> <span class="k">not</span> isinstance(r.get(m), float)
+        <span class="k">else</span> <span class="s">f"{r[m]:>13.3f}"</span>
+        <span class="k">for</span> m <span class="k">in</span> metric_names
+    )
+    <span class="k">print</span>(<span class="s">f"{r['question']:<50} {scores_str}"</span>)
+
+<span class="c"># Moyennes</span>
+<span class="k">print</span>(<span class="s">"\n── SCORES MOYENS ──"</span>)
+<span class="k">for</span> m <span class="k">in</span> metric_names:
+    vals = [r[m] <span class="k">for</span> r <span class="k">in</span> results <span class="k">if</span> isinstance(r.get(m), float)]
+    avg = sum(vals) / len(vals) <span class="k">if</span> vals <span class="k">else</span> <span class="n">0</span>
+    status = <span class="s">"✅"</span> <span class="k">if</span> avg >= <span class="n">0.75</span> <span class="k">else</span> <span class="s">"⚠️ À améliorer"</span>
+    <span class="k">print</span>(<span class="s">f"  {m:<25} {avg:.3f}  {status}"</span>)
+
+<span class="c"># Sauvegarder les résultats</span>
+Path(<span class="s">"eval/results"</span>).mkdir(exist_ok=<span class="k">True</span>)
+Path(<span class="s">"eval/results/ragas_v1.json"</span>).write_text(
+    json.dumps(results, ensure_ascii=<span class="k">False</span>, indent=<span class="n">2</span>)
+)
+<span class="k">print</span>(<span class="s">"\n✓ Résultats sauvegardés dans eval/results/ragas_v1.json"</span>)
+```
+
+asyncio.run(main())
+
+<span class="o">
+# SORTIE ATTENDUE (valeurs approximatives avec Mistral 7B) :
+# Question                                       faithfulness  context_recall  answer_relevancy  factual_correctness
+# ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+# Quelles sont les exigences d'authentifi...          0.950           0.900             0.920                0.880
+# Combien de jours de télétravail...                  1.000           1.000             0.950                1.000
+# ...
+#
+# ── SCORES MOYENS ──
+#   faithfulness              0.920  ✅
+#   context_recall            0.880  ✅
+#   answer_relevancy          0.910  ✅
+#   factual_correctness       0.840  ✅</span></pre>
+    </div>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège J2 — Mistral 7B comme évaluateur est moins fiable que GPT-4</strong>
+    <p>RAGAS utilise le LLM pour <em>évaluer</em> les réponses — si le LLM évaluateur est faible (Mistral 7B), ses scores seront moins fiables. Pour le développement local c'est acceptable. Pour la production, utilise un modèle plus grand comme <code>mistral-large</code> ou <code>llama3:70b</code> via Ollama, ou un modèle API pour l'évaluation uniquement.</p>
+  </div>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J3</h4>
+  <ul>
+    <li><input type="checkbox"> <code>ragas_v1.json</code> contient des scores numériques pour les 4 métriques</li>
+    <li><input type="checkbox"> Au moins 1 métrique est en dessous de 0.75 (sinon tes docs sont trop simples !)</li>
+    <li><input type="checkbox"> Tu comprends pourquoi Faithfulness &gt; Context Recall &gt; Answer Relevancy</li>
+    <li><input type="checkbox"> Tu peux expliquer ce que signifie un score Faithfulness = 0.5</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(36,113,163,.06);border-color:rgba(36,113,163,.25);">
+  <div class="liv-icon">📊</div>
+  <div class="liv-text">
+    <strong style="color:var(--d2)">Livrable J2</strong>
+    <p>Premier rapport RAGAS automatisé avec Mistral local. Tu as un score de base (baseline) à améliorer — ou à défendre quand tu changes le système.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J3 ══ -->
+
+<div class="dc" id="dc3">
+  <div class="dc-head" onclick="tog(3)">
+    <div class="dc-accent" style="background:var(--d3)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d3)">3</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>LLM-as-Judge — Évaluer les Agents et Métriques Custom</h3>
+      <div class="sub">AgentGoalAccuracy, métriques personnalisées, évaluation multi-tours</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 50 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d3);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Vital</span>
+    <span class="tg" style="color:var(--d3);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">LLM-as-Judge</span>
+    <span class="tg" style="color:var(--d4);border-color:rgba(212,132,10,.3);background:rgba(212,132,10,.08)">Agents</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Quand utiliser LLM-as-Judge</span></div>
+    <ul>
+      <li><div class="b"></div>RAGAS = pour le RAG (retriever + génération). LLM-as-Judge = pour <strong>tout le reste</strong> (agents, chatbots, MCP...)</li>
+      <li><div class="b"></div><strong>AgentGoalAccuracy</strong> : l'agent a-t-il atteint l'objectif de l'utilisateur ?</li>
+      <li><div class="b"></div><strong>DiscreteMetric</strong> de RAGAS : créer une métrique custom avec un prompt</li>
+      <li><div class="b"></div>Les biais LLM-as-Judge : le modèle préfère ses propres réponses, les réponses longues, les premières options</li>
+    </ul>
+  </div>
+  <div class="psplit warn-box">
+    <div class="psplit-head"><span class="badge">⚠️ Biais à connaître</span></div>
+    <ul>
+      <li><div class="b"></div><strong>Self-enhancement bias</strong> : Mistral note mieux les réponses générées par Mistral</li>
+      <li><div class="b"></div><strong>Length bias</strong> : les réponses longues sont mieux notées même si moins précises</li>
+      <li><div class="b"></div><strong>Position bias</strong> : la première option est souvent préférée dans les comparaisons</li>
+      <li><div class="b"></div>Solution : utiliser un LLM évaluateur différent du LLM générant les réponses</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 eval/jour3_llm_judge.py — LLM-as-Judge + métriques custom + agents</span></div>
+  <pre><span class="c"># pip install ragas langchain-ollama
+```
+
+# LLM-as-Judge : Mistral évalue la qualité des réponses et des agents</span>
+
+<span class="k">import</span> asyncio, json
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> ragas.llms <span class="k">import</span> LangchainLLMWrapper
+<span class="k">from</span> ragas.dataset_schema <span class="k">import</span> SingleTurnSample, MultiTurnSample
+<span class="k">from</span> ragas.messages <span class="k">import</span> HumanMessage, AIMessage, ToolCall, ToolMessage
+<span class="k">from</span> ragas.metrics <span class="k">import</span> AgentGoalAccuracyWithReference, DiscreteMetric
+
+evaluator_llm = LangchainLLMWrapper(ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>))
+
+<span class="c"># ── MÉTRIQUE CUSTOM 1 : Ton des réponses (professionnel / neutre / informel) ──</span>
+<span class="hl">ton_metrique = DiscreteMetric(
+name=<span class="s">“ton_professionnel”</span>,
+definition=<span class="s">””“Évalue le ton de la réponse de l’assistant.
+Réponds UNIQUEMENT par : ‘professionnel’, ‘neutre’, ou ‘informel’.”””</span>,
+allowed_values=[<span class="s">“professionnel”</span>, <span class="s">“neutre”</span>, <span class="s">“informel”</span>],
+)</span>
+
+<span class="c"># ── MÉTRIQUE CUSTOM 2 : Sourcing explicite ────────────────────────────</span>
+<span class="hl">sourcing_metrique = DiscreteMetric(
+name=<span class="s">“cite_source”</span>,
+definition=<span class="s">””“La réponse cite-t-elle explicitement une source de document ?
+Réponds UNIQUEMENT par : ‘oui’ ou ‘non’.”””</span>,
+allowed_values=[<span class="s">“oui”</span>, <span class="s">“non”</span>],
+)</span>
+
+<span class="c"># ── ÉVALUER AVEC LES MÉTRIQUES CUSTOM ────────────────────────────────</span>
+<span class="k">async def</span> <span class="f">eval_custom</span>():
+raw = json.loads(Path(<span class="s">“eval/datasets/dataset_v1.json”</span>).read_text())
+<span class="k">print</span>(<span class="s">“── Métriques custom (ton + sourcing) ──\n”</span>)
+<span class="k">for</span> s <span class="k">in</span> raw:
+sample = SingleTurnSample(
+user_input=s[<span class="s">“user_input”</span>],
+response=s[<span class="s">“response”</span>],
+retrieved_contexts=s[<span class="s">“retrieved_contexts”</span>],
+)
+<span class="hl">ton = await ton_metrique.single_turn_ascore(sample, llm=evaluator_llm)
+src = await sourcing_metrique.single_turn_ascore(sample, llm=evaluator_llm)</span>
+<span class="k">print</span>(<span class="s">f”  Q: {s[‘user_input’][:50]:50} | Ton: {ton:15} | Source: {src}”</span>)
+
+<span class="c"># ── ÉVALUATION D’UN AGENT (multi-tours) ───────────────────────────────</span>
+<span class="c"># Simuler une trace d’agent (comme si on avait capturé une vraie exécution)</span>
+<span class="k">async def</span> <span class="f">eval_agent</span>():
+<span class="k">print</span>(<span class="s">”\n── Évaluation agent multi-tours ──\n”</span>)
+
+```
+<span class="c"># Trace d'une conversation agent réelle (capturée depuis le cours Agents)</span>
+<span class="hl">agent_trace = [
+    HumanMessage(content=<span class="s">"Quelles sont les règles VPN ET combien de jours de télétravail ?"</span>),
+    AIMessage(content=<span class="s">""</span>, tool_calls=[
+        ToolCall(name=<span class="s">"recherche_docs_internes"</span>, args={<span class="s">"question"</span>: <span class="s">"règles VPN entreprise"</span>})
+    ]),
+    ToolMessage(content=<span class="s">"VPN obligatoire hors bureaux, MFA requis."</span>),
+    AIMessage(content=<span class="s">""</span>, tool_calls=[
+        ToolCall(name=<span class="s">"recherche_docs_internes"</span>, args={<span class="s">"question"</span>: <span class="s">"politique télétravail"</span>})
+    ]),
+    ToolMessage(content=<span class="s">"Télétravail : 2 jours max/semaine, accord manager requis."</span>),
+    AIMessage(content=<span class="s">"Le VPN avec MFA est obligatoire hors bureaux. Le télétravail est limité à 2 jours par semaine avec accord du manager."</span>),
+]</span>
+
+sample_agent = MultiTurnSample(
+    user_input=agent_trace,
+    reference=<span class="s">"L'agent doit expliquer les règles VPN (MFA obligatoire) et télétravail (2j max)"</span>,
+)
+
+<span class="hl">scorer = AgentGoalAccuracyWithReference(llm=evaluator_llm)
+score = await scorer.multi_turn_ascore(sample_agent)
+<span class="k">print</span>(<span class="s">f"  AgentGoalAccuracy : {score:.3f}"</span>)
+<span class="k">print</span>(<span class="s">f"  → {'✅ L\'agent a atteint son objectif' if score > 0.7 else '⚠️ Objectif partiellement atteint'}"</span>)</span>
+
+<span class="c"># Tester un agent qui ÉCHOUE</span>
+agent_echec = [
+    HumanMessage(content=<span class="s">"Quelles sont les règles VPN ?"</span>),
+    AIMessage(content=<span class="s">"Je ne suis pas sûr des règles VPN actuelles."</span>),  <span class="c"># réponse vague sans outil</span>
+]
+sample_echec = MultiTurnSample(user_input=agent_echec, reference=<span class="s">"L'agent doit expliquer MFA et l'obligation VPN"</span>)
+score_echec = await scorer.multi_turn_ascore(sample_echec)
+<span class="k">print</span>(<span class="s">f"\n  Agent sans outil : {score_echec:.3f}"</span>)
+<span class="k">print</span>(<span class="s">f"  → {'✅' if score_echec > 0.7 else '⚠️ Objectif non atteint (attendu !)'}"</span>)
+```
+
+<span class="k">async def</span> <span class="f">main</span>():
+await eval_custom()
+await eval_agent()
+
+asyncio.run(main())</pre>
+</div>
+
+```
+<div class="teach">
+  <strong>🎓 Pour enseigner LLM-as-Judge</strong>
+  <p>L'exercice le plus marquant : montrer l'évaluation des deux agents côte à côte — celui qui appelle les outils (score ~0.95) vs celui qui répond vaguement (score ~0.2). Puis demander aux étudiants : <em>"Est-ce qu'on fait confiance à Mistral pour se juger lui-même ?"</em> — c'est le débat fondamental sur les biais des évaluateurs LLM.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J4</h4>
+  <ul>
+    <li><input type="checkbox"> Les métriques custom retournent bien <code>professionnel</code>/<code>neutre</code>/<code>informel</code></li>
+    <li><input type="checkbox"> <code>AgentGoalAccuracy</code> différencie bien l'agent qui réussit de celui qui échoue</li>
+    <li><input type="checkbox"> Tu comprends les 3 biais principaux de LLM-as-Judge</li>
+    <li><input type="checkbox"> Tu sais créer une <code>DiscreteMetric</code> custom pour ton domaine</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(26,107,74,.06);border-color:rgba(26,107,74,.25);">
+  <div class="liv-icon">⚖️</div>
+  <div class="liv-text">
+    <strong style="color:var(--d3)">Livrable J3</strong>
+    <p>Métriques custom (ton, sourcing) + évaluation d'agents multi-tours avec AgentGoalAccuracy. Tu peux désormais mesurer n'importe quel comportement de ton agent.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J4 ══ -->
+
+<div class="dc" id="dc4">
+  <div class="dc-head" onclick="tog(4)">
+    <div class="dc-accent" style="background:var(--d4)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d4)">4</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Dataset Synthétique — Générer des Tests à la Volée</h3>
+      <div class="sub">TestsetGenerator RAGAS, couverture automatique, enrichir le dataset</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 50 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d4);border-color:rgba(212,132,10,.3);background:rgba(212,132,10,.08)">Vital</span>
+    <span class="tg" style="color:var(--d4);border-color:rgba(212,132,10,.3);background:rgba(212,132,10,.08)">Synthétique</span>
+    <span class="tg" style="color:var(--d2);border-color:rgba(36,113,163,.3);background:rgba(36,113,163,.08)">Automation</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Pourquoi générer des tests synthétiques</span></div>
+    <ul>
+      <li><div class="b"></div>Créer 5 tests manuellement (J1) = 15 min. Couvrir 50 questions = impossible manuellement</li>
+      <li><div class="b"></div><code>TestsetGenerator</code> de RAGAS génère des questions variées depuis tes documents</li>
+      <li><div class="b"></div>3 types de questions : <strong>simple</strong> (factuel), <strong>reasoning</strong> (raisonnement), <strong>multi_context</strong> (plusieurs docs)</li>
+      <li><div class="b"></div>Génération purement locale avec Mistral — aucun coût API</li>
+    </ul>
+  </div>
+  <div class="psplit useful">
+    <div class="psplit-head"><span class="badge">💡 Alternative simple sans TestsetGenerator</span></div>
+    <ul>
+      <li><div class="b"></div>Si TestsetGenerator est trop lent avec Mistral 7B, générer les questions manuellement avec Mistral via un prompt dédié</li>
+      <li><div class="b"></div>Pattern : <em>"Génère 10 questions sur ce document + réponses attendues"</em></li>
+      <li><div class="b"></div>Plus rapide, moins automatisé, mais tout aussi efficace pour débuter</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 eval/jour4_dataset_synthetique.py — Générer un dataset de test automatiquement</span></div>
+  <pre><span class="c"># pip install ragas langchain-ollama langchain-chroma langchain-huggingface
+```
+
+# ⚠️ TestsetGenerator est lent avec Mistral 7B — prévoir 5-10 min pour 10 questions</span>
+
+<span class="k">import</span> asyncio, json
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_huggingface <span class="k">import</span> HuggingFaceEmbeddings
+<span class="k">from</span> langchain_chroma <span class="k">import</span> Chroma
+<span class="k">from</span> ragas.llms <span class="k">import</span> LangchainLLMWrapper
+<span class="k">from</span> ragas.embeddings <span class="k">import</span> LangchainEmbeddingsWrapper
+
+llm_wrapper = LangchainLLMWrapper(ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0.3</span>))
+emb_wrapper = LangchainEmbeddingsWrapper(HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>))
+
+<span class="c"># ── MÉTHODE 1 : Génération via prompt simple (plus rapide) ─────────────</span>
+<span class="hl"><span class="k">async def</span> <span class="f">generer_questions_simple</span>(document_text: str, nb_questions: int = <span class="n">10</span>) -> list:
+<span class="s">””“Génère des questions de test depuis un document via prompt Mistral.”””</span>
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate
+<span class="k">from</span> langchain_core.output_parsers <span class="k">import</span> StrOutputParser
+<span class="k">import</span> re
+
+```
+llm = ChatOllama(model=<span class="s">"mistral"</span>, temperature=<span class="n">0.4</span>)
+prompt = ChatPromptTemplate.from_messages([
+    (<span class="s">"system"</span>, <span class="s">f"""Génère exactement {nb_questions} paires question/réponse en français basées sur ce document.
+```
+
+Format STRICT (une paire par ligne) :
+Q: [question factuelle]
+R: [réponse courte et précise]
+
+Document : {document_text[:2000]}”””</span>),
+(<span class="s">“human”</span>, <span class="s">“Génère les questions maintenant.”</span>),
+])
+raw = await (prompt | llm | StrOutputParser()).ainvoke({})
+
+```
+<span class="c"># Parser les paires Q/R</span>
+pairs = []
+lines = raw.strip().split(<span class="s">"\n"</span>)
+q, r = <span class="k">None</span>, <span class="k">None</span>
+<span class="k">for</span> line <span class="k">in</span> lines:
+    <span class="k">if</span> line.startswith(<span class="s">"Q:"</span>): q = line[<span class="n">2</span>:].strip()
+    <span class="k">elif</span> line.startswith(<span class="s">"R:"</span>) <span class="k">and</span> q:
+        r = line[<span class="n">2</span>:].strip()
+        pairs.append({<span class="s">"question"</span>: q, <span class="s">"reference"</span>: r})
+        q, r = <span class="k">None</span>, <span class="k">None</span>
+<span class="k">return</span> pairs[:nb_questions]</span>
+```
+
+<span class="c"># ── MÉTHODE 2 : TestsetGenerator RAGAS (plus puissant, plus lent) ──────</span>
+<span class="k">async def</span> <span class="f">generer_avec_ragas</span>(docs_langchain: list, nb: int = <span class="n">5</span>):
+<span class="s">””“Utilise TestsetGenerator RAGAS — génère questions simple + reasoning.”””</span>
+<span class="k">from</span> ragas.testset <span class="k">import</span> TestsetGenerator
+<span class="k">from</span> ragas.testset.synthesizers <span class="k">import</span> SingleHopSpecificQuerySynthesizer, MultiHopAbstractQuerySynthesizer
+
+```
+generator = TestsetGenerator(llm=llm_wrapper, embedding_model=emb_wrapper)
+<span class="hl">dataset = await generator.generate_with_langchain_docs(
+    documents=docs_langchain,
+    testset_size=nb,
+    query_distribution={
+        SingleHopSpecificQuerySynthesizer(llm=llm_wrapper): <span class="n">0.6</span>,   <span class="c"># 60% factuel simple</span>
+        MultiHopAbstractQuerySynthesizer(llm=llm_wrapper): <span class="n">0.4</span>,    <span class="c"># 40% multi-doc</span>
+    },
+)</span>
+<span class="k">return</span> dataset.to_pandas()
+```
+
+<span class="k">async def</span> <span class="f">main</span>():
+<span class="c"># Charger les docs de la base ChromaDB</span>
+emb = HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>)
+vectordb = Chroma(persist_directory=<span class="s">”./base_entreprise”</span>, embedding_function=emb)
+docs = vectordb.get()[<span class="s">“documents”</span>]
+doc_text = <span class="s">” “</span>.join(docs[:<span class="n">10</span>])  <span class="c"># 10 premiers chunks</span>
+
+```
+<span class="k">print</span>(<span class="s">"── Méthode 1 : génération par prompt ──"</span>)
+questions = await generer_questions_simple(doc_text, nb_questions=<span class="n">8</span>)
+<span class="k">print</span>(<span class="s">f"✓ {len(questions)} questions générées"</span>)
+<span class="k">for</span> q <span class="k">in</span> questions[:3]:
+    <span class="k">print</span>(<span class="s">f"  Q: {q['question']}"</span>)
+    <span class="k">print</span>(<span class="s">f"  R: {q['reference']}\n"</span>)
+
+<span class="c"># Enrichir le dataset existant</span>
+existing = json.loads(Path(<span class="s">"eval/datasets/dataset_v1.json"</span>).read_text())
+nouveaux_samples = []
+<span class="k">for</span> q <span class="k">in</span> questions:
+    <span class="c"># Pour chaque question, chercher les contextes dans ChromaDB</span>
+    results = vectordb.similarity_search(q[<span class="s">"question"</span>], k=<span class="n">2</span>)
+    nouveaux_samples.append({
+        <span class="s">"user_input"</span>: q[<span class="s">"question"</span>],
+        <span class="s">"retrieved_contexts"</span>: [r.page_content <span class="k">for</span> r <span class="k">in</span> results],
+        <span class="s">"response"</span>: <span class="s">""</span>,   <span class="c"># à remplir en lançant le RAG sur cette question</span>
+        <span class="s">"reference"</span>: q[<span class="s">"reference"</span>],
+    })
+
+dataset_enrichi = existing + nouveaux_samples
+Path(<span class="s">"eval/datasets/dataset_v2.json"</span>).write_text(
+    json.dumps(dataset_enrichi, ensure_ascii=<span class="k">False</span>, indent=<span class="n">2</span>)
+)
+<span class="k">print</span>(<span class="s">f"✓ Dataset enrichi : {len(dataset_enrichi)} samples (était {len(existing)})"</span>)
+```
+
+asyncio.run(main())</pre>
+</div>
+
+```
+<div class="check80">
+  <h4>✅ Checklist — Passer au J5</h4>
+  <ul>
+    <li><input type="checkbox"> La méthode prompt génère au moins 5 paires Q/R cohérentes</li>
+    <li><input type="checkbox"> Le dataset v2 contient plus de 10 samples</li>
+    <li><input type="checkbox"> Les nouvelles questions couvrent des sujets différents des 5 premières</li>
+    <li><input type="checkbox"> Tu comprends pourquoi TestsetGenerator est plus lent que la méthode prompt</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(212,132,10,.06);border-color:rgba(212,132,10,.25);">
+  <div class="liv-icon">🏭</div>
+  <div class="liv-text">
+    <strong style="color:var(--d4)">Livrable J4</strong>
+    <p>Dataset v2 avec 10+ samples générés automatiquement. Ton système de test est maintenant scalable — ajoute des docs et régénère le dataset en 1 commande.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J5 ══ -->
+
+<div class="dc" id="dc5">
+  <div class="dc-head" onclick="tog(5)">
+    <div class="dc-accent" style="background:var(--d5)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d5)">5</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Pipeline CI/CD + Dashboard — Automatiser et Visualiser</h3>
+      <div class="sub">Tests de régression, rapport HTML, dashboard Streamlit, intégration Git</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 60 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d5);border-color:rgba(176,58,46,.3);background:rgba(176,58,46,.08)">🏆 Projet final</span>
+    <span class="tg" style="color:var(--d5);border-color:rgba(176,58,46,.3);background:rgba(176,58,46,.08)">CI/CD</span>
+    <span class="tg" style="color:var(--d2);border-color:rgba(36,113,163,.3);background:rgba(36,113,163,.08)">Dashboard</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Ce que tu assembles</span></div>
+    <ul>
+      <li><div class="b"></div><strong>J1</strong> : Dataset manuel 5 samples</li>
+      <li><div class="b"></div><strong>J2</strong> : RAGAS + 4 métriques → baseline score</li>
+      <li><div class="b"></div><strong>J3</strong> : LLM-as-Judge + métriques custom agents</li>
+      <li><div class="b"></div><strong>J4</strong> : Dataset synthétique 10+ samples</li>
+      <li><div class="b"></div><strong>J5</strong> : Pipeline auto + détection régression + dashboard</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Hors scope J5</span></div>
+    <ul>
+      <li><div class="b"></div>LangSmith (plateforme payante)</li>
+      <li><div class="b"></div>GitHub Actions pour les evals (complexité DevOps)</li>
+      <li><div class="b"></div>A/B testing statistique rigoureux</li>
+      <li><div class="b"></div>Monitoring en production temps réel</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 eval/jour5_pipeline.py — Pipeline d'éval complet avec détection de régression</span></div>
+  <pre><span class="c"># Pipeline : charger dataset → lancer RAG → évaluer → comparer baseline → alerter</span>
+```
+
+<span class="k">import</span> asyncio, json
+<span class="k">from</span> datetime <span class="k">import</span> datetime
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_chroma <span class="k">import</span> Chroma
+<span class="k">from</span> langchain_huggingface <span class="k">import</span> HuggingFaceEmbeddings
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate
+<span class="k">from</span> langchain_core.output_parsers <span class="k">import</span> StrOutputParser
+<span class="k">from</span> langchain_core.runnables <span class="k">import</span> RunnablePassthrough
+<span class="k">from</span> ragas.llms <span class="k">import</span> LangchainLLMWrapper
+<span class="k">from</span> ragas.embeddings <span class="k">import</span> LangchainEmbeddingsWrapper
+<span class="k">from</span> ragas.dataset_schema <span class="k">import</span> SingleTurnSample
+<span class="k">from</span> ragas.metrics <span class="k">import</span> Faithfulness, LLMContextRecall, AnswerRelevancy
+
+<span class="c"># ── SEUILS DE RÉGRESSION ─────────────────────────────────────────────</span>
+<span class="hl">THRESHOLDS = {
+<span class="s">“faithfulness”</span>: <span class="n">0.80</span>,       <span class="c"># alerte si baisse sous 0.80</span>
+<span class="s">“context_recall”</span>: <span class="n">0.75</span>,
+<span class="s">“answer_relevancy”</span>: <span class="n">0.80</span>,
+}
+REGRESSION_DELTA = <span class="n">0.05</span>  <span class="c"># alerte si baisse de plus de 5% par rapport au baseline</span></span>
+
+<span class="c"># ── RAG À ÉVALUER (version actuelle) ─────────────────────────────────</span>
+<span class="k">def</span> <span class="f">build_rag</span>():
+emb = HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>)
+vectordb = Chroma(persist_directory=<span class="s">”./base_entreprise”</span>, embedding_function=emb)
+llm = ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>)
+retriever = vectordb.as_retriever(search_kwargs={<span class="s">“k”</span>: <span class="n">3</span>})
+
+```
+<span class="k">def</span> <span class="f">format_docs</span>(docs): <span class="k">return</span> <span class="s">"\n\n"</span>.join(d.page_content <span class="k">for</span> d <span class="k">in</span> docs)
+prompt = ChatPromptTemplate.from_messages([
+    (<span class="s">"system"</span>, <span class="s">"Réponds UNIQUEMENT avec le contexte. Cite la source.\n\nContexte:\n{context}"</span>),
+    (<span class="s">"human"</span>, <span class="s">"{question}"</span>),
+])
+chain = ({<span class="s">"context"</span>: retriever | format_docs, <span class="s">"question"</span>: RunnablePassthrough()} | prompt | llm | StrOutputParser())
+<span class="k">return</span> chain, retriever
+```
+
+<span class="k">async def</span> <span class="f">run_pipeline</span>(dataset_path: str, baseline_path: str = <span class="k">None</span>):
+dataset = json.loads(Path(dataset_path).read_text())
+chain, retriever = build_rag()
+eval_llm = LangchainLLMWrapper(ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>))
+eval_emb = LangchainEmbeddingsWrapper(HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>))
+metrics = [Faithfulness(llm=eval_llm), LLMContextRecall(llm=eval_llm), AnswerRelevancy(llm=eval_llm, embeddings=eval_emb)]
+
+```
+results = []
+<span class="k">print</span>(<span class="s">f"🔍 Évaluation de {len(dataset)} samples...\n"</span>)
+<span class="k">for</span> i, s <span class="k">in</span> enumerate(dataset, <span class="n">1</span>):
+    <span class="k">print</span>(<span class="s">f"  [{i}/{len(dataset)}] {s['user_input'][:60]}"</span>)
+    <span class="c"># Générer la réponse avec le RAG actuel</span>
+    response = chain.invoke(s[<span class="s">"user_input"</span>])
+    contexts = [d.page_content <span class="k">for</span> d <span class="k">in</span> retriever.invoke(s[<span class="s">"user_input"</span>])]
+    sample = SingleTurnSample(user_input=s[<span class="s">"user_input"</span>], retrieved_contexts=contexts, response=response, reference=s.get(<span class="s">"reference"</span>))
+
+    scores = {<span class="s">"question"</span>: s[<span class="s">"user_input"</span>], <span class="s">"response"</span>: response[:<span class="n">100</span>]}
+    <span class="k">for</span> m <span class="k">in</span> metrics:
+        <span class="k">try</span>: scores[m.name] = round(await m.single_turn_ascore(sample), <span class="n">3</span>)
+        <span class="k">except</span>: scores[m.name] = <span class="k">None</span>
+    results.append(scores)
+
+<span class="c"># ── CALCUL DES MOYENNES ────────────────────────────────────────────</span>
+metric_names = [m.name <span class="k">for</span> m <span class="k">in</span> metrics]
+averages = {}
+<span class="k">for</span> m <span class="k">in</span> metric_names:
+    vals = [r[m] <span class="k">for</span> r <span class="k">in</span> results <span class="k">if</span> r.get(m) <span class="k">is not None</span>]
+    averages[m] = round(sum(vals)/len(vals), <span class="n">3</span>) <span class="k">if</span> vals <span class="k">else</span> <span class="n">0</span>
+
+<span class="c"># ── DÉTECTION DE RÉGRESSION ───────────────────────────────────────</span>
+regressions = []
+<span class="k">if</span> baseline_path <span class="k">and</span> Path(baseline_path).exists():
+    baseline = json.loads(Path(baseline_path).read_text())
+    baseline_avg = baseline.get(<span class="s">"averages"</span>, {})
+    <span class="k">for</span> m, score <span class="k">in</span> averages.items():
+        threshold = THRESHOLDS.get(m, <span class="n">0.7</span>)
+        baseline_score = baseline_avg.get(m, score)
+        <span class="k">if</span> score < threshold:
+            regressions.append(<span class="s">f"⚠️ {m} = {score:.3f} (seuil: {threshold})"</span>)
+        <span class="k">elif</span> baseline_score - score > REGRESSION_DELTA:
+            regressions.append(<span class="s">f"📉 {m} : {baseline_score:.3f} → {score:.3f} (régression !)"</span>)
+
+<span class="c"># ── RAPPORT FINAL ─────────────────────────────────────────────────</span>
+run_id = datetime.now().strftime(<span class="s">"%Y%m%d_%H%M"</span>)
+report = {<span class="s">"run_id"</span>: run_id, <span class="s">"nb_samples"</span>: len(dataset), <span class="s">"averages"</span>: averages, <span class="s">"regressions"</span>: regressions, <span class="s">"details"</span>: results}
+Path(<span class="s">"eval/results"</span>).mkdir(exist_ok=<span class="k">True</span>)
+report_path = <span class="s">f"eval/results/run_{run_id}.json"</span>
+Path(report_path).write_text(json.dumps(report, ensure_ascii=<span class="k">False</span>, indent=<span class="n">2</span>))
+
+<span class="k">print</span>(<span class="s">f"\n{'='*50}\n📊 RAPPORT — Run {run_id}"</span>)
+<span class="k">for</span> m, v <span class="k">in</span> averages.items():
+    status = <span class="s">"✅"</span> <span class="k">if</span> v >= THRESHOLDS.get(m, <span class="n">0.7</span>) <span class="k">else</span> <span class="s">"❌"</span>
+    <span class="k">print</span>(<span class="s">f"  {status} {m:<25} {v:.3f}"</span>)
+<span class="k">if</span> regressions:
+    <span class="k">print</span>(<span class="s">"\n🚨 RÉGRESSIONS DÉTECTÉES :"</span>)
+    <span class="k">for</span> r <span class="k">in</span> regressions: <span class="k">print</span>(<span class="s">f"  {r}"</span>)
+<span class="k">else</span>:
+    <span class="k">print</span>(<span class="s">"\n✅ Aucune régression détectée"</span>)
+<span class="k">print</span>(<span class="s">f"\n✓ Rapport sauvegardé : {report_path}"</span>)
+<span class="k">return</span> report
+```
+
+<span class="c"># Lancer : python jour5_pipeline.py</span>
+<span class="c"># Comparer avec baseline : passer le chemin du rapport précédent en arg</span>
+asyncio.run(run_pipeline(<span class="s">“eval/datasets/dataset_v2.json”</span>, <span class="s">“eval/results/ragas_v1.json”</span>))</pre>
+</div>
+
+```
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 eval/jour5_dashboard.py — Dashboard Streamlit de suivi des évaluations</span></div>
+  <pre><span class="c"># streamlit run eval/jour5_dashboard.py</span>
+```
+
+<span class="k">import</span> streamlit <span class="k">as</span> st, json, glob
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+<span class="k">import</span> pandas <span class="k">as</span> pd
+
+st.set_page_config(page_title=<span class="s">“📊 Éval Dashboard”</span>, layout=<span class="s">“wide”</span>)
+st.title(<span class="s">“📊 Dashboard Évaluation RAG & Agents”</span>)
+
+<span class="c"># ── CHARGER TOUS LES RAPPORTS ─────────────────────────────────────────</span>
+report_files = sorted(glob.glob(<span class="s">“eval/results/run_*.json”</span>))
+
+<span class="k">if</span> <span class="k">not</span> report_files:
+st.warning(<span class="s">“Aucun rapport trouvé. Lance d’abord jour5_pipeline.py”</span>)
+st.stop()
+
+<span class="c"># Charger tous les runs</span>
+<span class="hl">runs = []
+<span class="k">for</span> f <span class="k">in</span> report_files:
+data = json.loads(Path(f).read_text())
+row = {<span class="s">“run_id”</span>: data[<span class="s">“run_id”</span>], <span class="s">“samples”</span>: data[<span class="s">“nb_samples”</span>], <span class="s">“regressions”</span>: len(data.get(<span class="s">“regressions”</span>, []))}
+row.update(data.get(<span class="s">“averages”</span>, {}))
+runs.append(row)
+df = pd.DataFrame(runs)</span>
+
+<span class="c"># ── VUE GLOBALE ───────────────────────────────────────────────────────</span>
+st.subheader(<span class="s">“📈 Évolution des métriques dans le temps”</span>)
+metric_cols = [c <span class="k">for</span> c <span class="k">in</span> df.columns <span class="k">if</span> c <span class="k">not in</span> [<span class="s">“run_id”</span>, <span class="s">“samples”</span>, <span class="s">“regressions”</span>]]
+<span class="k">if</span> metric_cols:
+st.line_chart(df.set_index(<span class="s">“run_id”</span>)[metric_cols])
+
+<span class="c"># ── ALERTES RÉGRESSION ────────────────────────────────────────────────</span>
+latest = runs[-<span class="n">1</span>] <span class="k">if</span> runs <span class="k">else</span> {}
+col1, col2, col3 = st.columns(<span class="n">3</span>)
+<span class="k">for</span> col, metric <span class="k">in</span> zip([col1, col2, col3], metric_cols[:<span class="n">3</span>]):
+val = latest.get(metric, <span class="n">0</span>)
+threshold = {<span class="s">“faithfulness”</span>: <span class="n">0.80</span>, <span class="s">“context_recall”</span>: <span class="n">0.75</span>, <span class="s">“answer_relevancy”</span>: <span class="n">0.80</span>}.get(metric, <span class="n">0.75</span>)
+col.metric(label=metric, value=<span class="s">f”{val:.3f}”</span>, delta=<span class="s">f”seuil: {threshold}”</span>, delta_color=<span class="s">“normal”</span> <span class="k">if</span> val >= threshold <span class="k">else</span> <span class="s">“inverse”</span>)
+
+<span class="c"># ── TABLEAU DÉTAILLÉ ──────────────────────────────────────────────────</span>
+st.subheader(<span class="s">“📋 Tous les runs”</span>)
+st.dataframe(df, use_container_width=<span class="k">True</span>)
+
+<span class="c"># ── ANALYSER UN RUN SPÉCIFIQUE ────────────────────────────────────────</span>
+selected = st.selectbox(<span class="s">“Analyser un run”</span>, [r[<span class="s">“run_id”</span>] <span class="k">for</span> r <span class="k">in</span> runs])
+<span class="k">if</span> selected:
+run_data = json.loads(Path(<span class="s">f”eval/results/run_{selected}.json”</span>).read_text())
+<span class="k">if</span> run_data.get(<span class="s">“regressions”</span>):
+st.error(<span class="s">f”🚨 Régressions : {’, ’.join(run_data[‘regressions’])}”</span>)
+details_df = pd.DataFrame(run_data.get(<span class="s">“details”</span>, []))
+st.subheader(<span class="s">“Détail par question”</span>)
+st.dataframe(details_df[[<span class="s">“question”</span>] + metric_cols[:3] <span class="k">if</span> metric_cols <span class="k">else</span> details_df.columns], use_container_width=<span class="k">True</span>)</pre>
+</div>
+
+```
+<div class="teach">
+  <strong>🎓 Pour enseigner la CI/CD éval</strong>
+  <p>Fais volontairement régresser le système : change <code>k=1</code> au lieu de <code>k=3</code> dans le retriever, relance le pipeline. Le dashboard montre la chute du Context Recall immédiatement. C'est le moment pédagogique le plus fort : les étudiants comprennent que sans ce pipeline, cette régression serait passée en prod inaperçue.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Formation complète</h4>
+  <ul>
+    <li><input type="checkbox"> Le pipeline tourne sur le dataset v2 et sauvegarde un rapport JSON</li>
+    <li><input type="checkbox"> En changeant k=1 → le pipeline détecte bien une régression sur Context Recall</li>
+    <li><input type="checkbox"> Le dashboard Streamlit affiche les métriques de tous tes runs</li>
+    <li><input type="checkbox"> Tu peux décrire le workflow complet : dataset → eval → baseline → régression</li>
+    <li><input type="checkbox"> Tu sais quel seuil déclenche une alerte pour chaque métrique</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(176,58,46,.06);border-color:rgba(176,58,46,.25);">
+  <div class="liv-icon">🏆</div>
+  <div class="liv-text">
+    <strong style="color:var(--d5)">Livrable Final — 5 jours</strong>
+    <p>Pipeline d'évaluation automatisé : génère les réponses, mesure 4 métriques RAGAS, compare au baseline, détecte les régressions, affiche un dashboard. Ton système IA ne peut plus régresser silencieusement.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+</div><!-- /days -->
+
+<!-- FINAL -->
+
+<div class="final">
+  <div class="final-badge">🏁 4 cours — stack IA complète</div>
+  <h2>De la donnée brute<br>à l'<em>IA mesurée et fiable</em></h2>
+  <p class="fdesc">Tu maîtrises maintenant les 4 piliers d'une IA d'entreprise sérieuse : construire (RAG), raisonner (Agents), connecter (MCP), <strong>mesurer (Évaluation)</strong>. Le prochain module : déployer.</p>
+  <div class="final-grid">
+    <div class="fg"><div class="fgi">📋</div><h4>Dataset structuré</h4><p>4 champs RAGAS : input, contexts, response, reference</p></div>
+    <div class="fg"><div class="fgi">📊</div><h4>4 métriques RAGAS</h4><p>Faithfulness, Context Recall, Answer Relevancy, Factual Correctness</p></div>
+    <div class="fg"><div class="fgi">⚖️</div><h4>LLM-as-Judge</h4><p>Métriques custom + évaluation d'agents multi-tours</p></div>
+    <div class="fg"><div class="fgi">🏭</div><h4>Dataset synthétique</h4><p>Génération automatique de tests depuis tes docs</p></div>
+    <div class="fg"><div class="fgi">🚨</div><h4>Détection régression</h4><p>Alerte si score descend sous le seuil ou baseline</p></div>
+    <div class="fg"><div class="fgi">📈</div><h4>Dashboard Streamlit</h4><p>Visualiser l'évolution des métriques dans le temps</p></div>
+  </div>
+</div>
+
+<!-- STACK -->
+
+<div style="margin-top:48px;">
+  <div class="sh"><span>Stack Évaluation</span><div class="ln"></div></div>
+  <div class="stack-grid">
+    <div class="sc"><div class="si">📊</div><div><div class="sn">RAGAS</div><div class="sd">Framework d'évaluation RAG/agents</div></div></div>
+    <div class="sc"><div class="si">🦙</div><div><div class="sn">Ollama + Mistral</div><div class="sd">LLM évaluateur local, 0 coût</div></div></div>
+    <div class="sc"><div class="si">🤗</div><div><div class="sn">HuggingFaceEmbeddings</div><div class="sd">Embeddings pour Answer Relevancy</div></div></div>
+    <div class="sc"><div class="si">🐼</div><div><div class="sn">Pandas</div><div class="sd">Analyse des résultats</div></div></div>
+    <div class="sc"><div class="si">🖥️</div><div><div class="sn">Streamlit</div><div class="sd">Dashboard de suivi</div></div></div>
+    <div class="sc"><div class="si">🗄️</div><div><div class="sn">ChromaDB</div><div class="sd">Base vectorielle évaluée</div></div></div>
+  </div>
+</div>
+
+<div style="margin-top:28px;padding:18px 24px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;">
+  <p style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Installation</p>
+  <code style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink2);line-height:1.9;">pip install ragas datasets pandas streamlit langchain-ollama langchain-huggingface langchain-chroma</code>
+</div>
+
+</div><!-- /page -->
+
+<script>
+function tog(n){document.getElementById('dc'+n).classList.toggle('open');}
+const colors=['#6b21a8','#2471a3','#1a6b4a','#d4840a','#b03a2e'];
+const done=new Set();
+const cont=document.getElementById('ddots');
+Array.from({length:5},(_,i)=>{
+  const w=document.createElement('div');
+  w.className='ddot';
+  w.innerHTML=`<div class="d"></div><span class="dl">J${i+1}</span>`;
+  w.onclick=()=>{
+    const d=i+1;
+    if(done.has(d)){done.delete(d);w.classList.remove('done');w.querySelector('.d').style.background='';}
+    else{done.add(d);w.classList.add('done');w.querySelector('.d').style.background=colors[i];}
+    const pct=Math.round(done.size/5*100);
+    document.getElementById('pct-label').textContent=
+      done.size===0?'Clique pour cocher ✓':done.size===5?'🎉 Module Évaluation terminé !':
+      `${pct}% — ${done.size}/5 jours`;
+  };
+  cont.appendChild(w);
+});
+document.getElementById('dc1').classList.add('open');
+</script>
+
+</body>
+</html>

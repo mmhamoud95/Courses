@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formation RAG — Loi de Pareto</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f7f3ee;
+  --ink:#18120e;
+  --ink2:#3d2f26;
+  --muted:#8a7a6a;
+  --border:#ddd5c8;
+  --surface:#fff;
+  --surface2:#f2ede6;
+
+–vital:#c0392b;   /* rouge Pareto — vital few */
+–vital-l:rgba(192,57,43,.08);
+–vital-m:rgba(192,57,43,.18);
+–useful:#2471a3;  /* bleu — useful many */
+–useful-l:rgba(36,113,163,.08);
+–skip:#aaa;       /* gris — skip */
+–skip-l:rgba(0,0,0,.04);
+
+–d1:#2471a3; –d2:#1a9e76; –d3:#c0392b;
+–d4:#d4840a; –d5:#7d3c98; –d6:#1a7a4a; –d7:#b03a2e;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+background:var(–bg);
+color:var(–ink);
+font-family:‘Bricolage Grotesque’,sans-serif;
+font-size:15px;
+line-height:1.6;
+}
+
+/* paper texture */
+body::before{
+content:’’;
+position:fixed;inset:0;
+background-image:url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘400’ height=‘400’%3E%3Cfilter id=‘n’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=’.65’ numOctaves=‘3’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘400’ height=‘400’ filter=‘url(%23n)’ opacity=’.025’/%3E%3C/svg%3E”);
+pointer-events:none;z-index:0;
+}
+
+.page{max-width:900px;margin:0 auto;padding:56px 24px 88px;position:relative;z-index:1;}
+
+/* ── HERO ── */
+.hero{margin-bottom:48px;animation:up .5s ease both;}
+
+.pareto-badge{
+display:inline-flex;align-items:center;gap:9px;
+background:var(–vital);color:#fff;
+font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+padding:5px 14px;border-radius:3px;margin-bottom:20px;
+}
+
+h1{
+font-size:clamp(2rem,5vw,3.4rem);font-weight:800;
+line-height:1.05;letter-spacing:-.025em;margin-bottom:16px;
+}
+
+h1 em{font-style:italic;color:var(–vital);}
+
+.hero-desc{color:var(–muted);font-size:.95rem;max-width:520px;margin-bottom:28px;line-height:1.65;}
+
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+.kpi{
+background:var(–surface);border:1.5px solid var(–border);
+border-radius:8px;padding:12px 18px;
+display:flex;flex-direction:column;gap:2px;
+}
+.kpi-v{font-family:‘JetBrains Mono’,monospace;font-size:1rem;font-weight:500;color:var(–ink);}
+.kpi-l{font-size:.68rem;color:var(–muted);text-transform:uppercase;letter-spacing:.09em;}
+
+/* ── PARETO LEGEND ── */
+.pareto-legend{
+display:flex;gap:24px;flex-wrap:wrap;
+background:var(–surface);border:1.5px solid var(–border);
+border-radius:10px;padding:16px 22px;margin-bottom:40px;
+animation:up .5s .08s ease both;
+}
+
+.leg{display:flex;align-items:center;gap:9px;font-size:.82rem;}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.leg strong{font-weight:700;}
+.leg span{color:var(–muted);}
+
+/* ── PARETO VISUAL (80/20 bar) ── */
+.pareto-bar-section{
+background:var(–surface);border:1.5px solid var(–border);
+border-radius:10px;padding:22px 26px;margin-bottom:40px;
+animation:up .5s .12s ease both;
+}
+
+.pareto-bar-section h3{
+font-size:.75rem;font-weight:700;text-transform:uppercase;
+letter-spacing:.12em;color:var(–muted);margin-bottom:16px;
+}
+
+.pbar-row{margin-bottom:14px;}
+.pbar-label{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:5px;}
+.pbar-label span:first-child{font-weight:600;color:var(–ink2);}
+.pbar-label span:last-child{font-family:‘JetBrains Mono’,monospace;font-size:.75rem;color:var(–muted);}
+.pbar-track{background:var(–surface2);border-radius:3px;height:9px;overflow:hidden;}
+.pbar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+
+/* ── PROGRESS ── */
+.tracker{
+background:var(–surface);border:1.5px solid var(–border);
+border-radius:10px;padding:20px 24px;margin-bottom:40px;
+animation:up .5s .16s ease both;
+}
+.tracker-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.tracker-top h3{font-family:‘JetBrains Mono’,monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(–muted);}
+#pct-label{font-family:‘JetBrains Mono’,monospace;font-size:.78rem;color:var(–ink);}
+
+.ddots{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+.ddot{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;}
+.ddot .d{width:100%;height:6px;border-radius:99px;background:var(–border);transition:all .2s;}
+.ddot:hover .d{transform:scaleY(2);}
+.ddot.done .d{background:var(–vital);}
+.ddot .dl{font-family:‘JetBrains Mono’,monospace;font-size:.62rem;color:var(–muted);}
+
+/* ── SECTION TITLE ── */
+.sh{display:flex;align-items:center;gap:12px;margin:44px 0 20px;}
+.sh span{font-family:‘JetBrains Mono’,monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(–muted);white-space:nowrap;}
+.sh .ln{flex:1;height:1px;background:var(–border);}
+
+/* ── DAY CARDS ── */
+.days{display:flex;flex-direction:column;gap:14px;}
+
+.dc{
+background:var(–surface);border:1.5px solid var(–border);
+border-radius:12px;overflow:hidden;
+animation:up .4s ease both;
+transition:box-shadow .2s;
+}
+.dc:hover{box-shadow:3px 3px 0 var(–border);}
+
+.dc-head{display:flex;align-items:stretch;cursor:pointer;}
+
+.dc-accent{width:5px;flex-shrink:0;}
+
+.dc-num{
+width:62px;display:flex;flex-direction:column;align-items:center;
+justify-content:center;padding:16px 8px;flex-shrink:0;
+}
+.dc-num .n{
+font-size:1.8rem;font-weight:800;line-height:1;
+font-family:‘Bricolage Grotesque’,sans-serif;
+}
+.dc-num .l{font-family:‘JetBrains Mono’,monospace;font-size:.55rem;color:var(–muted);text-transform:uppercase;letter-spacing:.1em;}
+
+.dc-info{flex:1;padding:16px 14px;}
+.dc-info h3{font-size:.97rem;font-weight:700;line-height:1.3;margin-bottom:3px;}
+.dc-info .sub{font-size:.77rem;color:var(–muted);}
+
+.dc-meta{
+display:flex;flex-direction:column;align-items:flex-end;justify-content:center;
+gap:7px;padding:16px 18px 16px 8px;flex-shrink:0;
+}
+
+.tbadge{
+font-family:‘JetBrains Mono’,monospace;font-size:.67rem;
+background:var(–surface2);border:1px solid var(–border);
+border-radius:5px;padding:3px 8px;color:var(–muted);white-space:nowrap;
+}
+
+.chev{
+width:24px;height:24px;border-radius:5px;background:var(–surface2);
+display:flex;align-items:center;justify-content:center;
+color:var(–muted);font-size:.7rem;transition:transform .25s;
+}
+.dc.open .chev{transform:rotate(180deg);}
+
+/* TAGS */
+.dc-tags{display:flex;gap:6px;flex-wrap:wrap;padding:0 18px 12px 67px;}
+
+.tg{
+font-family:‘JetBrains Mono’,monospace;font-size:.6rem;font-weight:500;
+letter-spacing:.06em;text-transform:uppercase;
+padding:3px 9px;border-radius:4px;border:1px solid;
+}
+
+/* BODY */
+.dc-body{
+display:none;
+border-top:1px solid var(–border);
+padding:22px 22px 24px;
+}
+.dc.open .dc-body{display:block;}
+
+/* ── PARETO SPLIT ── */
+.pareto-split{
+display:grid;grid-template-columns:1fr 1fr;
+gap:14px;margin-bottom:18px;
+}
+@media(max-width:580px){.pareto-split{grid-template-columns:1fr;} .dc-tags{padding-left:18px;}}
+
+.psplit{border-radius:9px;padding:16px 18px;border:1.5px solid;}
+
+.psplit.vital{
+background:var(–vital-l);border-color:rgba(192,57,43,.2);
+}
+.psplit.useful{
+background:var(–useful-l);border-color:rgba(36,113,163,.2);
+}
+.psplit.skip-box{
+background:var(–skip-l);border-color:rgba(0,0,0,.08);
+}
+
+.psplit-head{
+display:flex;align-items:center;gap:8px;margin-bottom:11px;
+}
+.psplit-head .badge{
+font-family:‘JetBrains Mono’,monospace;font-size:.58rem;font-weight:700;
+text-transform:uppercase;letter-spacing:.1em;
+padding:2px 7px;border-radius:3px;border:1px solid;
+}
+.psplit.vital .badge{color:var(–vital);border-color:rgba(192,57,43,.3);background:rgba(192,57,43,.08);}
+.psplit.useful .badge{color:var(–useful);border-color:rgba(36,113,163,.3);background:rgba(36,113,163,.08);}
+.psplit.skip-box .badge{color:var(–skip);border-color:rgba(0,0,0,.15);background:rgba(0,0,0,.04);}
+
+.psplit h4{font-size:.82rem;font-weight:700;color:var(–ink2);}
+
+.psplit ul{list-style:none;display:flex;flex-direction:column;gap:7px;margin:0;}
+.psplit li{
+display:flex;gap:8px;font-size:.83rem;color:var(–ink2);
+line-height:1.42;align-items:flex-start;
+}
+.psplit li .b{width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:7px;}
+.psplit.vital li .b{background:var(–vital);}
+.psplit.useful li .b{background:var(–useful);}
+.psplit.skip-box li .b{background:var(–skip);}
+.psplit.skip-box li{color:var(–muted);text-decoration:line-through;font-size:.79rem;}
+
+/* ── CODE BLOCK ── */
+.code-wrap{
+background:#16120e;border-radius:10px;
+overflow:hidden;border:1px solid rgba(255,255,255,.06);
+margin-bottom:16px;
+}
+.code-head-bar{
+display:flex;align-items:center;justify-content:space-between;
+padding:8px 16px;background:rgba(255,255,255,.03);
+border-bottom:1px solid rgba(255,255,255,.04);
+}
+.code-head-bar .fn{font-family:‘JetBrains Mono’,monospace;font-size:.68rem;color:#8a7a6a;}
+.run-btn{
+font-family:‘JetBrains Mono’,monospace;font-size:.6rem;font-weight:500;
+text-transform:uppercase;letter-spacing:.08em;
+background:var(–vital);color:#fff;border:none;
+border-radius:4px;padding:3px 10px;cursor:pointer;
+}
+
+pre{
+padding:18px 20px;overflow-x:auto;
+font-family:‘JetBrains Mono’,monospace;
+font-size:.75rem;line-height:1.78;color:#c8c0b4;white-space:pre;
+}
+
+.k{color:#c792ea;} /* keyword */
+.s{color:#f9c860;} /* string */
+.c{color:#3d7a4a;} /* comment */
+.f{color:#7ec8e3;} /* function */
+.n{color:#f07178;} /* number/const */
+.o{color:#c3e88d;} /* output */
+.hl{background:rgba(192,57,43,.18);display:block;margin:0 -20px;padding:0 20px;} /* highlight */
+
+/* ── PIÈGE ── */
+.piege{
+background:#fff8f0;border:1.5px solid #f0a060;
+border-radius:9px;padding:14px 18px;margin-bottom:14px;
+display:flex;gap:11px;align-items:flex-start;
+}
+.piege-icon{font-size:1rem;flex-shrink:0;margin-top:2px;}
+.piege-text strong{
+display:block;font-family:‘JetBrains Mono’,monospace;
+font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
+color:#c0680a;margin-bottom:4px;
+}
+.piege-text p{font-size:.82rem;color:#5a3a1a;line-height:1.5;}
+
+/* ── TEACH ── */
+.teach{
+background:#f0f7ff;border:1.5px solid #a0c4e8;
+border-radius:9px;padding:14px 18px;margin-bottom:14px;
+display:flex;gap:11px;align-items:flex-start;
+}
+.teach strong{
+display:block;font-family:‘JetBrains Mono’,monospace;
+font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;
+color:#1a5a8a;margin-bottom:4px;
+}
+.teach p{font-size:.82rem;color:#1a3a5a;line-height:1.5;}
+
+/* ── LIVRABLE ── */
+.livrable{
+border-radius:9px;padding:15px 18px;
+display:flex;gap:12px;align-items:flex-start;border:1.5px solid;
+}
+.liv-icon{font-size:1.3rem;flex-shrink:0;}
+.liv-text strong{
+display:block;font-family:‘JetBrains Mono’,monospace;
+font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;
+}
+.liv-text p{font-size:.83rem;line-height:1.5;}
+
+/* ── CHECKLIST 80 ── */
+.check80{
+background:var(–surface2);border-radius:9px;padding:14px 18px;
+margin-bottom:14px;border:1px solid var(–border);
+}
+.check80 h4{
+font-family:‘JetBrains Mono’,monospace;font-size:.65rem;text-transform:uppercase;
+letter-spacing:.1em;color:var(–muted);margin-bottom:10px;
+}
+.check80 ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.check80 li{display:flex;gap:9px;font-size:.83rem;align-items:flex-start;}
+.check80 li input[type=checkbox]{
+accent-color:var(–vital);margin-top:3px;flex-shrink:0;cursor:pointer;
+}
+
+/* ── FINAL ── */
+.final{
+margin-top:52px;
+background:var(–ink);color:#f7f3ee;
+border-radius:14px;padding:44px 44px 36px;
+position:relative;overflow:hidden;
+animation:up .5s .3s ease both;
+}
+.final::after{
+content:‘PARETO’;
+position:absolute;bottom:-20px;right:24px;
+font-size:7rem;font-weight:800;letter-spacing:-.04em;
+color:rgba(255,255,255,.03);line-height:1;pointer-events:none;
+}
+.final-badge{
+display:inline-flex;align-items:center;gap:8px;
+background:rgba(192,57,43,.2);border:1px solid rgba(192,57,43,.35);
+border-radius:99px;padding:5px 14px;
+font-family:‘JetBrains Mono’,monospace;font-size:.65rem;
+color:#f08070;text-transform:uppercase;letter-spacing:.1em;margin-bottom:20px;
+}
+.final h2{
+font-size:1.8rem;font-weight:800;line-height:1.1;margin-bottom:12px;
+}
+.final h2 em{font-style:italic;color:#f08070;}
+.final .fdesc{color:rgba(247,243,238,.6);font-size:.9rem;max-width:500px;margin-bottom:28px;line-height:1.6;}
+
+.final-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+.fg{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:14px;}
+.fg .fgi{font-size:1.2rem;margin-bottom:7px;}
+.fg h4{font-size:.84rem;font-weight:700;margin-bottom:2px;}
+.fg p{font-size:.73rem;color:rgba(247,243,238,.5);line-height:1.35;}
+
+/* ── STACK ── */
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+.sc{
+background:var(–surface);border:1.5px solid var(–border);
+border-radius:10px;padding:13px 15px;
+display:flex;gap:11px;align-items:flex-start;
+transition:border-color .2s,transform .15s;cursor:default;
+}
+.sc:hover{border-color:var(–vital);transform:translateY(-2px);}
+.sc .si{font-size:1.2rem;flex-shrink:0;margin-top:2px;}
+.sc .sn{font-weight:700;font-size:.83rem;margin-bottom:1px;}
+.sc .sd{font-size:.7rem;color:var(–muted);line-height:1.3;}
+
+/* ── PARETO CHART ── */
+.pchart-wrap{padding:16px 0 6px;}
+.pchart-title{font-family:‘JetBrains Mono’,monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(–muted);margin-bottom:14px;}
+.pchart{display:flex;align-items:flex-end;gap:6px;height:80px;}
+.pcbar{
+flex:1;border-radius:4px 4px 0 0;display:flex;flex-direction:column;
+justify-content:flex-end;cursor:default;position:relative;
+transition:opacity .2s;
+}
+.pcbar:hover{opacity:.85;}
+.pcbar .pct-tip{
+position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+font-family:‘JetBrains Mono’,monospace;font-size:.6rem;color:var(–ink2);
+white-space:nowrap;
+}
+.pcbar .lbl{
+font-family:‘JetBrains Mono’,monospace;font-size:.58rem;
+text-align:center;padding:4px 2px 0;color:var(–muted);
+}
+
+@keyframes up{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.dc:nth-child(1){animation-delay:.04s}
+.dc:nth-child(2){animation-delay:.08s}
+.dc:nth-child(3){animation-delay:.12s}
+.dc:nth-child(4){animation-delay:.16s}
+.dc:nth-child(5){animation-delay:.2s}
+.dc:nth-child(6){animation-delay:.24s}
+.dc:nth-child(7){animation-delay:.28s}
+</style>
+
+</head>
+<body>
+<div class="page">
+
+<!-- HERO -->
+
+<div class="hero">
+  <div class="pareto-badge">⚡ Loi de Pareto appliquée</div>
+  <h1>Maîtriser le RAG<br>avec le <em>minimum vital</em></h1>
+  <p class="hero-desc">20% des concepts RAG génèrent 80% de la valeur. Ce programme ne t'enseigne que ces 20% — avec un seul fil rouge d'exemple du J1 au J7 : une base documentaire d'entreprise (IT, RH, Sécurité).</p>
+  <div class="kpi-row">
+    <div class="kpi"><span class="kpi-v">7 jours</span><span class="kpi-l">Durée</span></div>
+    <div class="kpi"><span class="kpi-v">30–45 min</span><span class="kpi-l">Par jour</span></div>
+    <div class="kpi"><span class="kpi-v">80% pratique</span><span class="kpi-l">Ratio code/théorie</span></div>
+    <div class="kpi"><span class="kpi-v">1 fil rouge</span><span class="kpi-l">Exemple unique cohérent</span></div>
+  </div>
+</div>
+
+<!-- PARETO LEGEND -->
+
+<div class="pareto-legend">
+  <div class="leg"><div class="leg-dot" style="background:var(--vital)"></div><strong>Vital (20%)</strong><span>Ce que tu DOIS maîtriser — impact immédiat</span></div>
+  <div class="leg"><div class="leg-dot" style="background:var(--useful)"></div><strong>Utile (30%)</strong><span>Améliore la qualité — à faire si le temps le permet</span></div>
+  <div class="leg"><div class="leg-dot" style="background:var(--skip)"></div><strong>Superflu (50%)</strong><span>Éliminé — complexité sans ROI pour un débutant</span></div>
+</div>
+
+<!-- PARETO BARS -->
+
+<div class="pareto-bar-section">
+  <h3>Ce qui a été coupé vs gardé — Analyse Pareto du contenu RAG</h3>
+
+  <div class="pbar-row">
+    <div class="pbar-label"><span>Embeddings + similarité cosinus</span><span>Vital — impact 40%</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:100%;background:var(--vital)"></div></div>
+  </div>
+  <div class="pbar-row">
+    <div class="pbar-label"><span>Pipeline RAG complet (load → split → embed → retrieve → generate)</span><span>Vital — impact 35%</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:88%;background:var(--vital)"></div></div>
+  </div>
+  <div class="pbar-row">
+    <div class="pbar-label"><span>Chunking stratégique + chunk_size / overlap</span><span>Vital — impact 30%</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:75%;background:var(--vital)"></div></div>
+  </div>
+  <div class="pbar-row">
+    <div class="pbar-label"><span>Prompt template RAG (anti-hallucination)</span><span>Vital — impact 28%</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:70%;background:var(--vital)"></div></div>
+  </div>
+  <div class="pbar-row">
+    <div class="pbar-label"><span>Métadonnées + filtrage par source</span><span>Utile — impact 15%</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:38%;background:var(--useful)"></div></div>
+  </div>
+  <div class="pbar-row">
+    <div class="pbar-label"><span>Hybrid search (vectoriel + BM25)</span><span>❌ Supprimé — trop complexe J1</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:12%;background:var(--skip)"></div></div>
+  </div>
+  <div class="pbar-row">
+    <div class="pbar-label"><span>Reranking Cross-Encoder</span><span>❌ Supprimé — gain marginal débutant</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:8%;background:var(--skip)"></div></div>
+  </div>
+  <div class="pbar-row">
+    <div class="pbar-label"><span>FAISS, Qdrant, Pinecone</span><span>❌ Supprimé — ChromaDB suffit</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:5%;background:var(--skip)"></div></div>
+  </div>
+</div>
+
+<!-- TRACKER -->
+
+<div class="tracker">
+  <div class="tracker-top">
+    <h3>Progression</h3>
+    <span id="pct-label">Clique pour cocher ✓</span>
+  </div>
+  <div class="ddots" id="ddots"></div>
+</div>
+
+<!-- ═══ JOURS ═══ -->
+
+<div class="sh"><span>Programme Pareto — 7 jours</span><div class="ln"></div></div>
+<div class="days">
+
+<!-- ══ J1 ══ -->
+
+<div class="dc" id="dc1">
+  <div class="dc-head" onclick="tog(1)">
+    <div class="dc-accent" style="background:var(--d1)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d1)">1</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Embeddings — Comprendre le seul concept qui compte vraiment</h3>
+      <div class="sub">Fil rouge : documents IT/RH de ton entreprise</div>
+    </div>
+    <div class="dc-meta">
+      <span class="tbadge">⏱ 35 min</span>
+      <div class="chev">▾</div>
+    </div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--vital);border-color:rgba(192,57,43,.3);background:var(--vital-l)">Vital 20%</span>
+    <span class="tg" style="color:var(--d1);border-color:rgba(36,113,163,.3);background:var(--useful-l)">Théorie 10 min</span>
+    <span class="tg" style="color:var(--d2);border-color:rgba(26,158,118,.3);background:rgba(26,158,118,.08)">Code 25 min</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Apprendre (20 min)</span><h4>Le minimum vital</h4></div>
+    <ul>
+      <li><div class="b"></div><strong>Un embedding = une position dans l'espace.</strong> "Chat" et "félin" sont proches. "Voiture" est loin.</li>
+      <li><div class="b"></div><strong>Similarité cosinus = l'angle entre deux vecteurs.</strong> Score de 0 (sans rapport) à 1 (identique).</li>
+      <li><div class="b"></div><strong>Pourquoi ça bat la recherche par mots-clés :</strong> "procédure incident" trouve "gestion des pannes" même sans mot commun.</li>
+      <li><div class="b"></div><strong>Modèle à utiliser :</strong> <code>all-MiniLM-L6-v2</code> — gratuit, local, 90% aussi bon qu'OpenAI pour débuter.</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer (80% du temps)</span><h4>Superflu pour J1</h4></div>
+    <ul>
+      <li><div class="b"></div>Les 384 dimensions du vecteur et leur signification</li>
+      <li><div class="b"></div>Différences entre modèles (BERT, MPNet, E5…)</li>
+      <li><div class="b"></div>Fine-tuning d'un modèle d'embedding</li>
+      <li><div class="b"></div>Visualisation t-SNE / PCA des vecteurs</li>
+      <li><div class="b"></div>Dot product vs cosine similarity — théorie</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar">
+    <span class="fn">📁 fil_rouge/jour1_embeddings.py — Exemple : Base documentaire entreprise</span>
+  </div>
+  <pre><span class="c"># pip install sentence-transformers scikit-learn numpy</span>
+```
+
+<span class="k">from</span> sentence_transformers <span class="k">import</span> SentenceTransformer
+<span class="k">from</span> sklearn.metrics.pairwise <span class="k">import</span> cosine_similarity
+<span class="k">import</span> numpy <span class="k">as</span> np
+
+model = SentenceTransformer(<span class="s">‘all-MiniLM-L6-v2’</span>)  <span class="c"># ~90MB, téléchargé une fois</span>
+
+<span class="c"># ── FIL ROUGE : tes vrais documents d’entreprise ──────────────────────</span>
+<span class="c"># Remplace par des extraits réels de tes docs (max 2-3 phrases / entrée)</span>
+DOCS_ENTREPRISE = [
+<span class="s">“Politique de sécurité : tout accès VPN requiert une authentification MFA.”</span>,
+<span class="s">“Guide onboarding IT : créer le compte AD, affecter les licences Office365.”</span>,
+<span class="s">“Procédure incident P1 : alerter le NOC dans les 15 min, ouvrir un ticket P1.”</span>,
+<span class="s">“Charte télétravail RH : 2 jours max par semaine, accord manager obligatoire.”</span>,
+<span class="s">“RGPD : toute collecte de données personnelles nécessite une base légale.”</span>,
+<span class="s">“Backup : snapshots quotidiens à 2h du matin, rétention 30 jours.”</span>,
+]
+
+<span class="c"># ── ÉTAPE 1 : Transformer le texte en vecteurs ─────────────────────────</span>
+<span class="hl">vectors = model.encode(DOCS_ENTREPRISE)  <span class="c"># shape: (6, 384) — 6 docs × 384 dimensions</span></span>
+<span class="k">print</span>(<span class="s">f”✓ {len(DOCS_ENTREPRISE)} documents → vecteurs {vectors.shape}”</span>)
+
+<span class="c"># ── ÉTAPE 2 : Recherche sémantique sur une requête ─────────────────────</span>
+question = <span class="s">“Comment gérer une panne critique en urgence ?”</span>
+<span class="hl">q_vector = model.encode([question])  <span class="c"># même opération pour la requête</span></span>
+
+scores = cosine_similarity(q_vector, vectors)[<span class="n">0</span>]  <span class="c"># score entre 0 et 1 pour chaque doc</span>
+
+<span class="c"># ── RÉSULTATS : triés par pertinence ───────────────────────────────────</span>
+ranked = sorted(enumerate(scores), key=<span class="k">lambda</span> x: x[<span class="n">1</span>], reverse=<span class="k">True</span>)
+
+<span class="k">print</span>(<span class="s">f”\n🔍 Question : ‘{question}’\n”</span>)
+<span class="k">for</span> rank, (idx, score) <span class="k">in</span> enumerate(ranked[:<span class="n">3</span>], <span class="n">1</span>):
+<span class="k">print</span>(<span class="s">f”  #{rank} ({score:.2f}) → {DOCS_ENTREPRISE[idx][:70]}…”</span>)
+
+<span class="c"># ── CE QUE TU DOIS OBSERVER ────────────────────────────────────────────</span>
+<span class="c"># → “Procédure incident P1” devrait être en #1 (score > 0.5)</span>
+<span class="c"># → “Backup” peut apparaître en #2 (notion d’“urgence” liée)</span>
+<span class="c"># → “Charte télétravail” devrait être en bas (hors sujet)</span>
+<span class="o">
+
+# SORTIE ATTENDUE :
+
+# #1 (0.67) → Procédure incident P1 : alerter le NOC dans les 15 min…
+
+# #2 (0.41) → Backup : snapshots quotidiens à 2h du matin…
+
+# #3 (0.28) → Guide onboarding IT : créer le compte AD…</span></pre>
+
+```
+</div>
+
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fréquent J1</strong>
+    <p>Le modèle se télécharge (~90MB) à la première exécution. Si tu es derrière un proxy d'entreprise, utilise <code>TRANSFORMERS_OFFLINE=1</code> ou télécharge manuellement. Pas un bug de code — juste le réseau.</p>
+  </div>
+</div>
+
+<div class="teach">
+  <strong>🎓 Pour enseigner ce concept</strong>
+  <p>Fais l'exercice en direct avec les étudiants. Change la question et montre comment les scores changent en temps réel. La "magie" opère quand ils voient que <em>"panne critique"</em> trouve <em>"incident P1"</em> sans avoir un seul mot commun.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Tu peux passer au J2 si tu coches tout</h4>
+  <ul>
+    <li><input type="checkbox"> Le script tourne sans erreur sur tes propres phrases</li>
+    <li><input type="checkbox"> Le résultat #1 est sémantiquement cohérent avec ta question</li>
+    <li><input type="checkbox"> Tu comprends pourquoi score cosinus ≈ 1 = très similaire</li>
+    <li><input type="checkbox"> Tu sais expliquer en 1 phrase ce qu'est un embedding</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(36,113,163,.06);border-color:rgba(36,113,163,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d1)">Livrable J1</strong>
+    <p>Script qui classe tes 6 docs entreprise par pertinence sur 3 questions différentes. Tu vois que "incident" et "panne" sont liés sans mot commun — c'est le cœur de tout RAG.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J2 ══ -->
+
+<div class="dc" id="dc2">
+  <div class="dc-head" onclick="tog(2)">
+    <div class="dc-accent" style="background:var(--d2)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d2)">2</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>ChromaDB — Stocker les vecteurs une fois, chercher indéfiniment</h3>
+      <div class="sub">Fil rouge : indexer les 6 docs entreprise dans une base persistante</div>
+    </div>
+    <div class="dc-meta">
+      <span class="tbadge">⏱ 40 min</span>
+      <div class="chev">▾</div>
+    </div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--vital);border-color:rgba(192,57,43,.3);background:var(--vital-l)">Vital 20%</span>
+    <span class="tg" style="color:var(--d2);border-color:rgba(26,158,118,.3);background:rgba(26,158,118,.08)">Base vectorielle</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Apprendre (15 min)</span><h4>3 opérations à maîtriser</h4></div>
+    <ul>
+      <li><div class="b"></div><strong>add()</strong> — insérer des documents avec leurs vecteurs et métadonnées</li>
+      <li><div class="b"></div><strong>query()</strong> — chercher les N plus proches voisins d'une requête</li>
+      <li><div class="b"></div><strong>PersistentClient</strong> — sauvegarder sur disque, recharger sans re-encoder</li>
+      <li><div class="b"></div><strong>Métadonnées = filtres futurs :</strong> <code>source</code>, <code>date</code>, <code>dept</code> — les ajouter dès le début</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer pour l'instant</span><h4>Superflu J2</h4></div>
+    <ul>
+      <li><div class="b"></div>FAISS, Qdrant, Pinecone — ChromaDB suffit en prod légère</li>
+      <li><div class="b"></div>HNSW index params (ef, M) — valeurs par défaut correctes</li>
+      <li><div class="b"></div>Collections multiples avec namespaces complexes</li>
+      <li><div class="b"></div>Batch updates et upsert optimisés</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar">
+    <span class="fn">📁 fil_rouge/jour2_chromadb.py — Extension du J1 avec persistence</span>
+  </div>
+  <pre><span class="c"># pip install chromadb sentence-transformers</span>
+```
+
+<span class="k">import</span> chromadb
+<span class="k">from</span> sentence_transformers <span class="k">import</span> SentenceTransformer
+
+<span class="c"># ── MÊME CORPUS QUE J1 — on le stocke maintenant ──────────────────────</span>
+DOCS = [
+{<span class="s">“id”</span>: <span class="s">“sec_01”</span>,  <span class="s">“text”</span>: <span class="s">“Politique sécurité : tout accès VPN requiert MFA.”</span>,            <span class="s">“dept”</span>: <span class="s">“IT”</span>,  <span class="s">“source”</span>: <span class="s">“politique_securite_v3.pdf”</span>},
+{<span class="s">“id”</span>: <span class="s">“it_01”</span>,   <span class="s">“text”</span>: <span class="s">“Onboarding IT : créer compte AD, affecter licences Office365.”</span>, <span class="s">“dept”</span>: <span class="s">“IT”</span>,  <span class="s">“source”</span>: <span class="s">“guide_onboarding.pdf”</span>},
+{<span class="s">“id”</span>: <span class="s">“inc_01”</span>,  <span class="s">“text”</span>: <span class="s">“Incident P1 : alerter le NOC dans les 15 min.”</span>,               <span class="s">“dept”</span>: <span class="s">“IT”</span>,  <span class="s">“source”</span>: <span class="s">“proc_incident.pdf”</span>},
+{<span class="s">“id”</span>: <span class="s">“rh_01”</span>,   <span class="s">“text”</span>: <span class="s">“Télétravail : 2 jours max/semaine, accord manager requis.”</span>,    <span class="s">“dept”</span>: <span class="s">“RH”</span>,  <span class="s">“source”</span>: <span class="s">“charte_teletravail.pdf”</span>},
+{<span class="s">“id”</span>: <span class="s">“rgpd_01”</span>, <span class="s">“text”</span>: <span class="s">“RGPD : toute collecte de données requiert une base légale.”</span>,   <span class="s">“dept”</span>: <span class="s">“JUR”</span>, <span class="s">“source”</span>: <span class="s">“note_rgpd_2024.pdf”</span>},
+{<span class="s">“id”</span>: <span class="s">“bkp_01”</span>,  <span class="s">“text”</span>: <span class="s">“Backup : snapshots quotidiens 2h, rétention 30 jours.”</span>,        <span class="s">“dept”</span>: <span class="s">“IT”</span>,  <span class="s">“source”</span>: <span class="s">“politique_backup.pdf”</span>},
+]
+
+<span class="c"># ── INIT : base persistante sur disque ────────────────────────────────</span>
+<span class="hl">client = chromadb.PersistentClient(path=<span class="s">”./base_entreprise”</span>)  <span class="c"># dossier créé auto</span></span>
+col = client.get_or_create_collection(<span class="s">“docs_internes”</span>)
+model = SentenceTransformer(<span class="s">‘all-MiniLM-L6-v2’</span>)
+
+<span class="c"># ── INGESTION : éviter les doublons ──────────────────────────────────</span>
+existing_ids = col.get()[<span class="s">“ids”</span>]
+nouveaux = [d <span class="k">for</span> d <span class="k">in</span> DOCS <span class="k">if</span> d[<span class="s">“id”</span>] <span class="k">not in</span> existing_ids]
+
+<span class="k">if</span> nouveaux:
+col.add(
+documents=[d[<span class="s">“text”</span>]     <span class="k">for</span> d <span class="k">in</span> nouveaux],
+embeddings=model.encode([d[<span class="s">“text”</span>] <span class="k">for</span> d <span class="k">in</span> nouveaux]).tolist(),
+metadatas=[{<span class="s">“dept”</span>: d[<span class="s">“dept”</span>], <span class="s">“source”</span>: d[<span class="s">“source”</span>]} <span class="k">for</span> d <span class="k">in</span> nouveaux],
+ids=[d[<span class="s">“id”</span>]           <span class="k">for</span> d <span class="k">in</span> nouveaux],
+)
+<span class="k">print</span>(<span class="s">f”✓ {len(nouveaux)} docs ajoutés | Total : {col.count()}”</span>)
+<span class="k">else</span>:
+<span class="k">print</span>(<span class="s">f”✓ Base déjà à jour ({col.count()} docs)”</span>)
+
+<span class="c"># ── REQUÊTE SIMPLE ───────────────────────────────────────────────────</span>
+question = <span class="s">“Quelles sont les règles pour travailler depuis chez soi ?”</span>
+<span class="hl">results = col.query(
+query_embeddings=model.encode([question]).tolist(),
+n_results=<span class="n">2</span>,
+include=[<span class="s">“documents”</span>, <span class="s">“metadatas”</span>, <span class="s">“distances”</span>]
+)</span>
+
+<span class="k">for</span> i, (doc, meta, dist) <span class="k">in</span> enumerate(zip(
+results[<span class="s">“documents”</span>][<span class="n">0</span>],
+results[<span class="s">“metadatas”</span>][<span class="n">0</span>],
+results[<span class="s">“distances”</span>][<span class="n">0</span>]
+)):
+<span class="k">print</span>(<span class="s">f”\n#{i+1} Source: {meta[‘source’]} | Distance: {dist:.3f}”</span>)
+<span class="k">print</span>(<span class="s">f”     {doc}”</span>)
+
+<span class="c"># ── REQUÊTE FILTRÉE PAR DÉPARTEMENT ──────────────────────────────────</span>
+<span class="k">print</span>(<span class="s">”\n── Recherche dans IT uniquement ──”</span>)
+results_it = col.query(
+query_embeddings=model.encode([<span class="s">“comment configurer un nouveau poste ?”</span>]).tolist(),
+n_results=<span class="n">2</span>,
+where={<span class="s">“dept”</span>: <span class="s">“IT”</span>}   <span class="c"># ← filtre : uniquement les docs IT</span>
+)
+<span class="k">print</span>(results_it[<span class="s">“documents”</span>][<span class="n">0</span>])</pre>
+</div>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fréquent J2</strong>
+    <p>Si tu relances le script sans vérifier les IDs existants, tu obtiens des erreurs de doublon (<code>IDAlreadyExistsError</code>). Le check <code>if d["id"] not in existing_ids</code> dans le code ci-dessus l'évite. C'est le bug n°1 en prod.</p>
+  </div>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J3</h4>
+  <ul>
+    <li><input type="checkbox"> La base est créée dans <code>./base_entreprise/</code> sur ton disque</li>
+    <li><input type="checkbox"> Tu relances le script → "Base déjà à jour" (pas de doublon)</li>
+    <li><input type="checkbox"> La requête télétravail retourne <code>charte_teletravail.pdf</code> en #1</li>
+    <li><input type="checkbox"> Le filtre <code>where={"dept": "IT"}</code> fonctionne</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(26,158,118,.06);border-color:rgba(26,158,118,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d2)">Livrable J2</strong>
+    <p>Base ChromaDB persistante avec tes 6 docs métier indexés, filtrable par département. C'est la couche "mémoire" de ton RAG — elle sera réutilisée telle quelle du J3 au J7.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J3 ══ -->
+
+<div class="dc" id="dc3">
+  <div class="dc-head" onclick="tog(3)">
+    <div class="dc-accent" style="background:var(--d3)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d3)">3</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Pipeline RAG Complet — Le Moment où Tout s'Assemble</h3>
+      <div class="sub">Relier ChromaDB + LLM avec LangChain en 40 lignes</div>
+    </div>
+    <div class="dc-meta">
+      <span class="tbadge">⏱ 40 min</span>
+      <div class="chev">▾</div>
+    </div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--vital);border-color:rgba(192,57,43,.3);background:var(--vital-l)">🏆 Milestone</span>
+    <span class="tg" style="color:var(--vital);border-color:rgba(192,57,43,.3);background:var(--vital-l)">Vital 20%</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Le pipeline en 4 lignes conceptuelles</span><h4></h4></div>
+    <ul>
+      <li><div class="b"></div><strong>1. Charger</strong> ton PDF avec <code>PyPDFLoader</code></li>
+      <li><div class="b"></div><strong>2. Découper</strong> en chunks avec <code>RecursiveCharacterTextSplitter</code></li>
+      <li><div class="b"></div><strong>3. Indexer</strong> dans ChromaDB (J2 déjà fait !)</li>
+      <li><div class="b"></div><strong>4. Chaîner</strong> Retriever + LLM avec <code>RetrievalQA</code></li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ne pas apprendre maintenant</span><h4>Complexité inutile J3</h4></div>
+    <ul>
+      <li><div class="b"></div>LCEL (LangChain Expression Language) — syntaxe avancée</li>
+      <li><div class="b"></div>Async / streaming de réponses</li>
+      <li><div class="b"></div>Multi-query retriever, ensemble retriever</li>
+      <li><div class="b"></div>LangSmith tracing et observabilité</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar">
+    <span class="fn">📁 fil_rouge/jour3_pipeline_rag.py — RAG complet sur un vrai PDF</span>
+  </div>
+  <pre><span class="c"># pip install langchain-core langchain-community langchain-ollama langchain-huggingface pypdf chromadb
+```
+
+# Prérequis : ollama pull mistral  (une seule fois dans le terminal)
+
+# ⚠️ LangChain v1 : RetrievalQA est supprimé → on utilise le pattern LCEL</span>
+
+<span class="k">from</span> langchain_community.document_loaders <span class="k">import</span> PyPDFLoader
+<span class="k">from</span> langchain_text_splitters <span class="k">import</span> RecursiveCharacterTextSplitter  <span class="c"># ← nouveau package v1</span>
+<span class="k">from</span> langchain_chroma <span class="k">import</span> Chroma                                   <span class="c"># ← langchain-chroma (plus community)</span>
+<span class="k">from</span> langchain_huggingface <span class="k">import</span> HuggingFaceEmbeddings               <span class="c"># ← langchain-huggingface</span>
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate
+<span class="k">from</span> langchain_core.output_parsers <span class="k">import</span> StrOutputParser
+<span class="k">from</span> langchain_core.runnables <span class="k">import</span> RunnablePassthrough
+
+<span class="c"># ── ÉTAPE 1 : Charger UN vrai PDF ─────────────────────────────────────</span>
+<span class="hl">pages = PyPDFLoader(<span class="s">“politique_securite_v3.pdf”</span>).load()</span>
+<span class="k">print</span>(<span class="s">f”✓ {len(pages)} pages chargées”</span>)
+
+<span class="c"># ── ÉTAPE 2 : Découper en chunks ──────────────────────────────────────</span>
+<span class="hl">chunks = RecursiveCharacterTextSplitter(
+chunk_size=<span class="n">500</span>, chunk_overlap=<span class="n">50</span>
+).split_documents(pages)</span>
+<span class="k">print</span>(<span class="s">f”✓ {len(chunks)} chunks générés”</span>)
+
+<span class="c"># ── ÉTAPE 3 : Indexer dans ChromaDB ──────────────────────────────────</span>
+<span class="hl">vectordb = Chroma.from_documents(
+documents=chunks,
+embedding=HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>),
+persist_directory=<span class="s">”./base_entreprise”</span>
+)</span>
+retriever = vectordb.as_retriever(search_kwargs={<span class="s">“k”</span>: <span class="n">3</span>})
+<span class="k">print</span>(<span class="s">f”✓ {vectordb._collection.count()} chunks indexés”</span>)
+
+<span class="c"># ── ÉTAPE 4 : Pipeline LCEL (pattern LangChain v1) ───────────────────</span>
+<span class="c"># Plus de RetrievalQA → on compose avec le pipe operator |</span>
+llm = ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>)
+
+prompt = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">“Réponds UNIQUEMENT avec le contexte. Si absent, dis-le clairement.\n\nContexte:\n{context}”</span>),
+(<span class="s">“human”</span>, <span class="s">”{question}”</span>),
+])
+
+<span class="c"># Fonction helper pour formater les docs récupérés</span>
+<span class="k">def</span> <span class="f">format_docs</span>(docs):
+<span class="k">return</span> <span class="s">”\n\n”</span>.join(
+<span class="s">f”[Source: {d.metadata.get(‘source’,’?’)}]\n{d.page_content}”</span>
+<span class="k">for</span> d <span class="k">in</span> docs
+)
+
+<span class="c"># Le pipe | est le pattern LCEL v1 — lisible et composable</span>
+<span class="hl">rag_chain = (
+{<span class="s">“context”</span>: retriever | format_docs, <span class="s">“question”</span>: RunnablePassthrough()}
+| prompt
+| llm
+| StrOutputParser()
+)</span>
+
+<span class="c"># ── TESTER avec 3 questions types ────────────────────────────────────</span>
+questions = [
+<span class="s">“Quelles sont les exigences d’authentification pour le VPN ?”</span>,
+<span class="s">“Que faire en cas de perte d’un appareil professionnel ?”</span>,
+<span class="s">“Quelles données sont interdites de stocker sur un poste local ?”</span>,
+]
+
+<span class="k">for</span> q <span class="k">in</span> questions:
+<span class="k">print</span>(<span class="s">f”\n❓ {q}”</span>)
+<span class="c"># Récupérer les sources séparément pour les afficher</span>
+sources = [d.metadata.get(<span class="s">‘source’</span>,<span class="s">’?’</span>) <span class="k">for</span> d <span class="k">in</span> retriever.invoke(q)]
+answer = rag_chain.invoke(q)
+<span class="k">print</span>(<span class="s">f”💬 {answer}”</span>)
+<span class="k">print</span>(<span class="s">f”📄 Sources : {sources}”</span>)</pre>
+</div>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fréquent J3 — "Le LLM invente quand même"</strong>
+    <p>Si <code>result["context"]</code> retourne des chunks hors sujet, le LLM va "combler" avec ses connaissances. Avant d'accuser Mistral : vérifie d'abord que les chunks récupérés sont pertinents. Le problème est presque toujours dans le retriever. Si Ollama répond lentement, c'est normal — Mistral tourne en local sur ton CPU/GPU.</p>
+  </div>
+</div>
+
+<div class="teach">
+  <strong>🎓 Pour enseigner ce pipeline</strong>
+  <p>Montre les deux colonnes en parallèle : à gauche les chunks récupérés, à droite la réponse finale. Les étudiants comprennent instantanément que la qualité du retriever = qualité de la réponse. Pas besoin d'expliquer LangChain en détail.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J4</h4>
+  <ul>
+    <li><input type="checkbox"> Le pipeline tourne sur ton PDF sans erreur</li>
+    <li><input type="checkbox"> <code>result["context"]</code> retourne des chunks pertinents pour chaque question (clé v1 = "context", plus "source_documents")</li>
+    <li><input type="checkbox"> Tu vois le lien direct : meilleur chunk → meilleure réponse</li>
+    <li><input type="checkbox"> Tu peux expliquer les 4 étapes à quelqu'un d'autre</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(192,57,43,.06);border-color:rgba(192,57,43,.25);">
+  <div class="liv-icon">🎉</div>
+  <div class="liv-text">
+    <strong style="color:var(--d3)">Livrable J3 — MILESTONE</strong>
+    <p>Ton premier RAG fonctionnel qui répond à des questions sur un vrai PDF d'entreprise, en citant ses sources. Tout ce qui suit, c'est de l'amélioration de ce pipeline.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J4 ══ -->
+
+<div class="dc" id="dc4">
+  <div class="dc-head" onclick="tog(4)">
+    <div class="dc-accent" style="background:var(--d4)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d4)">4</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Chunking — Le Seul Réglage qui Change Tout</h3>
+      <div class="sub">chunk_size + overlap : l'expérience qui parle d'elle-même</div>
+    </div>
+    <div class="dc-meta">
+      <span class="tbadge">⏱ 35 min</span>
+      <div class="chev">▾</div>
+    </div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--vital);border-color:rgba(192,57,43,.3);background:var(--vital-l)">Vital 20%</span>
+    <span class="tg" style="color:var(--d4);border-color:rgba(212,132,10,.3);background:rgba(212,132,10,.08)">Expérience directe</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ La règle des 3 tailles (10 min)</span><h4></h4></div>
+    <ul>
+      <li><div class="b"></div><strong>200 tokens</strong> → précis mais sans contexte. Bon pour FAQ courtes.</li>
+      <li><div class="b"></div><strong>500 tokens</strong> → le sweet spot pour 80% des cas. <em>Commence toujours là.</em></li>
+      <li><div class="b"></div><strong>1000 tokens</strong> → bon contexte mais dilue la pertinence. Docs narratifs.</li>
+      <li><div class="b"></div><strong>Overlap = 10% de chunk_size.</strong> Si chunk=500, overlap=50. Pas plus.</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer maintenant</span><h4></h4></div>
+    <ul>
+      <li><div class="b"></div>SemanticChunker (fragile, lent, coûteux)</li>
+      <li><div class="b"></div>ParentDocument Retriever (complexité prématurée)</li>
+      <li><div class="b"></div>MarkdownHeaderTextSplitter (cas spécifique)</li>
+      <li><div class="b"></div>Optimisation token-level avec tiktoken</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar">
+    <span class="fn">📁 fil_rouge/jour4_chunking.py — Comparaison empirique sur ton PDF</span>
+  </div>
+  <pre><span class="c"># Même PDF que J3 — on compare 3 configurations</span>
+```
+
+<span class="k">from</span> langchain_community.document_loaders <span class="k">import</span> PyPDFLoader
+<span class="k">from</span> langchain_text_splitters <span class="k">import</span> RecursiveCharacterTextSplitter  <span class="c"># ← v1</span>
+<span class="k">from</span> langchain_huggingface <span class="k">import</span> HuggingFaceEmbeddings                <span class="c"># ← v1</span>
+<span class="k">from</span> sklearn.metrics.pairwise <span class="k">import</span> cosine_similarity
+<span class="k">import</span> numpy <span class="k">as</span> np
+
+pages = PyPDFLoader(<span class="s">“politique_securite_v3.pdf”</span>).load()
+emb = HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>)
+
+<span class="c"># ── Les 3 configurations à tester ─────────────────────────────────────</span>
+CONFIGS = [
+{<span class="s">“name”</span>: <span class="s">“Petit  (200/20)”</span>,  <span class="s">“size”</span>: <span class="n">200</span>,  <span class="s">“overlap”</span>: <span class="n">20</span>},
+{<span class="s">“name”</span>: <span class="s">“Moyen  (500/50)”</span>,  <span class="s">“size”</span>: <span class="n">500</span>,  <span class="s">“overlap”</span>: <span class="n">50</span>},  <span class="c"># ← sweet spot</span>
+{<span class="s">“name”</span>: <span class="s">“Grand  (1000/100)”</span>, <span class="s">“size”</span>: <span class="n">1000</span>, <span class="s">“overlap”</span>: <span class="n">100</span>},
+]
+
+<span class="c"># ── Question de test (utilise une vraie question sur ton doc) ──────────</span>
+QUESTION = <span class="s">“Que faire si un employé perd son ordinateur portable ?”</span>
+q_vec = np.array(emb.embed_query(QUESTION))
+
+<span class="k">print</span>(<span class="s">f”\n{‘Config’:<20} {‘Chunks’:>6} {‘Score #1’:>9} {‘Contexte chunk #1 (100 chars)’}”</span>)
+<span class="k">print</span>(<span class="s">”-”</span> * <span class="n">80</span>)
+
+<span class="k">for</span> cfg <span class="k">in</span> CONFIGS:
+splitter = RecursiveCharacterTextSplitter(chunk_size=cfg[<span class="s">“size”</span>], chunk_overlap=cfg[<span class="s">“overlap”</span>])
+chunks = splitter.split_documents(pages)
+texts = [c.page_content <span class="k">for</span> c <span class="k">in</span> chunks]
+vecs = np.array(emb.embed_documents(texts))
+
+```
+scores = cosine_similarity([q_vec], vecs)[<span class="n">0</span>]
+best_idx = int(np.argmax(scores))
+best_score = scores[best_idx]
+best_text = texts[best_idx][:<span class="n">100</span>].replace(<span class="s">"\n"</span>, <span class="s">" "</span>)
+
+<span class="k">print</span>(<span class="s">f"{cfg['name']:<20} {len(chunks):>6} {best_score:>9.3f} {best_text}"</span>)
+```
+
+<span class="o">
+# SORTIE ATTENDUE (exemple) :
+# Config               Chunks  Score #1  Contexte chunk #1 (100 chars)
+# ────────────────────────────────────────────────────────────────────────────────
+# Petit  (200/20)         142     0.641  En cas de perte ou vol d'un équipement,
+# Moyen  (500/50)          68     0.718  En cas de perte ou vol d'un équipement...
+# Grand  (1000/100)        34     0.695  Chapitre 4 - Incidents de sécurité. En...
+#
+# → Moyen 500/50 gagne sur le score ET le contexte. Commence toujours là.</span></pre>
+    </div>
+
+```
+<div class="teach">
+  <strong>🎓 Pour enseigner le chunking</strong>
+  <p>Lance ce script en direct avec les étudiants. Laisse-les deviner avant lequel gagne. Le résultat empirique (le score s'affiche) est beaucoup plus marquant que n'importe quelle explication théorique. C'est le "wow moment" de la séance.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J5</h4>
+  <ul>
+    <li><input type="checkbox"> Tu as le tableau comparatif des 3 configs sur ton PDF</li>
+    <li><input type="checkbox"> chunk_size=500 / overlap=50 donne le meilleur score</li>
+    <li><input type="checkbox"> Tu sais expliquer pourquoi "500" est le sweet spot</li>
+    <li><input type="checkbox"> Tu peux choisir la bonne config selon le type de document</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(212,132,10,.06);border-color:rgba(212,132,10,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d4)">Livrable J4</strong>
+    <p>Tableau comparatif des 3 tailles de chunks sur ton propre PDF, avec scores. Réutilisable directement comme exercice TP dans ton cours.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J5 ══ -->
+
+<div class="dc" id="dc5">
+  <div class="dc-head" onclick="tog(5)">
+    <div class="dc-accent" style="background:var(--d5)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d5)">5</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Prompt Anti-Hallucination — Contrôler ce que le LLM dit</h3>
+      <div class="sub">Le seul prompt template qui fait la différence en production</div>
+    </div>
+    <div class="dc-meta">
+      <span class="tbadge">⏱ 35 min</span>
+      <div class="chev">▾</div>
+    </div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--vital);border-color:rgba(192,57,43,.3);background:var(--vital-l)">Vital 20%</span>
+    <span class="tg" style="color:var(--d5);border-color:rgba(125,60,152,.3);background:rgba(125,60,152,.08)">Anti-hallucination</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Les 3 instructions vitales du prompt</span><h4></h4></div>
+    <ul>
+      <li><div class="b"></div><strong>"Réponds uniquement avec le contexte fourni."</strong> — interdit les inventions</li>
+      <li><div class="b"></div><strong>"Si la réponse n'est pas dans le contexte, dis-le."</strong> — honnêteté forcée</li>
+      <li><div class="b"></div><strong>"Cite la source de chaque affirmation."</strong> — traçabilité totale</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer</span><h4>Prompt engineering avancé</h4></div>
+    <ul>
+      <li><div class="b"></div>Chain-of-thought prompting pour RAG</li>
+      <li><div class="b"></div>Few-shot examples dans le prompt</li>
+      <li><div class="b"></div>ReAct prompting + tool use</li>
+      <li><div class="b"></div>Constitutional AI et auto-critique</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar">
+    <span class="fn">📁 fil_rouge/jour5_prompt_rag.py — Démonstration avec/sans prompt</span>
+  </div>
+  <pre><span class="c"># ⚠️ LangChain v1 : PromptTemplate + RetrievalQA supprimés
+```
+
+# → on utilise ChatPromptTemplate (langchain-core) + pipe LCEL</span>
+
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate
+<span class="k">from</span> langchain_core.output_parsers <span class="k">import</span> StrOutputParser
+<span class="k">from</span> langchain_core.runnables <span class="k">import</span> RunnablePassthrough
+<span class="c"># vectordb, retriever, llm = réutilisés depuis J3</span>
+
+<span class="c"># ── LE PROMPT PARETO v1 — 3 instructions, impact maximal ──────────────</span>
+<span class="c"># Avec ChatPromptTemplate, “system” = instruction LLM, “human” = question user</span>
+<span class="hl">SYSTEM_PROMPT = <span class="s">””“Tu es l’assistant documentaire interne de l’entreprise.
+
+RÈGLES ABSOLUES :
+
+1. Réponds UNIQUEMENT avec les informations du contexte fourni.
+1. Si la réponse n’est PAS dans le contexte, réponds EXACTEMENT :
+   “Je n’ai pas trouvé cette information dans les documents internes.”
+1. Cite toujours la source : (Source : nom_du_fichier.pdf)
+
+Contexte disponible :
+{context}”””</span></span>
+
+<span class="hl">prompt = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, SYSTEM_PROMPT),
+(<span class="s">“human”</span>, <span class="s">”{question}”</span>),
+])</span>
+
+<span class="k">def</span> <span class="f">format_docs_avec_source</span>(docs):
+<span class="k">return</span> <span class="s">”\n\n”</span>.join(
+<span class="s">f”[Source: {d.metadata.get(‘source’,’?’)}]\n{d.page_content}”</span>
+<span class="k">for</span> d <span class="k">in</span> docs
+)
+
+<span class="hl">rag_avec_prompt = (
+{<span class="s">“context”</span>: retriever | format_docs_avec_source, <span class="s">“question”</span>: RunnablePassthrough()}
+| prompt
+| llm
+| StrOutputParser()
+)</span>
+
+<span class="c"># ── TEST CRITIQUE : question hors contexte ────────────────────────────</span>
+<span class="c"># Avec prompt  → il répond honnêtement “je ne sais pas”</span>
+<span class="c"># Sans prompt  → le LLM invente (tu peux le tester en retirant SYSTEM_PROMPT)</span>
+
+hors_contexte = <span class="s">“Quel est le salaire moyen d’un développeur dans l’entreprise ?”</span>
+<span class="k">print</span>(<span class="s">f”\n❓ {hors_contexte}”</span>)
+<span class="k">print</span>(<span class="s">f”💬 {rag_avec_prompt.invoke(hors_contexte)}”</span>)
+
+<span class="o">
+# AVEC PROMPT :
+# "Je n'ai pas trouvé cette information dans les documents internes."
+
+# SANS PROMPT (retire SYSTEM_PROMPT et teste) :
+
+# “Le salaire moyen d’un développeur varie entre 45 000 et 65 000€…”
+
+# → HALLUCINATION — Mistral invente des données salariales !</span>
+
+<span class="c"># ── TEST NORMAL : question dans le contexte ───────────────────────────</span>
+dans_contexte = <span class="s">“Quelles sont les obligations MFA pour le VPN ?”</span>
+<span class="k">print</span>(<span class="s">f”\n❓ {dans_contexte}”</span>)
+<span class="k">print</span>(<span class="s">f”💬 {rag_avec_prompt.invoke(dans_contexte)}”</span>)</pre>
+</div>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fréquent J5 — Le LLM "oublie" les instructions</strong>
+    <p>Certains modèles légers ignorent parfois la règle "si pas dans le contexte, dis-le". Avec Mistral via Ollama, ajoute <code>temperature=0</code> (déjà fait) et teste avec des questions délibérément hors-sujet pour vérifier. Si ça persiste, reformule la règle avec <strong>"Tu DOIS répondre : 'Information non disponible'"</strong> — plus impératif = plus respecté.</p>
+  </div>
+</div>
+
+<div class="teach">
+  <strong>🎓 Pour enseigner les hallucinations</strong>
+  <p>Montre en direct les deux versions côte à côte. La réponse inventée sur les salaires vs "information non trouvée". C'est le moment pédagogique le plus fort de toute la formation — les étudiants comprennent pourquoi le prompt template est critique en contexte professionnel.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J6</h4>
+  <ul>
+    <li><input type="checkbox"> Question hors-contexte → "information non trouvée" (pas d'invention)</li>
+    <li><input type="checkbox"> Question dans le contexte → réponse sourcée avec nom du fichier</li>
+    <li><input type="checkbox"> Tu comprends pourquoi temperature=0 est crucial</li>
+    <li><input type="checkbox"> Tu peux adapter ce prompt template pour n'importe quel domaine</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(125,60,152,.06);border-color:rgba(125,60,152,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d5)">Livrable J5</strong>
+    <p>Démonstration avant/après prompt template : hallucination vs réponse contrôlée. Ce script devient l'exemple central de ton cours sur les limites et bonnes pratiques des LLM.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J6 ══ -->
+
+<div class="dc" id="dc6">
+  <div class="dc-head" onclick="tog(6)">
+    <div class="dc-accent" style="background:var(--d6)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d6)">6</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Mémoire Conversationnelle — RAG qui Retient le Contexte</h3>
+      <div class="sub">Passer d'un Q&A statique à un vrai dialogue</div>
+    </div>
+    <div class="dc-meta">
+      <span class="tbadge">⏱ 35 min</span>
+      <div class="chev">▾</div>
+    </div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--useful);border-color:rgba(36,113,163,.3);background:var(--useful-l)">Utile 30%</span>
+    <span class="tg" style="color:var(--d6);border-color:rgba(26,122,74,.3);background:rgba(26,122,74,.08)">Conversationnel</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit useful">
+    <div class="psplit-head"><span class="badge">✅ 1 seul ajout (15 min)</span><h4>ConversationalRetrievalChain</h4></div>
+    <ul>
+      <li><div class="b"></div>Utiliser <code>create_history_aware_retriever</code> + <code>create_retrieval_chain</code></li>
+      <li><div class="b"></div>Gérer l'historique avec une liste <code>[HumanMessage, AIMessage]</code> tronquée à k=5 tours</li>
+      <li><div class="b"></div>Passer <code>chat_history</code> à chaque appel — c'est tout</li>
+      <li><div class="b"></div>Tester avec des questions de suivi : "Et pour ça ?", "Donne-moi plus de détails"</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer</span><h4>Mémoire avancée</h4></div>
+    <ul>
+      <li><div class="b"></div>Redis / PostgreSQL comme backend mémoire</li>
+      <li><div class="b"></div>Résumé automatique de l'historique long</li>
+      <li><div class="b"></div>Entity memory et knowledge graph</li>
+      <li><div class="b"></div>Multi-session persistence par utilisateur</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar">
+    <span class="fn">📁 fil_rouge/jour6_memoire.py — Conversation multi-tours sur tes docs</span>
+  </div>
+  <pre><span class="c"># ⚠️ LangChain v1 : ConversationalRetrievalChain + ConversationBufferWindowMemory supprimés
+```
+
+# → pattern officiel v1 : create_history_aware_retriever + create_retrieval_chain
+
+# + historique géré manuellement comme liste de messages (HumanMessage/AIMessage)</span>
+
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> HumanMessage, AIMessage
+<span class="k">from</span> langchain.chains <span class="k">import</span> create_history_aware_retriever, create_retrieval_chain
+<span class="k">from</span> langchain.chains.combine_documents <span class="k">import</span> create_stuff_documents_chain
+<span class="c"># retriever, vectordb = réutilisés depuis J3</span>
+
+llm = ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>)
+
+<span class="c"># ── ÉTAPE 1 : Retriever “conscient” de l’historique ───────────────────</span>
+<span class="c"># Reformule la question en tenant compte du contexte précédent</span>
+<span class="hl">contextualize_prompt = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">“Reformule la question en tenant compte de l’historique. “
+“Retourne UNIQUEMENT la question reformulée, rien d’autre.”</span>),
+MessagesPlaceholder(<span class="s">“chat_history”</span>),   <span class="c"># ← placeholder pour la liste de messages</span>
+(<span class="s">“human”</span>, <span class="s">”{input}”</span>),
+])
+history_aware_retriever = create_history_aware_retriever(llm, retriever, contextualize_prompt)</span>
+
+<span class="c"># ── ÉTAPE 2 : Chaîne RAG avec prompt anti-hallucination ───────────────</span>
+<span class="hl">qa_prompt = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">“Réponds UNIQUEMENT avec le contexte. Si absent : “
+“‘Information non trouvée dans les documents.’\n\nContexte:\n{context}”</span>),
+MessagesPlaceholder(<span class="s">“chat_history”</span>),
+(<span class="s">“human”</span>, <span class="s">”{input}”</span>),
+])
+question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+rag_conv = create_retrieval_chain(history_aware_retriever, question_answer_chain)</span>
+
+<span class="c"># ── ÉTAPE 3 : L’historique = une simple liste — tu le gères toi-même ──</span>
+<span class="c"># Plus de ConversationBufferWindowMemory → plus simple, plus transparent</span>
+chat_history = []   <span class="c"># liste de HumanMessage / AIMessage</span>
+MAX_HISTORY  = <span class="n">5</span>    <span class="c"># garde les 5 derniers tours (pareto : k=5 suffit)</span>
+
+conversation = [
+<span class="s">“Quelles sont les règles d’accès VPN de l’entreprise ?”</span>,
+<span class="s">“Est-ce que MFA s’applique aussi en dehors du VPN ?”</span>,   <span class="c"># référence implicite</span>
+<span class="s">“Et si quelqu’un ne respecte pas ces règles ?”</span>,            <span class="c"># suite logique</span>
+]
+
+<span class="k">for</span> question <span class="k">in</span> conversation:
+result = rag_conv.invoke({<span class="s">“input”</span>: question, <span class="s">“chat_history”</span>: chat_history})
+answer = result[<span class="s">“answer”</span>]
+<span class="k">print</span>(<span class="s">f”\n👤 {question}”</span>)
+<span class="k">print</span>(<span class="s">f”🤖 {answer}”</span>)
+<span class="c"># Mettre à jour l’historique + tronquer à MAX_HISTORY tours</span>
+chat_history.extend([HumanMessage(content=question), AIMessage(content=answer)])
+chat_history = chat_history[-MAX_HISTORY * <span class="n">2</span>:]   <span class="c"># *2 car 1 tour = 2 messages</span>
+<span class="k">print</span>(<span class="s">f”── historique : {len(chat_history)} messages”</span>)
+
+<span class="o">
+# La 2ème question contient "aussi en dehors" — ambiguë sans contexte.
+# create_history_aware_retriever reformule en :
+# "MFA est-il obligatoire pour les accès sans VPN ?"
+# → le retriever trouve les bons chunks, le LLM répond précisément.</span></pre>
+    </div>
+
+```
+<div class="check80">
+  <h4>✅ Checklist — Passer au J7</h4>
+  <ul>
+    <li><input type="checkbox"> La 2ème question (référence implicite) est bien reformulée et comprise</li>
+    <li><input type="checkbox"> <code>chat_history</code> augmente bien de 2 messages à chaque tour</li>
+    <li><input type="checkbox"> La troncature à MAX_HISTORY fonctionne (len ne dépasse pas 10)</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(26,122,74,.06);border-color:rgba(26,122,74,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d6)">Livrable J6</strong>
+    <p>RAG conversationnel qui gère les questions de suivi. Passe de "outil Q&A" à "vrai chatbot" — la différence que les utilisateurs finaux remarquent immédiatement.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J7 ══ -->
+
+<div class="dc" id="dc7">
+  <div class="dc-head" onclick="tog(7)">
+    <div class="dc-accent" style="background:var(--d7)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d7)">7</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>App Streamlit — Interface Déployable en 45 min</h3>
+      <div class="sub">Assembler les J1–J6 en une app web que tu peux montrer demain</div>
+    </div>
+    <div class="dc-meta">
+      <span class="tbadge">⏱ 45 min</span>
+      <div class="chev">▾</div>
+    </div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--vital);border-color:rgba(192,57,43,.3);background:var(--vital-l)">🏆 Projet final</span>
+    <span class="tg" style="color:var(--d7);border-color:rgba(176,58,46,.3);background:rgba(176,58,46,.08)">Déployable</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Ce que tu assembles</span><h4>Tout ce qui a été fait</h4></div>
+    <ul>
+      <li><div class="b"></div><strong>J1</strong> : Embeddings → le moteur de recherche</li>
+      <li><div class="b"></div><strong>J2</strong> : ChromaDB persistant → la mémoire</li>
+      <li><div class="b"></div><strong>J3</strong> : Pipeline LangChain → la chaîne</li>
+      <li><div class="b"></div><strong>J4</strong> : chunk_size=500/50 → la config optimale</li>
+      <li><div class="b"></div><strong>J5</strong> : Prompt anti-hallucination → la fiabilité</li>
+      <li><div class="b"></div><strong>J6</strong> : Mémoire conversationnelle → l'expérience</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ne pas ajouter maintenant</span><h4>Scope creep</h4></div>
+    <ul>
+      <li><div class="b"></div>Authentification utilisateurs</li>
+      <li><div class="b"></div>Multi-tenant (plusieurs bases)</li>
+      <li><div class="b"></div>Monitoring RAGAS en temps réel</li>
+      <li><div class="b"></div>Docker / Kubernetes deployment</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar">
+    <span class="fn">📁 fil_rouge/jour7_app.py — App Streamlit complète (80 lignes)</span>
+  </div>
+  <pre><span class="c"># pip install streamlit langchain-core langchain langchain-ollama langchain-chroma langchain-huggingface pypdf langchain-text-splitters
+```
+
+# Prérequis : ollama serve  (terminal séparé)  |  ollama pull mistral
+
+# Lancer : streamlit run jour7_app.py
+
+# ⚠️ LangChain v1 : ConversationalRetrievalChain/Memory supprimés → create_retrieval_chain + liste messages</span>
+
+<span class="k">import</span> streamlit <span class="k">as</span> st, tempfile
+<span class="k">from</span> langchain_community.document_loaders <span class="k">import</span> PyPDFLoader
+<span class="k">from</span> langchain_text_splitters <span class="k">import</span> RecursiveCharacterTextSplitter   <span class="c"># ← v1</span>
+<span class="k">from</span> langchain_chroma <span class="k">import</span> Chroma                                    <span class="c"># ← v1</span>
+<span class="k">from</span> langchain_huggingface <span class="k">import</span> HuggingFaceEmbeddings                <span class="c"># ← v1</span>
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> HumanMessage, AIMessage
+<span class="k">from</span> langchain.chains <span class="k">import</span> create_history_aware_retriever, create_retrieval_chain
+<span class="k">from</span> langchain.chains.combine_documents <span class="k">import</span> create_stuff_documents_chain
+
+<span class="c"># ── CONFIG PARETO v1 ──────────────────────────────────────────────────</span>
+OLLAMA_MODEL = <span class="s">“mistral”</span>   <span class="c"># ollama pull mistral (une seule fois)</span>
+CHUNK_SIZE   = <span class="n">500</span>         <span class="c"># J4 : sweet spot</span>
+CHUNK_OVL    = <span class="n">50</span>          <span class="c"># J4 : 10% du chunk</span>
+TOP_K        = <span class="n">3</span>           <span class="c"># J3 : 3 chunks suffisent</span>
+MAX_HIST     = <span class="n">5</span>           <span class="c"># J6 : 5 tours max en mémoire</span>
+
+<span class="k">def</span> <span class="f">build_chain</span>(retriever):
+<span class="c">“Construit la chaîne RAG conversationnelle (pattern LangChain v1)”</span>
+llm = ChatOllama(model=OLLAMA_MODEL, temperature=<span class="n">0</span>)
+ctx_p = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">“Reformule la question avec l’historique. Retourne uniquement la question.”</span>),
+MessagesPlaceholder(<span class="s">“chat_history”</span>),
+(<span class="s">“human”</span>, <span class="s">”{input}”</span>),
+])
+qa_p = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">“Réponds UNIQUEMENT avec le contexte fourni. Si absent : ‘Information non disponible dans les documents.’
+Cite toujours (Source : fichier.pdf).
+
+Contexte :
+{context}”</span>),
+MessagesPlaceholder(<span class="s">“chat_history”</span>),
+(<span class="s">“human”</span>, <span class="s">”{input}”</span>),
+])
+<span class="k">return</span> create_retrieval_chain(
+create_history_aware_retriever(llm, retriever, ctx_p),
+create_stuff_documents_chain(llm, qa_p)
+)
+
+<span class="c"># ── INTERFACE ─────────────────────────────────────────────────────────</span>
+st.set_page_config(page_title=<span class="s">“📚 RAG Entreprise”</span>, layout=<span class="s">“wide”</span>)
+st.title(<span class="s">“📚 Chatbot Documentaire — Mistral + Ollama (LangChain v1)”</span>)
+
+<span class="k">with</span> st.sidebar:
+st.header(<span class="s">“📄 Documents”</span>)
+pdfs = st.file_uploader(<span class="s">“Uploader vos PDFs”</span>, type=<span class="s">“pdf”</span>, accept_multiple_files=<span class="k">True</span>)
+st.caption(<span class="s">“🟢 Mistral tourne 100% en local”</span>)
+<span class="k">if</span> st.button(<span class="s">“🗑️ Nouvelle session”</span>):
+<span class="k">for</span> k <span class="k">in</span> [<span class="s">“chain”</span>, <span class="s">“messages”</span>, <span class="s">“history”</span>]:
+st.session_state.pop(k, <span class="k">None</span>)
+st.rerun()
+
+<span class="c"># ── INDEXATION ────────────────────────────────────────────────────────</span>
+<span class="k">if</span> pdfs <span class="k">and</span> <span class="s">“chain”</span> <span class="k">not in</span> st.session_state:
+<span class="k">with</span> st.spinner(<span class="s">“Indexation en cours (embeddings locaux)…”</span>):
+all_chunks = []
+splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVL)
+<span class="k">for</span> pdf <span class="k">in</span> pdfs:
+<span class="k">with</span> tempfile.NamedTemporaryFile(delete=<span class="k">False</span>, suffix=<span class="s">”.pdf”</span>) <span class="k">as</span> f:
+f.write(pdf.read()); tmp = f.name
+chunks = splitter.split_documents(PyPDFLoader(tmp).load())
+<span class="k">for</span> c <span class="k">in</span> chunks: c.metadata[<span class="s">“source”</span>] = pdf.name
+all_chunks.extend(chunks)
+<span class="hl">vectordb = Chroma.from_documents(
+all_chunks,
+HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>)
+)
+st.session_state.chain    = build_chain(vectordb.as_retriever(search_kwargs={<span class="s">“k”</span>: TOP_K}))
+st.session_state.messages = []   <span class="c"># affichage Streamlit</span>
+st.session_state.history  = []   <span class="c"># HumanMessage/AIMessage — pattern v1</span></span>
+st.success(<span class="s">f”✓ {len(all_chunks)} chunks indexés depuis {len(pdfs)} PDF(s)”</span>)
+
+<span class="c"># ── CHAT ─────────────────────────────────────────────────────────────</span>
+<span class="k">for</span> msg <span class="k">in</span> st.session_state.get(<span class="s">“messages”</span>, []):
+<span class="k">with</span> st.chat_message(msg[<span class="s">“role”</span>]): st.markdown(msg[<span class="s">“content”</span>])
+
+<span class="k">if</span> q := st.chat_input(<span class="s">“Posez votre question…”</span>):
+<span class="k">if</span> <span class="s">“chain”</span> <span class="k">not in</span> st.session_state:
+st.warning(<span class="s">“⬅️ Uploadez d’abord des PDFs”</span>)
+<span class="k">else</span>:
+st.session_state.messages.append({<span class="s">“role”</span>: <span class="s">“user”</span>, <span class="s">“content”</span>: q})
+<span class="k">with</span> st.chat_message(<span class="s">“user”</span>): st.markdown(q)
+<span class="k">with</span> st.chat_message(<span class="s">“assistant”</span>), st.spinner(<span class="s">“Mistral réfléchit…”</span>):
+<span class="hl">res = st.session_state.chain.invoke({
+<span class="s">“input”</span>: q,
+<span class="s">“chat_history”</span>: st.session_state.history
+})</span>
+ans = res[<span class="s">“answer”</span>]
+st.markdown(ans)
+sources = list({d.metadata.get(<span class="s">“source”</span>, <span class="s">”?”</span>) <span class="k">for</span> d <span class="k">in</span> res.get(<span class="s">“context”</span>, [])})
+<span class="k">if</span> sources: st.caption(<span class="s">f”📄 Sources : {’, ’.join(sources)}”</span>)
+st.session_state.messages.append({<span class="s">“role”</span>: <span class="s">“assistant”</span>, <span class="s">“content”</span>: ans})
+st.session_state.history.extend([HumanMessage(content=q), AIMessage(content=ans)])
+st.session_state.history = st.session_state.history[-MAX_HIST * <span class="n">2</span>:]
+</div>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Déploiement : Ollama en local vs cloud</strong>
+    <p>Ollama tourne sur <strong>ta machine</strong> — l'app Streamlit fonctionne donc en local sans problème. Pour déployer sur Streamlit Cloud, Ollama ne sera pas disponible : tu devras soit utiliser une VM avec Ollama installé, soit switcher sur Groq/OpenAI uniquement pour la prod cloud. En local ou sur un serveur interne d'entreprise, Ollama est parfait.</p>
+  </div>
+</div>
+
+<div class="teach">
+  <strong>🎓 Pour utiliser en TP</strong>
+  <p>Chaque étudiant uploade un PDF différent (cours, article, doc technique) et pose 3 questions. Ils voient en direct pourquoi certaines questions trouvent des réponses et d'autres pas — c'est la meilleure introduction aux limites du RAG.</p>
+</div>
+
+<div class="livrable" style="background:rgba(176,58,46,.06);border-color:rgba(176,58,46,.25);">
+  <div class="liv-icon">🏆</div>
+  <div class="liv-text">
+    <strong style="color:var(--d7)">Livrable Final — Semaine complète</strong>
+    <p>App RAG déployée en ligne. Elle intègre les 6 apprentissages précédents dans 80 lignes de code. Montre-la à n'importe qui — c'est un outil professionnel réel, pas un exercice.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+</div><!-- /days -->
+
+<!-- FINAL -->
+
+<div class="final">
+  <div class="final-badge">🏁 Récapitulatif Pareto</div>
+  <h2>20% des concepts,<br><em>100% du résultat</em></h2>
+  <p class="fdesc">En 7 × 40 min, tu maîtrises les 5 gestes fondamentaux qui produisent 80% de la valeur d'un RAG en production. Tout le reste est de l'optimisation marginale.</p>
+  <div class="final-grid">
+    <div class="fg"><div class="fgi">1️⃣</div><h4>Embeddings</h4><p>Le moteur de recherche sémantique — J1</p></div>
+    <div class="fg"><div class="fgi">2️⃣</div><h4>ChromaDB</h4><p>La mémoire persistante — J2</p></div>
+    <div class="fg"><div class="fgi">3️⃣</div><h4>Pipeline LangChain</h4><p>La chaîne qui relie tout — J3</p></div>
+    <div class="fg"><div class="fgi">4️⃣</div><h4>chunk_size=500</h4><p>Le seul réglage qui compte — J4</p></div>
+    <div class="fg"><div class="fgi">5️⃣</div><h4>Prompt anti-hallucination</h4><p>La fiabilité en production — J5</p></div>
+  </div>
+</div>
+
+<!-- STACK -->
+
+<div style="margin-top:48px;">
+  <div class="sh"><span>Stack Pareto — 5 outils, 0 superflu</span><div class="ln"></div></div>
+  <div class="stack-grid">
+    <div class="sc"><div class="si">🤗</div><div><div class="sn">Sentence-Transformers</div><div class="sd">Embeddings gratuits locaux</div></div></div>
+    <div class="sc"><div class="si">🗄️</div><div><div class="sn">ChromaDB</div><div class="sd">Base vectorielle locale</div></div></div>
+    <div class="sc"><div class="si">🦜</div><div><div class="sn">LangChain</div><div class="sd">Framework pipeline RAG</div></div></div>
+    <div class="sc"><div class="si">🦙</div><div><div class="sn">Ollama + Mistral</div><div class="sd">LLM 100% local, aucune clé API</div></div></div>
+    <div class="sc"><div class="si">🖥️</div><div><div class="sn">Streamlit</div><div class="sd">Interface + déploiement</div></div></div>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+function tog(n){document.getElementById('dc'+n).classList.toggle('open');}
+
+const colors=['#2471a3','#1a9e76','#c0392b','#d4840a','#7d3c98','#1a7a4a','#b03a2e'];
+const done=new Set();
+const cont=document.getElementById('ddots');
+['J1','J2','J3','J4','J5','J6','J7'].forEach((lbl,i)=>{
+  const w=document.createElement('div');
+  w.className='ddot'; w.dataset.day=i+1;
+  w.innerHTML=`<div class="d"></div><span class="dl">${lbl}</span>`;
+  w.onclick=()=>{
+    const d=i+1;
+    if(done.has(d)){done.delete(d);w.classList.remove('done');w.querySelector('.d').style.background='';}
+    else{done.add(d);w.classList.add('done');w.querySelector('.d').style.background=colors[i];}
+    const pct=Math.round(done.size/7*100);
+    document.getElementById('pct-label').textContent=
+      done.size===0?'Clique pour cocher ✓':done.size===7?'🎉 Terminé — Pareto accompli !':
+      `${pct}% — ${done.size}/7 jours`;
+  };
+  cont.appendChild(w);
+});
+
+document.getElementById('dc1').classList.add('open');
+</script>
+
+</body>
+</html>

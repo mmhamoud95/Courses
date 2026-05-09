@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Avancé — Self-RAG · CRAG · GraphRAG · Reranking</title>
+<style>
+/* ═══════════════════════════════════════
+   VARIABLES
+═══════════════════════════════════════ */
+:root {
+  --bg:      #090d13;
+  --bg2:     #0e1420;
+  --bg3:     #131a26;
+  --card:    #18202e;
+  --card2:   #1e2838;
+  --border:  #222d40;
+  --border2: #2a3850;
+  --text:    #c4d4ec;
+  --text2:   #6e89b0;
+  --text3:   #3d5070;
+  --white:   #edf2ff;
+  --blue:    #4b9dff;
+  --blue2:   #76b8ff;
+  --green:   #2ecc8a;
+  --green2:  #52e0a4;
+  --orange:  #f5923a;
+  --purple:  #a47cf5;
+  --cyan:    #18d4e8;
+  --yellow:  #f0b429;
+  --red:     #f56565;
+  --pink:    #ec4899;
+  --mono:    'Cascadia Code','Fira Code','Consolas',monospace;
+  --sans:    'Segoe UI',system-ui,sans-serif;
+  --r:       8px;
+  --r2:      14px;
+}
+
+/* ═══════════════════════════════════════
+RESET & BASE
+═══════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto}
+body{background:var(–bg);color:var(–text);font-family:var(–sans);font-size:15px;line-height:1.72;display:flex;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(–bg)}::-webkit-scrollbar-thumb{background:var(–border2);border-radius:4px}
+a{color:var(–blue)}
+strong{color:var(–white);font-weight:600}
+em{color:var(–text2);font-style:italic}
+code{font-family:var(–mono);font-size:12.5px;background:rgba(75,157,255,.1);color:var(–blue2);padding:1px 6px;border-radius:4px;border:1px solid rgba(75,157,255,.18)}
+ul,ol{padding-left:22px;margin-bottom:14px}
+li{margin-bottom:5px;font-size:14px;line-height:1.65}
+ul li::marker{color:var(–blue)}
+ol li::marker{color:var(–blue);font-family:var(–mono);font-size:12px}
+p{margin-bottom:12px;font-size:14px;line-height:1.72}
+
+/* ═══════════════════════════════════════
+SIDEBAR
+═══════════════════════════════════════ */
+#sb{position:fixed;left:0;top:0;bottom:0;width:268px;background:var(–bg2);border-right:1px solid var(–border);overflow-y:auto;z-index:100;display:flex;flex-direction:column}
+.sb-logo{padding:20px 18px 14px;border-bottom:1px solid var(–border)}
+.sb-logo .ey{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(–orange);display:block;margin-bottom:4px}
+.sb-logo h2{font-size:15px;font-weight:800;color:var(–white);line-height:1.3}
+.sb-prog{padding:11px 18px;border-bottom:1px solid var(–border)}
+.sb-prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(–text2);margin-bottom:5px;font-family:var(–mono)}
+.sb-bar{height:3px;background:var(–bg3);border-radius:3px;overflow:hidden}
+.sb-fill{height:100%;background:linear-gradient(90deg,var(–orange),var(–pink));width:0;transition:width .4s}
+.sb-nav{padding:10px 0;flex:1}
+.sb-sec{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(–text3);padding:8px 18px 3px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 18px;cursor:pointer;font-size:12.5px;color:var(–text2);border-left:2px solid transparent;transition:all .13s}
+.sb-item:hover{background:var(–bg3);color:var(–text);border-left-color:var(–border2)}
+.sb-item.active{background:rgba(75,157,255,.07);color:var(–blue2);border-left-color:var(–blue)}
+.sb-item .ic{width:18px;text-align:center;font-size:13px}
+.sb-item .bx{margin-left:auto;font-size:9px;font-family:var(–mono);background:var(–bg3);padding:1px 5px;border-radius:3px;color:var(–text3)}
+.sb-item.active .bx{background:rgba(75,157,255,.15);color:var(–blue)}
+
+/* ═══════════════════════════════════════
+MAIN
+═══════════════════════════════════════ */
+#main{margin-left:268px;flex:1;min-height:100vh}
+.topbar{position:sticky;top:0;background:rgba(9,13,19,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(–border);height:46px;padding:0 36px;display:flex;align-items:center;justify-content:space-between;z-index:50}
+.tb-bc{font-family:var(–mono);font-size:11px;color:var(–text2);display:flex;align-items:center;gap:6px}
+.tb-bc .sep{color:var(–border2)}
+.tb-bc .cur{color:var(–text)}
+.tb-btn{background:var(–card);border:1px solid var(–border);color:var(–text2);font-size:11px;padding:4px 12px;border-radius:6px;cursor:pointer;font-family:var(–mono)}
+.tb-btn:hover{border-color:var(–orange);color:var(–orange)}
+
+/* ═══════════════════════════════════════
+SECTIONS
+═══════════════════════════════════════ */
+.hero{padding:52px 50px 0}
+.page{padding:50px 50px 80px;max-width:880px}
+.mod-sec{padding:50px 50px 0}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(–border),transparent)}
+
+/* ═══════════════════════════════════════
+HERO
+═══════════════════════════════════════ */
+.pill{display:inline-flex;align-items:center;gap:7px;background:rgba(245,146,58,.08);border:1px solid rgba(245,146,58,.25);color:var(–orange);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 13px;border-radius:99px;margin-bottom:20px}
+.hero-title{font-size:clamp(26px,4vw,46px);font-weight:800;color:var(–white);line-height:1.08;letter-spacing:-1px;margin-bottom:10px}
+.hero-title .t1{color:var(–orange)}
+.hero-title .t2{color:var(–pink)}
+.hero-title .t3{color:var(–purple)}
+.hero-title .t4{color:var(–cyan)}
+.hero-sub{font-size:15px;color:var(–text2);max-width:600px;margin-bottom:26px;line-height:1.65}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:36px}
+.chip{padding:4px 10px;border-radius:5px;font-size:11px;font-family:var(–mono);font-weight:600;border:1px solid}
+.c-o{color:var(–orange);border-color:rgba(245,146,58,.3);background:rgba(245,146,58,.07)}
+.c-p{color:var(–purple);border-color:rgba(164,124,245,.3);background:rgba(164,124,245,.07)}
+.c-c{color:var(–cyan);border-color:rgba(24,212,232,.3);background:rgba(24,212,232,.07)}
+.c-g{color:var(–green);border-color:rgba(46,204,138,.3);background:rgba(46,204,138,.07)}
+.c-b{color:var(–blue2);border-color:rgba(75,157,255,.3);background:rgba(75,157,255,.07)}
+.c-pk{color:var(–pink);border-color:rgba(236,72,153,.3);background:rgba(236,72,153,.07)}
+.stat-row{display:flex;border:1px solid var(–border);border-radius:var(–r2);overflow:hidden;background:var(–bg2);margin-bottom:40px}
+.stat{flex:1;padding:16px 18px;border-right:1px solid var(–border)}
+.stat:last-child{border-right:none}
+.stat-n{font-size:22px;font-weight:800;color:var(–white);line-height:1}
+.stat-n span{font-size:13px;color:var(–orange)}
+.stat-l{font-size:11px;color:var(–text2);margin-top:2px;font-family:var(–mono)}
+
+/* ═══════════════════════════════════════
+MODULE HEADER
+═══════════════════════════════════════ */
+.mod-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:26px;padding-bottom:20px;border-bottom:1px solid var(–border)}
+.mbadge{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0}
+.mb-o{background:linear-gradient(135deg,#3a1e08,#1a0d00);border:1px solid rgba(245,146,58,.3);color:var(–orange)}
+.mb-p{background:linear-gradient(135deg,#22105e,#0f0530);border:1px solid rgba(164,124,245,.3);color:var(–purple)}
+.mb-c{background:linear-gradient(135deg,#073040,#001820);border:1px solid rgba(24,212,232,.3);color:var(–cyan)}
+.mb-g{background:linear-gradient(135deg,#083a20,#021a08);border:1px solid rgba(46,204,138,.3);color:var(–green)}
+.mb-pk{background:linear-gradient(135deg,#3a0820,#1a0010);border:1px solid rgba(236,72,153,.3);color:var(–pink)}
+.mb-b{background:linear-gradient(135deg,#0a2050,#041028);border:1px solid rgba(75,157,255,.3);color:var(–blue2)}
+.mod-info .mtag{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(–text2);margin-bottom:4px}
+.mod-info h1{font-size:23px;font-weight:800;color:var(–white);letter-spacing:-.3px;margin-bottom:5px}
+.mod-info p{font-size:13px;color:var(–text2);line-height:1.55;margin:0}
+.mlevel{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:var(–mono);border:1px solid var(–border);padding:2px 8px;border-radius:99px;color:var(–text2);margin-top:7px}
+.mlevel .dot{width:5px;height:5px;border-radius:50%;background:var(–green)}
+.mlevel.inter .dot{background:var(–orange)}
+.mlevel.adv .dot{background:var(–red)}
+.mlevel.exp .dot{background:var(–purple)}
+
+/* ═══════════════════════════════════════
+TYPOGRAPHY
+═══════════════════════════════════════ */
+h2.sh{font-size:18px;font-weight:700;color:var(–white);margin:34px 0 13px;display:flex;align-items:center;gap:9px}
+h2.sh::before{content:’’;display:block;width:3px;height:18px;border-radius:2px;background:var(–orange);flex-shrink:0}
+h3.shs{font-size:14px;font-weight:700;color:var(–text);margin:20px 0 9px}
+h4.shss{font-size:13px;font-weight:700;color:var(–text2);margin:14px 0 7px;font-family:var(–mono);text-transform:uppercase;letter-spacing:1px}
+
+/* ═══════════════════════════════════════
+CODE BLOCKS
+═══════════════════════════════════════ */
+.cb{background:#0b1018;border:1px solid var(–border);border-radius:var(–r2);margin:14px 0;overflow:hidden}
+.cb-head{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#10161f;border-bottom:1px solid var(–border)}
+.cb-fn{font-size:11px;color:var(–text2);font-family:var(–mono);display:flex;align-items:center;gap:7px}
+.cb-fn::before{content:’’;width:7px;height:7px;border-radius:50%;background:var(–green);box-shadow:0 0 5px var(–green);display:inline-block}
+.cb-lang{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(–orange);background:rgba(245,146,58,.1);padding:2px 7px;border-radius:3px}
+.cp-btn{background:none;border:1px solid var(–border);color:var(–text2);font-size:10px;font-family:var(–mono);padding:2px 9px;border-radius:5px;cursor:pointer}
+.cp-btn:hover{border-color:var(–orange);color:var(–orange)}
+.cp-btn.ok{border-color:var(–green);color:var(–green)}
+pre{padding:18px;overflow-x:auto;font-size:12.5px;line-height:1.72;tab-size:2}
+pre code{background:none;color:#c9d1d9;padding:0;border:none;font-size:12.5px}
+/* syntax */
+.kw{color:#ff7b72}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#5c6a7a}
+.nu{color:#f78166}.cl{color:#ffa657}.im{color:#79c0ff}.dc{color:#b392f0}
+.ky{color:#7ee787}.op{color:#ff7b72}.bl{color:#56b6c2}
+
+/* ═══════════════════════════════════════
+CALLOUTS
+═══════════════════════════════════════ */
+.ca{border-radius:var(–r2);padding:14px 18px;margin:14px 0;border-left:3px solid;display:flex;gap:12px}
+.ca-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.ca-body h4{font-size:13px;font-weight:700;margin-bottom:4px}
+.ca-body p,.ca-body li{font-size:13px;line-height:1.6;margin:0}
+.ca-body ul{margin:6px 0 0}
+.ca-info{background:rgba(75,157,255,.06);border-color:var(–blue)}
+.ca-info .ca-body h4{color:var(–blue2)}
+.ca-tip{background:rgba(46,204,138,.06);border-color:var(–green)}
+.ca-tip .ca-body h4{color:var(–green2)}
+.ca-warn{background:rgba(245,146,58,.06);border-color:var(–orange)}
+.ca-warn .ca-body h4{color:var(–orange)}
+.ca-pareto{background:rgba(164,124,245,.06);border-color:var(–purple)}
+.ca-pareto .ca-body h4{color:var(–purple)}
+.ca-new{background:rgba(236,72,153,.06);border-color:var(–pink)}
+.ca-new .ca-body h4{color:var(–pink)}
+
+/* ═══════════════════════════════════════
+TABLES
+═══════════════════════════════════════ */
+.tw{overflow-x:auto;margin:14px 0;border-radius:var(–r2);border:1px solid var(–border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(–card)}
+thead th{padding:10px 14px;text-align:left;font-family:var(–mono);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(–text2);border-bottom:1px solid var(–border)}
+tbody tr{border-bottom:1px solid var(–border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(75,157,255,.03)}
+td{padding:9px 14px;color:var(–text);vertical-align:top;font-size:13px}
+td:first-child{color:var(–orange);font-family:var(–mono);font-size:12px;font-weight:600}
+.stars{color:var(–yellow)}
+.yes{color:var(–green);font-weight:700}
+.no{color:var(–red)}
+.part{color:var(–orange)}
+
+/* ═══════════════════════════════════════
+QUIZ
+═══════════════════════════════════════ */
+.quiz{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r2);padding:22px;margin:26px 0}
+.quiz-head{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(–border)}
+.quiz-head h3{font-size:16px;font-weight:700;color:var(–white)}
+.qbadge{background:rgba(164,124,245,.12);color:var(–purple);font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:99px;text-transform:uppercase;border:1px solid rgba(164,124,245,.25)}
+.qq{background:var(–card);border:1px solid var(–border);border-radius:var(–r);padding:16px;margin-bottom:12px}
+.qq-num{font-size:9px;font-weight:700;letter-spacing:2px;color:var(–purple);text-transform:uppercase;margin-bottom:6px;font-family:var(–mono)}
+.qq-text{font-size:13.5px;color:var(–text);margin-bottom:11px;font-weight:500;line-height:1.55}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:flex-start;gap:9px;padding:8px 12px;border-radius:7px;border:1px solid var(–border);cursor:pointer;font-size:13px;color:var(–text2);transition:all .12s}
+.opt:hover{border-color:var(–border2);background:var(–bg3);color:var(–text)}
+.opt.correct{border-color:var(–green);background:rgba(46,204,138,.07);color:var(–green2)}
+.opt.wrong{border-color:var(–red);background:rgba(245,101,101,.07);color:var(–red)}
+.ol{font-family:var(–mono);font-size:10px;font-weight:700;background:var(–bg3);width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qa{display:none;margin-top:11px;padding:12px;background:rgba(46,204,138,.06);border:1px solid rgba(46,204,138,.2);border-radius:7px;font-size:13px;color:#6ee7b7;line-height:1.6}
+.qa.show{display:block}
+.qa strong{color:var(–green)}
+.show-btn{margin-top:9px;padding:5px 14px;border-radius:6px;border:1px solid var(–border2);background:var(–bg3);color:var(–text2);font-size:11px;font-family:var(–mono);cursor:pointer}
+.show-btn:hover{border-color:var(–purple);color:var(–purple)}
+
+/* ═══════════════════════════════════════
+CARDS / GRID
+═══════════════════════════════════════ */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:11px;margin:14px 0}
+.gcard{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r2);padding:16px;cursor:pointer;position:relative;overflow:hidden}
+.gcard:hover{border-color:var(–border2)}
+.gtop{height:2px;position:absolute;top:0;left:0;right:0}
+.gt-o{background:linear-gradient(90deg,var(–orange),var(–pink))}
+.gt-p{background:linear-gradient(90deg,var(–purple),var(–blue2))}
+.gt-c{background:linear-gradient(90deg,var(–cyan),var(–green))}
+.gt-g{background:linear-gradient(90deg,var(–green),var(–cyan))}
+.gcard-ic{font-size:20px;margin-bottom:8px}
+.gcard-t{font-size:13px;font-weight:700;color:var(–white);margin-bottom:4px}
+.gcard-d{font-size:12px;color:var(–text2);line-height:1.5}
+
+/* ═══════════════════════════════════════
+DIAGRAM / ARCH
+═══════════════════════════════════════ */
+.arch{background:#080d14;border:1px solid var(–border);border-radius:var(–r2);padding:20px;margin:14px 0;font-family:var(–mono);font-size:12.5px;color:var(–text2);line-height:1.9;overflow-x:auto}
+.arch .d{color:var(–orange);font-weight:600}
+.arch .f{color:var(–text)}
+.arch .c{color:#3a4d5e}
+.arch .s{color:var(–border2)}
+.arch .hi{color:var(–green);font-weight:700}
+.arch .arrow{color:var(–blue2)}
+
+/* Flow diagram */
+.flow{display:flex;align-items:center;gap:0;margin:14px 0;flex-wrap:wrap}
+.fbox{background:var(–card);border:1px solid var(–border);border-radius:var(–r);padding:9px 14px;font-size:12px;color:var(–text);font-family:var(–mono);white-space:nowrap}
+.fbox.hi{border-color:var(–orange);color:var(–orange);background:rgba(245,146,58,.07)}
+.fbox.new{border-color:var(–green);color:var(–green);background:rgba(46,204,138,.07)}
+.farrow{color:var(–text3);padding:0 8px;font-size:16px}
+.fbranch{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.frow{display:flex;align-items:center;gap:0}
+
+/* ═══════════════════════════════════════
+COMPARE
+═══════════════════════════════════════ */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.cmp-col{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r2);overflow:hidden}
+.cmp-head{padding:10px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(–border)}
+.cmp-head.bad{background:rgba(245,101,101,.07);color:var(–red);border-top:2px solid var(–red)}
+.cmp-head.good{background:rgba(46,204,138,.07);color:var(–green);border-top:2px solid var(–green)}
+.cmp-body{padding:12px 16px}
+.cmp-body li{font-size:13px;margin-bottom:4px}
+
+/* ═══════════════════════════════════════
+CHECKLIST
+═══════════════════════════════════════ */
+.cl-list{display:flex;flex-direction:column;gap:5px;margin:11px 0}
+.cl-item{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(–text);padding:5px 0;cursor:pointer}
+.cl-box{width:17px;height:17px;border-radius:4px;border:1.5px solid var(–border2);background:var(–card);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+.cl-item:hover .cl-box{border-color:var(–green)}
+.cl-item.done .cl-box{background:var(–green);border-color:var(–green);color:#000}
+.cl-item.done .cl-label{text-decoration:line-through;color:var(–text2)}
+
+/* ═══════════════════════════════════════
+FOOTER / SCROLL TOP
+═══════════════════════════════════════ */
+.footer{padding:36px 50px;border-top:1px solid var(–border);text-align:center;color:var(–text2);font-size:13px}
+#stb{position:fixed;bottom:22px;right:22px;width:38px;height:38px;background:var(–card);border:1px solid var(–border);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(–text2);opacity:0;pointer-events:none;z-index:200}
+#stb.vis{opacity:1;pointer-events:auto}
+#stb:hover{border-color:var(–orange);color:var(–orange)}
+#mob-btn{display:none;position:fixed;top:10px;left:10px;z-index:150;width:36px;height:36px;background:var(–card);border:1px solid var(–border);border-radius:8px;cursor:pointer;align-items:center;justify-content:center;font-size:15px;color:var(–text)}
+
+/* ═══════════════════════════════════════
+RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:820px){
+#sb{transform:translateX(-100%);transition:transform .25s}
+#sb.open{transform:translateX(0)}
+#main{margin-left:0}
+#mob-btn{display:flex}
+.page,.mod-sec,.hero{padding-left:20px;padding-right:20px}
+.cmp{grid-template-columns:1fr}
+.stat-row{flex-direction:column}
+.stat{border-right:none;border-bottom:1px solid var(–border)}
+.stat:last-child{border-bottom:none}
+.flow{gap:4px}
+}
+</style>
+
+</head>
+<body>
+
+<!-- SIDEBAR -->
+
+<nav id="sb">
+  <div class="sb-logo">
+    <span class="ey">Niveau Expert · Pareto 80/20</span>
+    <h2>RAG Avancé<br>Self-RAG · CRAG · GraphRAG</h2>
+  </div>
+  <div class="sb-prog">
+    <div class="sb-prog-row"><span>Progression</span><span id="pct">0%</span></div>
+    <div class="sb-bar"><div class="sb-fill" id="bar"></div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-sec">Introduction</div>
+    <div class="sb-item active" onclick="goto('hero')"><span class="ic">🏠</span>Accueil<span class="bx">·</span></div>
+
+```
+<div class="sb-sec">Fondations</div>
+<div class="sb-item" onclick="goto('m1')"><span class="ic">📐</span>M1 · Reranking<span class="bx">int.</span></div>
+<div class="sb-item" onclick="goto('m2')"><span class="ic">🔎</span>M2 · HyDE<span class="bx">int.</span></div>
+
+<div class="sb-sec">Techniques Avancées</div>
+<div class="sb-item" onclick="goto('m3')"><span class="ic">🔄</span>M3 · Corrective RAG<span class="bx">avancé</span></div>
+<div class="sb-item" onclick="goto('m4')"><span class="ic">🧠</span>M4 · Self-RAG<span class="bx">avancé</span></div>
+<div class="sb-item" onclick="goto('m5')"><span class="ic">🕸</span>M5 · GraphRAG<span class="bx">expert</span></div>
+
+<div class="sb-sec">Production</div>
+<div class="sb-item" onclick="goto('m6')"><span class="ic">⚙️</span>M6 · Adaptive RAG<span class="bx">expert</span></div>
+<div class="sb-item" onclick="goto('m7')"><span class="ic">🚀</span>M7 · Projet Final<span class="bx">expert</span></div>
+
+<div class="sb-sec">Ressources</div>
+<div class="sb-item" onclick="goto('m8')"><span class="ic">📚</span>M8 · Annexes</div>
+```
+
+  </div>
+</nav>
+
+<button id="mob-btn" onclick="document.getElementById('sb').classList.toggle('open')">☰</button>
+
+<!-- MAIN -->
+
+<main id="main">
+<div class="topbar">
+  <div class="tb-bc">RAG Avancé <span class="sep">›</span><span class="cur" id="cur">Accueil</span></div>
+  <div><button class="tb-btn" onclick="window.print()">⬇ PDF</button></div>
+</div>
+
+<!-- ════════════ HERO ════════════ -->
+
+<section class="hero" id="hero">
+<div class="page" style="padding-top:0;padding-bottom:0">
+  <div class="pill">Niveau Expert · 8 Modules · Pareto 80/20</div>
+  <h1 class="hero-title">
+    <span class="t1">Self-RAG</span> ·
+    <span class="t2">CRAG</span> ·
+    <span class="t3">GraphRAG</span> ·
+    <span class="t4">Reranking</span>
+  </h1>
+  <p class="hero-sub">Les techniques qui séparent un RAG de prototype d'un RAG de production. Chaque module couvre les concepts théoriques, le code complet et les cas d'usage réels.</p>
+  <div class="chips">
+    <span class="chip c-o">Reranking Cross-Encoder</span>
+    <span class="chip c-pk">Corrective RAG</span>
+    <span class="chip c-p">Self-RAG</span>
+    <span class="chip c-c">GraphRAG</span>
+    <span class="chip c-g">HyDE</span>
+    <span class="chip c-b">Adaptive RAG</span>
+    <span class="chip c-o">LangGraph</span>
+    <span class="chip c-pk">LangSmith Eval</span>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-n">8<span> mod.</span></div><div class="stat-l">Modules progressifs</div></div>
+    <div class="stat"><div class="stat-n">40<span>+</span></div><div class="stat-l">Exemples de code</div></div>
+    <div class="stat"><div class="stat-n">6<span> quiz</span></div><div class="stat-l">Auto-évaluation</div></div>
+    <div class="stat"><div class="stat-n">1<span> proj.</span></div><div class="stat-l">Projet RAG complet</div></div>
+  </div>
+
+  <h2 class="sh">Pourquoi ces techniques ?</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Technique</th><th>Problème résolu</th><th>Gain typique</th><th>Complexité</th></tr></thead>
+      <tbody>
+        <tr><td>Reranking</td><td>Chunks récupérés pas dans le bon ordre</td><td>+20-40% précision</td><td>Faible</td></tr>
+        <tr><td>HyDE</td><td>Questions courtes mal représentées</td><td>+15-25% rappel</td><td>Faible</td></tr>
+        <tr><td>CRAG</td><td>Mauvais documents → hallucinations</td><td>-50% hallucinations</td><td>Moyenne</td></tr>
+        <tr><td>Self-RAG</td><td>Pas de contrôle qualité de la réponse</td><td>+30% fidélité</td><td>Élevée</td></tr>
+        <tr><td>GraphRAG</td><td>Relations entre entités non capturées</td><td>+60% sur questions complexes</td><td>Élevée</td></tr>
+        <tr><td>Adaptive RAG</td><td>Même stratégie pour toutes les questions</td><td>Équilibre vitesse/qualité</td><td>Élevée</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="sh">Plan du cours</h2>
+  <div class="grid">
+    <div class="gcard" onclick="goto('m1')"><div class="gtop gt-o"></div><div class="gcard-ic">📐</div><div class="gcard-t">M1 · Reranking</div><div class="gcard-d">Cross-encoder, BGE Reranker, intégration LCEL</div></div>
+    <div class="gcard" onclick="goto('m2')"><div class="gtop gt-g"></div><div class="gcard-ic">🔎</div><div class="gcard-t">M2 · HyDE</div><div class="gcard-d">Hypothetical Document Embedding, améliorer le rappel</div></div>
+    <div class="gcard" onclick="goto('m3')"><div class="gtop gt-o"></div><div class="gcard-ic">🔄</div><div class="gcard-t">M3 · Corrective RAG</div><div class="gcard-d">Évaluer la pertinence, fallback web search</div></div>
+    <div class="gcard" onclick="goto('m4')"><div class="gtop gt-p"></div><div class="gcard-ic">🧠</div><div class="gcard-t">M4 · Self-RAG</div><div class="gcard-d">Retrieve tokens, critique, réflexion</div></div>
+    <div class="gcard" onclick="goto('m5')"><div class="gtop gt-c"></div><div class="gcard-ic">🕸</div><div class="gcard-t">M5 · GraphRAG</div><div class="gcard-d">Graphe de connaissances, Neo4j, entités</div></div>
+    <div class="gcard" onclick="goto('m6')"><div class="gtop gt-o"></div><div class="gcard-ic">⚙️</div><div class="gcard-t">M6 · Adaptive RAG</div><div class="gcard-d">Routage dynamique, RAG conditionnel</div></div>
+    <div class="gcard" onclick="goto('m7')"><div class="gtop gt-p"></div><div class="gcard-ic">🚀</div><div class="gcard-t">M7 · Projet Final</div><div class="gcard-d">RAG production : toutes les techniques combinées</div></div>
+    <div class="gcard" onclick="goto('m8')"><div class="gtop gt-g"></div><div class="gcard-ic">📚</div><div class="gcard-t">M8 · Annexes</div><div class="gcard-d">Cheatsheets, papers, checklist expert</div></div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ M1 · RERANKING ════════════ -->
+
+<div class="divider" id="m1"></div>
+<section class="mod-sec">
+<div class="page">
+  <div class="mod-head">
+    <div class="mbadge mb-o">M1</div>
+    <div class="mod-info">
+      <div class="mtag">Module 1 · Fondation</div>
+      <h1>Reranking — Cross-Encoder</h1>
+      <p>Améliorer l'ordre des chunks récupérés avec un modèle de reranking, pour donner au LLM les passages les plus pertinents en premier.</p>
+      <span class="mlevel inter"><span class="dot"></span>Intermédiaire</span>
+    </div>
+  </div>
+
+  <h2 class="sh">1.1 — Le problème que résout le Reranking</h2>
+  <div class="cmp">
+    <div class="cmp-col">
+      <div class="cmp-head bad">❌ Sans Reranking</div>
+      <div class="cmp-body"><ul>
+        <li>Le retriever retourne les K chunks les plus <em>similaires</em></li>
+        <li>Similarité ≠ pertinence réelle pour la question</li>
+        <li>Le chunk le plus utile peut être en position 4 ou 5</li>
+        <li>Le LLM souffre de "lost in the middle" — il ignore les passages au milieu</li>
+      </ul></div>
+    </div>
+    <div class="cmp-col">
+      <div class="cmp-head good">✅ Avec Reranking</div>
+      <div class="cmp-body"><ul>
+        <li>Un 2ème modèle <em>classe</em> les chunks par pertinence réelle</li>
+        <li>Les chunks les plus utiles remontent en tête</li>
+        <li>On peut réduire k (ex: 10→3) sans perte de qualité</li>
+        <li>Le LLM reçoit un contexte plus dense et pertinent</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <h2 class="sh">1.2 — Bi-Encoder vs Cross-Encoder</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Critère</th><th>Bi-Encoder (retriever)</th><th>Cross-Encoder (reranker)</th></tr></thead>
+      <tbody>
+        <tr><td>Fonctionnement</td><td>Encode query et doc séparément → similarité cosinus</td><td>Encode query + doc ensemble → score de pertinence</td></tr>
+        <tr><td>Vitesse</td><td class="yes">Ultra-rapide (pré-calculé)</td><td class="part">Lent (calcul à la volée)</td></tr>
+        <tr><td>Précision</td><td class="part">Bonne</td><td class="yes">Excellente</td></tr>
+        <tr><td>Usage</td><td>Récupération initiale (top-20)</td><td>Reclassement final (top-20 → top-3)</td></tr>
+        <tr><td>Modèles</td><td>nomic-embed-text, all-MiniLM</td><td>BGE-Reranker, ms-marco-MiniLM</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ca ca-pareto">
+    <span class="ca-icon">🎯</span>
+    <div class="ca-body">
+      <h4>Pattern Pareto — Retrieve large, Rerank small</h4>
+      <p>Récupérez <strong>20-50 candidats</strong> avec le retriever rapide, puis rerankez pour ne garder que les <strong>3-5 meilleurs</strong>. C'est le meilleur ratio qualité/latence pour 90% des cas.</p>
+    </div>
+  </div>
+
+  <h2 class="sh">1.3 — Implémentation avec sentence-transformers</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">01_reranking.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="cm"># pip install sentence-transformers langchain langchain-ollama chromadb</span>
+<span class="kw">from</span> <span class="im">sentence_transformers</span> <span class="kw">import</span> CrossEncoder
+<span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> OllamaEmbeddings, ChatOllama
+<span class="kw">from</span> <span class="im">langchain_community.vectorstores</span> <span class="kw">import</span> Chroma
+<span class="kw">from</span> <span class="im">langchain_core.documents</span> <span class="kw">import</span> Document
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> <span class="im">langchain_core.output_parsers</span> <span class="kw">import</span> StrOutputParser
+<span class="kw">from</span> <span class="im">langchain_core.runnables</span> <span class="kw">import</span> RunnablePassthrough
+
+<span class="cm"># ── Charger le Cross-Encoder ────────────────────────────────────</span>
+<span class="cm"># Modèles recommandés (par ordre de qualité/vitesse):</span>
+<span class="cm"># - BAAI/bge-reranker-base     : rapide, très bon</span>
+<span class="cm"># - cross-encoder/ms-marco-MiniLM-L-6-v2 : ultra-léger</span>
+<span class="cm"># - BAAI/bge-reranker-large    : meilleure qualité</span>
+reranker = <span class="cl">CrossEncoder</span>(<span class="st">“BAAI/bge-reranker-base”</span>)
+
+<span class="cm"># ── Setup vectorstore ───────────────────────────────────────────</span>
+embeddings  = <span class="cl">OllamaEmbeddings</span>(model=<span class="st">“nomic-embed-text”</span>)
+vectorstore = <span class="cl">Chroma</span>(persist_directory=<span class="st">”./chroma_db”</span>, embedding_function=embeddings)
+
+<span class="cm"># ── Fonction de reranking ───────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">rerank</span>(query: str, docs: list[<span class="cl">Document</span>], top_k: int = <span class="nu">3</span>) -> list[<span class="cl">Document</span>]:
+<span class="st">””“Rerank les documents par pertinence réelle avec le cross-encoder.”””</span>
+<span class="kw">if not</span> docs:
+<span class="kw">return</span> []
+
+```
+<span class="cm"># Créer les paires (query, passage) pour le cross-encoder</span>
+pairs = [(query, doc.page_content) <span class="kw">for</span> doc <span class="kw">in</span> docs]
+
+<span class="cm"># Calculer les scores de pertinence</span>
+scores = reranker.predict(pairs)
+
+<span class="cm"># Trier par score décroissant</span>
+ranked = sorted(zip(scores, docs), key=<span class="kw">lambda</span> x: x[<span class="nu">0</span>], reverse=<span class="kw">True</span>)
+
+<span class="cm"># Retourner les top_k documents avec leur score</span>
+result = []
+<span class="kw">for</span> score, doc <span class="kw">in</span> ranked[:top_k]:
+    doc.metadata[<span class="st">"rerank_score"</span>] = <span class="fn">round</span>(<span class="fn">float</span>(score), <span class="nu">4</span>)
+    result.append(doc)
+
+<span class="kw">return</span> result
+```
+
+<span class="cm"># ── Test standalone ─────────────────────────────────────────────</span>
+query    = <span class="st">“Quelle est la politique de remboursement?”</span>
+<span class="cm"># Récupérer 20 candidats avec le retriever rapide</span>
+candidates = vectorstore.similarity_search(query, k=<span class="nu">20</span>)
+<span class="cm"># Reranker pour obtenir les 3 meilleurs</span>
+best_docs  = rerank(query, candidates, top_k=<span class="nu">3</span>)
+
+<span class="kw">for</span> doc <span class="kw">in</span> best_docs:
+<span class="kw">print</span>(f<span class="st">“Score: {doc.metadata[‘rerank_score’]:.4f} | {doc.page_content[:80]}…”</span>)</code></pre>
+
+  </div>
+
+  <h2 class="sh">1.4 — Intégration dans une chain LCEL</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">01_rerank_chain.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="kw">from</span> <span class="im">langchain_core.runnables</span> <span class="kw">import</span> RunnableLambda, RunnableParallel
+
+llm = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>, temperature=<span class="nu">0</span>)
+
+<span class="cm"># ── Retriever avec reranking intégré ────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">RerankRetriever</span>:
+<span class="st">””“Retriever qui applique automatiquement le reranking.”””</span>
+
+```
+<span class="kw">def</span> <span class="fn">__init__</span>(self, vectorstore, reranker, fetch_k=<span class="nu">20</span>, top_k=<span class="nu">4</span>):
+    self.vs       = vectorstore
+    self.reranker = reranker
+    self.fetch_k  = fetch_k
+    self.top_k    = top_k
+
+<span class="kw">def</span> <span class="fn">get_relevant_documents</span>(self, query: str) -> list[<span class="cl">Document</span>]:
+    <span class="cm"># 1. Récupérer beaucoup de candidats</span>
+    candidates = self.vs.similarity_search(query, k=self.fetch_k)
+    <span class="cm"># 2. Reranker pour garder les meilleurs</span>
+    <span class="kw">return</span> rerank(query, candidates, top_k=self.top_k)
+
+<span class="kw">def</span> <span class="fn">__call__</span>(self, query: str) -> list[<span class="cl">Document</span>]:
+    <span class="kw">return</span> self.get_relevant_documents(query)
+```
+
+rerank_retriever = <span class="cl">RerankRetriever</span>(vectorstore, reranker, fetch_k=<span class="nu">20</span>, top_k=<span class="nu">4</span>)
+
+<span class="cm"># ── Chain RAG avec reranking ─────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">fmt_docs</span>(docs):
+<span class="kw">return</span> <span class="st">”\n\n—\n\n”</span>.join(
+f<span class="st">”[Score: {d.metadata.get(‘rerank_score’, ‘N/A’)} | {d.metadata.get(‘source’,’?’)}]\n{d.page_content}”</span>
+<span class="kw">for</span> d <span class="kw">in</span> docs
+)
+
+rag_prompt = <span class="cl">ChatPromptTemplate</span>.from_template(<span class="st">”””
+Réponds uniquement en te basant sur le contexte ci-dessous.
+
+Contexte (trié par pertinence):
+{context}
+
+Question: {question}
+Réponse:”””</span>)
+
+<span class="cm"># La chain complète avec reranking transparent</span>
+rag_chain = (
+{
+<span class="st">“context”</span>:  <span class="cl">RunnableLambda</span>(rerank_retriever) | fmt_docs,
+<span class="st">“question”</span>: <span class="cl">RunnablePassthrough</span>(),
+}
+| rag_prompt | llm | <span class="cl">StrOutputParser</span>()
+)
+
+answer = rag_chain.invoke(<span class="st">“Quelle est la politique de remboursement?”</span>)
+<span class="kw">print</span>(answer)
+
+<span class="cm"># ── Alternative: ContextualCompressionRetriever (LangChain natif) ─</span>
+<span class="kw">from</span> <span class="im">langchain.retrievers</span> <span class="kw">import</span> ContextualCompressionRetriever
+<span class="kw">from</span> <span class="im">langchain.retrievers.document_compressors</span> <span class="kw">import</span> CrossEncoderReranker
+<span class="kw">from</span> <span class="im">langchain_community.cross_encoders</span> <span class="kw">import</span> HuggingFaceCrossEncoder
+
+hf_reranker = <span class="cl">HuggingFaceCrossEncoder</span>(model_name=<span class="st">“BAAI/bge-reranker-base”</span>)
+compressor   = <span class="cl">CrossEncoderReranker</span>(model=hf_reranker, top_n=<span class="nu">4</span>)
+
+base_retriever     = vectorstore.as_retriever(search_kwargs={<span class="st">“k”</span>: <span class="nu">20</span>})
+rerank_retriever_lc = <span class="cl">ContextualCompressionRetriever</span>(
+base_compressor=compressor,
+base_retriever=base_retriever
+)
+<span class="cm"># Utilisable directement dans une chain LCEL comme retriever normal</span></code></pre>
+
+  </div>
+
+  <h2 class="sh">1.5 — Mesurer l'impact du reranking</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">01_benchmark_reranking.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="cm"># Comparer RAG standard vs RAG + Reranking sur un dataset de test</span>
+<span class="kw">from</span> <span class="im">langsmith</span> <span class="kw">import</span> Client
+<span class="kw">from</span> <span class="im">langsmith.evaluation</span> <span class="kw">import</span> evaluate
+
+client = <span class="cl">Client</span>()
+
+test_questions = [
+{<span class="st">“question”</span>: <span class="st">“Quelle est la politique de remboursement?”</span>, <span class="st">“answer”</span>: <span class="st">“30 jours…”</span>},
+{<span class="st">“question”</span>: <span class="st">“Quels modes de paiement sont acceptés?”</span>,    <span class="st">“answer”</span>: <span class="st">“CB, PayPal…”</span>},
+]
+
+<span class="cm"># Pipeline sans reranking</span>
+<span class="kw">def</span> <span class="fn">rag_standard</span>(inputs):
+docs   = vectorstore.similarity_search(inputs[<span class="st">“question”</span>], k=<span class="nu">4</span>)
+answer = (rag_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+<span class="st">“context”</span>: fmt_docs(docs), <span class="st">“question”</span>: inputs[<span class="st">“question”</span>]
+})
+<span class="kw">return</span> {<span class="st">“answer”</span>: answer}
+
+<span class="cm"># Pipeline avec reranking</span>
+<span class="kw">def</span> <span class="fn">rag_reranked</span>(inputs):
+candidates = vectorstore.similarity_search(inputs[<span class="st">“question”</span>], k=<span class="nu">20</span>)
+docs       = rerank(inputs[<span class="st">“question”</span>], candidates, top_k=<span class="nu">4</span>)
+answer     = (rag_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+<span class="st">“context”</span>: fmt_docs(docs), <span class="st">“question”</span>: inputs[<span class="st">“question”</span>]
+})
+<span class="kw">return</span> {<span class="st">“answer”</span>: answer}
+
+<span class="cm"># Évaluer les deux et comparer</span>
+dataset = client.create_dataset(<span class="st">“reranking-test”</span>)
+client.create_examples(
+inputs=[{<span class="st">“question”</span>: q[<span class="st">“question”</span>]} <span class="kw">for</span> q <span class="kw">in</span> test_questions],
+outputs=[{<span class="st">“answer”</span>: q[<span class="st">“answer”</span>]} <span class="kw">for</span> q <span class="kw">in</span> test_questions],
+dataset_id=dataset.id
+)
+
+res_standard = evaluate(rag_standard, data=<span class="st">“reranking-test”</span>, experiment_prefix=<span class="st">“standard”</span>)
+res_reranked  = evaluate(rag_reranked,  data=<span class="st">“reranking-test”</span>, experiment_prefix=<span class="st">“reranked”</span>)
+<span class="kw">print</span>(<span class="st">“Standard:”</span>, res_standard.to_pandas()[[<span class="st">“feedback.correctness”</span>]].mean())
+<span class="kw">print</span>(<span class="st">“Reranked:”</span>, res_reranked.to_pandas()[[<span class="st">“feedback.correctness”</span>]].mean())</code></pre>
+
+  </div>
+
+  <div class="quiz">
+    <div class="quiz-head"><span style="font-size:20px">📐</span><h3>Quiz — Module 1 : Reranking</h3><span class="qbadge">3 questions</span></div>
+    <div class="qq">
+      <div class="qq-num">Q1 · QCM</div>
+      <div class="qq-text">Quelle est la différence fondamentale entre un <strong>Bi-Encoder</strong> et un <strong>Cross-Encoder</strong> ?</div>
+      <div class="opts" id="q1-1">
+        <div class="opt" onclick="qa('q1-1',this,false)"><span class="ol">A</span>Le Cross-Encoder est plus rapide</div>
+        <div class="opt" onclick="qa('q1-1',this,true)"><span class="ol">B</span>Le Bi-Encoder encode query et doc séparément ; le Cross-Encoder les encode ensemble</div>
+        <div class="opt" onclick="qa('q1-1',this,false)"><span class="ol">C</span>Le Cross-Encoder ne peut pas traiter des paires query/document</div>
+        <div class="opt" onclick="qa('q1-1',this,false)"><span class="ol">D</span>Ils produisent exactement les mêmes scores</div>
+      </div>
+      <div class="qa" id="q1-1-a"><strong>✓ B.</strong> Le Bi-Encoder génère deux vecteurs indépendants → similarité cosinus (rapide, pré-calculable). Le Cross-Encoder encode la paire complète en un seul passage → score de pertinence direct (plus précis, mais calcul à la volée pour chaque paire).</div>
+    </div>
+    <div class="qq">
+      <div class="qq-num">Q2 · QCM</div>
+      <div class="qq-text">Quel est le pattern optimal pour utiliser le reranking sans exploser la latence ?</div>
+      <div class="opts" id="q1-2">
+        <div class="opt" onclick="qa('q1-2',this,false)"><span class="ol">A</span>Reranker tous les documents de la base</div>
+        <div class="opt" onclick="qa('q1-2',this,true)"><span class="ol">B</span>Récupérer 20-50 candidats avec le retriever, reranker pour garder 3-5</div>
+        <div class="opt" onclick="qa('q1-2',this,false)"><span class="ol">C</span>Utiliser uniquement le Cross-Encoder sans retriever préalable</div>
+        <div class="opt" onclick="qa('q1-2',this,false)"><span class="ol">D</span>Reranker 3 candidats récupérés par le retriever</div>
+      </div>
+      <div class="qa" id="q1-2-a"><strong>✓ B.</strong> "Retrieve large, Rerank small" — le retriever (Bi-Encoder) filtre rapidement les candidats pertinents. Le Cross-Encoder, plus lent mais précis, ne traite que ces candidats. Reranker 20 docs prend ~50ms, reranker 1000 docs prendrait ~2500ms.</div>
+    </div>
+    <div class="qq">
+      <div class="qq-num">Q3 · Ouverte</div>
+      <div class="qq-text">Expliquez le phénomène "lost in the middle" et comment le reranking l'atténue.</div>
+      <button class="show-btn" onclick="document.getElementById('q1-3-a').classList.toggle('show')">Voir correction</button>
+      <div class="qa" id="q1-3-a"><strong>✓ Lost in the middle</strong> : les LLMs ont tendance à mieux utiliser les passages en début et fin de contexte, ignorant le milieu (Liu et al., 2023). Sans reranking, le chunk le plus pertinent peut se retrouver en position 3 ou 4 — ignoré par le LLM. Avec reranking, les chunks les plus utiles sont toujours en tête de contexte → le LLM les traite en priorité.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ M2 · HyDE ════════════ -->
+
+<div class="divider" id="m2"></div>
+<section class="mod-sec">
+<div class="page">
+  <div class="mod-head">
+    <div class="mbadge mb-g">M2</div>
+    <div class="mod-info">
+      <div class="mtag">Module 2 · Fondation</div>
+      <h1>HyDE — Hypothetical Document Embedding</h1>
+      <p>Générer un document hypothétique idéal avant de chercher, pour améliorer drastiquement le rappel sur les questions courtes ou ambiguës.</p>
+      <span class="mlevel inter"><span class="dot"></span>Intermédiaire</span>
+    </div>
+  </div>
+
+  <h2 class="sh">2.1 — Le problème des questions courtes</h2>
+  <div class="ca ca-warn">
+    <span class="ca-icon">⚠️</span>
+    <div class="ca-body">
+      <h4>Pourquoi les questions courtes échouent</h4>
+      <p>Une question courte comme <em>"garantie produit?"</em> a un embedding très différent d'un passage long sur la garantie dans un manuel. Le retriever vectoriel cherche la similarité de représentation, pas de sens — et les vecteurs ne se "trouvent" pas facilement.</p>
+    </div>
+  </div>
+
+  <h2 class="sh">2.2 — Comment fonctionne HyDE</h2>
+  <div class="flow">
+    <div class="fbox">Question courte</div>
+    <div class="farrow">→</div>
+    <div class="fbox hi">LLM génère<br>un doc hypothétique</div>
+    <div class="farrow">→</div>
+    <div class="fbox new">Embedding<br>du doc hypothétique</div>
+    <div class="farrow">→</div>
+    <div class="fbox">Recherche dans<br>le vectorstore</div>
+    <div class="farrow">→</div>
+    <div class="fbox">Vrais documents<br>similaires</div>
+  </div>
+
+  <div class="ca ca-info">
+    <span class="ca-icon">💡</span>
+    <div class="ca-body">
+      <h4>L'intuition derrière HyDE</h4>
+      <p>Un document hypothétique sur "la garantie produit" sera dans le même espace d'embedding qu'un vrai document sur ce sujet — même s'il contient des hallucinations. <strong>Ce n'est pas la vérité qui compte, c'est la représentation vectorielle.</strong> On cherche avec le doc hypothétique, pas avec la réponse hypothétique.</p>
+    </div>
+  </div>
+
+  <h2 class="sh">2.3 — Implémentation complète</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">02_hyde.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> ChatOllama, OllamaEmbeddings
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> <span class="im">langchain_core.output_parsers</span> <span class="kw">import</span> StrOutputParser
+<span class="kw">from</span> <span class="im">langchain_core.runnables</span> <span class="kw">import</span> RunnablePassthrough, RunnableLambda, RunnableParallel
+<span class="kw">from</span> <span class="im">langchain_community.vectorstores</span> <span class="kw">import</span> Chroma
+
+llm        = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>, temperature=<span class="nu">0.3</span>)
+embeddings = <span class="cl">OllamaEmbeddings</span>(model=<span class="st">“nomic-embed-text”</span>)
+vectorstore = <span class="cl">Chroma</span>(persist_directory=<span class="st">”./chroma_db”</span>, embedding_function=embeddings)
+
+<span class="cm"># ── 1. Prompt de génération du document hypothétique ────────────</span>
+hyde_prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">””“Tu es un expert qui génère des passages de documentation.
+Génère un extrait de documentation technique précis et détaillé
+qui répondrait PARFAITEMENT à la question posée.
+Écris uniquement le passage, sans introduction ni commentaire.
+Longueur: 2-3 paragraphes.”””</span>),
+(<span class="st">“human”</span>, <span class="st">“Question: {question}\n\nPassage hypothétique:”</span>),
+])
+
+<span class="cm"># Chain de génération HyDE</span>
+hyde_chain = hyde_prompt | llm | <span class="cl">StrOutputParser</span>()
+
+<span class="cm"># ── 2. Retriever HyDE ───────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">hyde_retrieve</span>(query: str, k: int = <span class="nu">4</span>) -> list:
+<span class="st">””“Retrieval via document hypothétique.”””</span>
+<span class="cm"># Générer le document hypothétique</span>
+hypo_doc = hyde_chain.invoke({<span class="st">“question”</span>: query})
+
+```
+<span class="cm"># Encoder le document hypothétique (pas la question!)</span>
+hypo_embedding = embeddings.embed_query(hypo_doc)
+
+<span class="cm"># Chercher les vrais docs similaires au doc hypothétique</span>
+docs = vectorstore.similarity_search_by_vector(hypo_embedding, k=k)
+
+<span class="kw">return</span> docs
+```
+
+<span class="cm"># ── 3. HyDE + Reranking (combinaison optimale) ──────────────────</span>
+<span class="kw">def</span> <span class="fn">hyde_rerank_retrieve</span>(query: str, fetch_k: int = <span class="nu">15</span>, top_k: int = <span class="nu">4</span>) -> list:
+<span class="st">””“HyDE pour le rappel + Reranking pour la précision.”””</span>
+candidates = hyde_retrieve(query, k=fetch_k)
+<span class="kw">return</span> rerank(query, candidates, top_k=top_k)  <span class="cm"># rerank() du module 1</span>
+
+<span class="cm"># ── 4. Chain RAG complète avec HyDE ─────────────────────────────</span>
+rag_hyde_chain = (
+{
+<span class="st">“context”</span>:  <span class="cl">RunnableLambda</span>(<span class="kw">lambda</span> q: fmt_docs(hyde_retrieve(q, k=<span class="nu">4</span>))),
+<span class="st">“question”</span>: <span class="cl">RunnablePassthrough</span>(),
+}
+| rag_prompt | llm | <span class="cl">StrOutputParser</span>()
+)
+
+<span class="cm"># ── 5. Test comparatif ──────────────────────────────────────────</span>
+query = <span class="st">“garantie produit?”</span>
+
+<span class="cm"># Standard: embedding de la question courte</span>
+std_docs = vectorstore.similarity_search(query, k=<span class="nu">4</span>)
+
+<span class="cm"># HyDE: embedding du document hypothétique</span>
+hypo = hyde_chain.invoke({<span class="st">“question”</span>: query})
+<span class="kw">print</span>(<span class="st">“Document hypothétique généré:”</span>)
+<span class="kw">print</span>(hypo[:<span class="nu">300</span>], <span class="st">”…”</span>)
+
+hyde_docs = hyde_retrieve(query, k=<span class="nu">4</span>)
+
+<span class="kw">print</span>(f<span class="st">”\nDocs standard: {[d.metadata.get(‘source’,’?’) for d in std_docs]}”</span>)
+<span class="kw">print</span>(f<span class="st">“Docs HyDE:     {[d.metadata.get(‘source’,’?’) for d in hyde_docs]}”</span>)</code></pre>
+
+  </div>
+
+  <h2 class="sh">2.4 — Multi-Query vs HyDE — Quand utiliser quoi ?</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Critère</th><th>Multi-Query</th><th>HyDE</th><th>HyDE + Reranking</th></tr></thead>
+      <tbody>
+        <tr><td>Questions courtes</td><td class="part">Moyen</td><td class="yes">Excellent</td><td class="yes">Excellent</td></tr>
+        <tr><td>Questions longues</td><td class="yes">Bon</td><td class="part">Moyen</td><td class="yes">Bon</td></tr>
+        <tr><td>Latence</td><td class="part">+1 appel LLM</td><td class="part">+1 appel LLM</td><td class="no">+2 appels LLM</td></tr>
+        <tr><td>Questions factuelles</td><td class="yes">Bon</td><td class="part">Risque hallucination</td><td class="yes">Bon</td></tr>
+        <tr><td>Questions analytiques</td><td class="yes">Bon</td><td class="yes">Bon</td><td class="yes">Excellent</td></tr>
+        <tr><td>Complexité</td><td class="yes">Faible</td><td class="yes">Faible</td><td class="part">Moyenne</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ M3 · CORRECTIVE RAG ════════════ -->
+
+<div class="divider" id="m3"></div>
+<section class="mod-sec">
+<div class="page">
+  <div class="mod-head">
+    <div class="mbadge mb-pk">M3</div>
+    <div class="mod-info">
+      <div class="mtag">Module 3 · Technique Avancée</div>
+      <h1>CRAG — Corrective RAG</h1>
+      <p>Évaluer automatiquement la qualité des documents récupérés et déclencher une recherche corrective si nécessaire.</p>
+      <span class="mlevel adv"><span class="dot"></span>Avancé</span>
+    </div>
+  </div>
+
+  <div class="ca ca-new">
+    <span class="ca-icon">🔄</span>
+    <div class="ca-body">
+      <h4>CRAG — Papier Yan et al. (2024)</h4>
+      <p>CRAG ajoute une <strong>étape de validation</strong> entre la récupération et la génération. Si les documents sont jugés non pertinents, le système les corrige ou en cherche d'autres (web search). Résultat : -50% d'hallucinations sur les benchmarks.</p>
+    </div>
+  </div>
+
+  <h2 class="sh">3.1 — Architecture CRAG</h2>
+  <div class="flow">
+    <div class="fbox">Question</div>
+    <div class="farrow">→</div>
+    <div class="fbox">Retriever</div>
+    <div class="farrow">→</div>
+    <div class="fbox hi">Évaluateur<br>de pertinence</div>
+    <div class="farrow">→</div>
+    <div class="fbranch">
+      <div class="frow"><div class="fbox new">✅ Pertinent → Générer</div></div>
+      <div class="frow"><div class="fbox" style="border-color:var(--orange);color:var(--orange)">⚠️ Ambigu → Filtrer + Web</div></div>
+      <div class="frow"><div class="fbox" style="border-color:var(--red);color:var(--red)">❌ Non pertinent → Web Search</div></div>
+    </div>
+  </div>
+
+  <h2 class="sh">3.2 — Implémentation avec LangGraph</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">03_crag.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="kw">from</span> <span class="im">langgraph.graph</span> <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> ChatOllama
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> <span class="im">langchain_core.documents</span> <span class="kw">import</span> Document
+<span class="kw">from</span> <span class="im">langchain_community.tools</span> <span class="kw">import</span> DuckDuckGoSearchRun
+<span class="kw">from</span> <span class="im">pydantic</span> <span class="kw">import</span> BaseModel, Field
+<span class="kw">from</span> <span class="im">typing</span> <span class="kw">import</span> TypedDict, Annotated, Literal
+<span class="kw">import</span> operator
+
+llm        = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>, temperature=<span class="nu">0</span>)
+web_search = <span class="cl">DuckDuckGoSearchRun</span>()
+
+<span class="cm"># ── 1. État CRAG ────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">CRAGState</span>(TypedDict):
+question:   str
+documents:  list[<span class="cl">Document</span>]
+generation: str
+web_search: bool  <span class="cm"># True si on a eu besoin d’une recherche web</span>
+
+<span class="cm"># ── 2. Évaluateur de pertinence ─────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">GradeDoc</span>(BaseModel):
+score: Literal[<span class="st">“yes”</span>, <span class="st">“no”</span>] = <span class="cl">Field</span>(description=<span class="st">”‘yes’ si pertinent, ‘no’ sinon”</span>)
+
+grade_llm = llm.with_structured_output(<span class="cl">GradeDoc</span>)
+
+grade_prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">””“Tu es un évaluateur strict de pertinence documentaire.
+Réponds ‘yes’ UNIQUEMENT si le document contient des informations
+directement utiles pour répondre à la question.
+Réponds ‘no’ si le document est hors-sujet, trop général, ou vague.”””</span>),
+(<span class="st">“human”</span>, <span class="st">“Question: {question}\n\nDocument:\n{document}\n\nPertinent?”</span>),
+])
+
+grade_chain = grade_prompt | grade_llm
+
+<span class="cm"># ── 3. Nœuds du graphe CRAG ─────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">retrieve</span>(state: <span class="cl">CRAGState</span>) -> dict:
+<span class="st">””“Récupère les documents depuis le vectorstore.”””</span>
+docs = vectorstore.similarity_search(state[<span class="st">“question”</span>], k=<span class="nu">4</span>)
+<span class="kw">return</span> {<span class="st">“documents”</span>: docs}
+
+<span class="kw">def</span> <span class="fn">grade_documents</span>(state: <span class="cl">CRAGState</span>) -> dict:
+<span class="st">””“Évalue chaque document — ne garde que les pertinents.”””</span>
+question  = state[<span class="st">“question”</span>]
+documents = state[<span class="st">“documents”</span>]
+
+```
+relevant_docs = []
+need_web      = <span class="kw">False</span>
+
+<span class="kw">for</span> doc <span class="kw">in</span> documents:
+    grade = grade_chain.invoke({
+        <span class="st">"question"</span>: question,
+        <span class="st">"document"</span>: doc.page_content
+    })
+    <span class="kw">if</span> grade.score == <span class="st">"yes"</span>:
+        relevant_docs.append(doc)
+    <span class="kw">else</span>:
+        need_web = <span class="kw">True</span>  <span class="cm"># Au moins un doc non pertinent</span>
+
+<span class="cm"># Si aucun doc pertinent → on a besoin du web</span>
+<span class="kw">if not</span> relevant_docs:
+    need_web = <span class="kw">True</span>
+
+<span class="kw">return</span> {<span class="st">"documents"</span>: relevant_docs, <span class="st">"web_search"</span>: need_web}
+```
+
+<span class="kw">def</span> <span class="fn">web_search_node</span>(state: <span class="cl">CRAGState</span>) -> dict:
+<span class="st">””“Effectue une recherche web et ajoute les résultats aux documents.”””</span>
+question   = state[<span class="st">“question”</span>]
+web_result = web_search.run(question)
+
+```
+<span class="cm"># Convertir le résultat web en Document</span>
+web_doc = <span class="cl">Document</span>(
+    page_content=web_result,
+    metadata={<span class="st">"source"</span>: <span class="st">"web_search"</span>, <span class="st">"type"</span>: <span class="st">"web"</span>}
+)
+
+<span class="cm"># Ajouter aux documents existants (s'il y en a)</span>
+existing = state[<span class="st">"documents"</span>]
+<span class="kw">return</span> {<span class="st">"documents"</span>: existing + [web_doc]}
+```
+
+<span class="kw">def</span> <span class="fn">generate</span>(state: <span class="cl">CRAGState</span>) -> dict:
+<span class="st">””“Génère la réponse finale.”””</span>
+question  = state[<span class="st">“question”</span>]
+documents = state[<span class="st">“documents”</span>]
+
+```
+<span class="kw">if not</span> documents:
+    <span class="kw">return</span> {<span class="st">"generation"</span>: <span class="st">"Je n'ai pas trouvé d'informations pertinentes."</span>}
+
+context = fmt_docs(documents)
+answer  = (rag_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+    <span class="st">"context"</span>: context, <span class="st">"question"</span>: question
+})
+<span class="kw">return</span> {<span class="st">"generation"</span>: answer}
+```
+
+<span class="cm"># ── 4. Condition de routage ──────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">route_after_grading</span>(state: <span class="cl">CRAGState</span>) -> Literal[<span class="st">“web_search”</span>, <span class="st">“generate”</span>]:
+<span class="st">””“Décide si on fait une recherche web ou on génère directement.”””</span>
+<span class="kw">if</span> state[<span class="st">“web_search”</span>]:
+<span class="kw">return</span> <span class="st">“web_search”</span>
+<span class="kw">return</span> <span class="st">“generate”</span>
+
+<span class="cm"># ── 5. Construire le graphe CRAG ─────────────────────────────────</span>
+crag_builder = <span class="cl">StateGraph</span>(<span class="cl">CRAGState</span>)
+crag_builder.add_node(<span class="st">“retrieve”</span>,        retrieve)
+crag_builder.add_node(<span class="st">“grade_documents”</span>, grade_documents)
+crag_builder.add_node(<span class="st">“web_search”</span>,      web_search_node)
+crag_builder.add_node(<span class="st">“generate”</span>,        generate)
+
+crag_builder.set_entry_point(<span class="st">“retrieve”</span>)
+crag_builder.add_edge(<span class="st">“retrieve”</span>, <span class="st">“grade_documents”</span>)
+crag_builder.add_conditional_edges(<span class="st">“grade_documents”</span>, route_after_grading)
+crag_builder.add_edge(<span class="st">“web_search”</span>, <span class="st">“generate”</span>)
+crag_builder.add_edge(<span class="st">“generate”</span>,   END)
+
+crag_graph = crag_builder.compile()
+
+<span class="cm"># ── 6. Utilisation ──────────────────────────────────────────────</span>
+result = crag_graph.invoke({
+<span class="st">“question”</span>: <span class="st">“Quel est le dernier modèle LLaMA d’OpenAI?”</span>,
+<span class="st">“documents”</span>: [], <span class="st">“generation”</span>: <span class="st">””</span>, <span class="st">“web_search”</span>: <span class="kw">False</span>
+})
+<span class="kw">print</span>(result[<span class="st">“generation”</span>])
+<span class="kw">print</span>(f<span class="st">“Recherche web utilisée: {result[‘web_search’]}”</span>)</code></pre>
+
+  </div>
+
+  <h2 class="sh">3.3 — CRAG amélioré — Réécriture de requête</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">03_crag_rewrite.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="cm"># Avant la recherche web, réécrire la question pour le moteur de recherche</span>
+<span class="kw">def</span> <span class="fn">rewrite_query</span>(state: <span class="cl">CRAGState</span>) -> dict:
+    <span class="st">"""Réécrit la question pour optimiser la recherche web."""</span>
+    rewrite_prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+        (<span class="st">"system"</span>, <span class="st">"""Tu transformes des questions en requêtes de recherche web optimales.
+        Retourne UNIQUEMENT la requête, sans explication."""</span>),
+        (<span class="st">"human"</span>, <span class="st">"Question: {question}\nRequête web optimisée:"</span>),
+    ])
+    query = (rewrite_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+        <span class="st">"question"</span>: state[<span class="st">"question"</span>]
+    })
+    web_result = web_search.run(query.strip())
+    web_doc    = <span class="cl">Document</span>(page_content=web_result,
+                           metadata={<span class="st">"source"</span>: <span class="st">"web"</span>, <span class="st">"query"</span>: query})
+    <span class="kw">return</span> {<span class="st">"documents"</span>: state[<span class="st">"documents"</span>] + [web_doc]}
+
+<span class="cm"># Remplacer web_search_node par rewrite_query dans le graphe</span>
+<span class="cm"># pour de meilleurs résultats de recherche web</span></code></pre>
+
+  </div>
+
+  <div class="quiz">
+    <div class="quiz-head"><span style="font-size:20px">🔄</span><h3>Quiz — Module 3 : CRAG</h3><span class="qbadge">2 questions</span></div>
+    <div class="qq">
+      <div class="qq-num">Q1 · QCM</div>
+      <div class="qq-text">Dans CRAG, que se passe-t-il si <strong>certains</strong> documents récupérés sont pertinents et d'autres ne le sont pas ?</div>
+      <div class="opts" id="q3-1">
+        <div class="opt" onclick="qa('q3-1',this,false)"><span class="ol">A</span>On abandonne tous les documents et on fait uniquement une recherche web</div>
+        <div class="opt" onclick="qa('q3-1',this,true)"><span class="ol">B</span>On garde les pertinents et on complète avec une recherche web</div>
+        <div class="opt" onclick="qa('q3-1',this,false)"><span class="ol">C</span>On utilise tous les documents, pertinents ou non</div>
+        <div class="opt" onclick="qa('q3-1',this,false)"><span class="ol">D</span>On régénère une nouvelle requête de retrieval</div>
+      </div>
+      <div class="qa" id="q3-1-a"><strong>✓ B.</strong> L'implémentation optimale de CRAG filtre les documents non pertinents, garde les bons, puis complète avec une recherche web. On met <code>need_web = True</code> dès qu'au moins un document est rejeté, mais on cumule les sources pertinentes.</div>
+    </div>
+    <div class="qq">
+      <div class="qq-num">Q2 · Ouverte</div>
+      <div class="qq-text">Pourquoi est-il important de <strong>réécrire la requête</strong> avant la recherche web dans CRAG ?</div>
+      <button class="show-btn" onclick="document.getElementById('q3-2-a').classList.toggle('show')">Voir correction</button>
+      <div class="qa" id="q3-2-a"><strong>✓</strong> La question originale est formulée pour un humain ou un vectorstore. Une requête web efficace est différente : plus courte, avec des mots-clés précis, sans mots de liaison. Par exemple, "Quels sont les avantages du RAG?" devient "RAG advantages limitations LLM". La réécriture améliore significativement la qualité des résultats web.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ M4 · SELF-RAG ════════════ -->
+
+<div class="divider" id="m4"></div>
+<section class="mod-sec">
+<div class="page">
+  <div class="mod-head">
+    <div class="mbadge mb-p">M4</div>
+    <div class="mod-info">
+      <div class="mtag">Module 4 · Technique Avancée</div>
+      <h1>Self-RAG — Retrieval par Réflexion</h1>
+      <p>Le LLM décide lui-même quand chercher, évalue ce qu'il trouve et critique sa propre réponse avant de la livrer.</p>
+      <span class="mlevel adv"><span class="dot"></span>Avancé</span>
+    </div>
+  </div>
+
+  <div class="ca ca-new">
+    <span class="ca-icon">🧠</span>
+    <div class="ca-body">
+      <h4>Self-RAG — Asai et al. (2023)</h4>
+      <p>Self-RAG introduit des <strong>tokens de réflexion</strong> spéciaux que le LLM génère pour contrôler son propre processus : <code>[Retrieve]</code>, <code>[Relevant]</code>, <code>[IsSupported]</code>, <code>[IsUseful]</code>. Dans notre implémentation pratique avec LangGraph, on simule ce comportement avec des nœuds dédiés.</p>
+    </div>
+  </div>
+
+  <h2 class="sh">4.1 — Les 4 décisions Self-RAG</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Token / Décision</th><th>Question posée</th><th>Valeurs possibles</th></tr></thead>
+      <tbody>
+        <tr><td>Retrieve?</td><td>Ai-je besoin de chercher des documents?</td><td>Yes / No</td></tr>
+        <tr><td>IsRelevant</td><td>Ce document est-il utile pour ma réponse?</td><td>Relevant / Irrelevant</td></tr>
+        <tr><td>IsSupported</td><td>Ma réponse est-elle soutenue par les docs?</td><td>Fully / Partially / Not</td></tr>
+        <tr><td>IsUseful</td><td>Ma réponse est-elle utile pour l'utilisateur?</td><td>Score 1-5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="sh">4.2 — Implémentation Self-RAG avec LangGraph</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">04_self_rag.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="kw">from</span> <span class="im">langgraph.graph</span> <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> ChatOllama
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> <span class="im">pydantic</span> <span class="kw">import</span> BaseModel, Field
+<span class="kw">from</span> <span class="im">typing</span> <span class="kw">import</span> TypedDict, Annotated, Literal, Optional
+<span class="kw">import</span> operator
+
+llm = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>, temperature=<span class="nu">0</span>)
+
+<span class="cm"># ── 1. État Self-RAG ────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">SelfRAGState</span>(TypedDict):
+question:     str
+documents:    list
+generation:   str
+iterations:   int          <span class="cm"># compteur d’itérations</span>
+is_supported: str          <span class="cm"># “yes” / “partial” / “no”</span>
+
+<span class="cm"># ── 2. Schémas Pydantic pour les décisions ─────────────────────</span>
+<span class="kw">class</span> <span class="cl">NeedRetrieval</span>(BaseModel):
+need: Literal[<span class="st">“yes”</span>, <span class="st">“no”</span>] = <span class="cl">Field</span>(description=<span class="st">”‘yes’ si besoin de docs, ‘no’ sinon”</span>)
+
+<span class="kw">class</span> <span class="cl">Hallucination</span>(BaseModel):
+supported: Literal[<span class="st">“yes”</span>, <span class="st">“partial”</span>, <span class="st">“no”</span>] = <span class="cl">Field</span>(
+description=<span class="st">”‘yes’=bien supporté, ‘partial’=partiellement, ‘no’=hallucination”</span>
+)
+
+<span class="kw">class</span> <span class="cl">AnswerQuality</span>(BaseModel):
+useful: Literal[<span class="st">“yes”</span>, <span class="st">“no”</span>] = <span class="cl">Field</span>(description=<span class="st">”‘yes’ si la réponse est utile”</span>)
+
+<span class="cm"># ── 3. Chains de décision ───────────────────────────────────────</span>
+retrieval_chain = (
+<span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">””“Décide si tu as besoin de documents pour répondre.
+Réponds ‘no’ si: question de politesse, calcul, question factuelle simple.
+Réponds ‘yes’ si: question sur des données spécifiques, procédures, faits précis.”””</span>),
+(<span class="st">“human”</span>, <span class="st">“Question: {question}”</span>),
+])
+| llm.with_structured_output(<span class="cl">NeedRetrieval</span>)
+)
+
+hallucination_chain = (
+<span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">””“Évalue si la réponse est bien soutenue par les documents fournis.
+‘yes’ = chaque affirmation est prouvée par les docs.
+‘partial’ = certaines affirmations ne sont pas prouvées.
+‘no’ = la réponse contient des informations absentes des docs (hallucination).”””</span>),
+(<span class="st">“human”</span>, <span class="st">“Documents:\n{documents}\n\nRéponse générée:\n{generation}”</span>),
+])
+| llm.with_structured_output(<span class="cl">Hallucination</span>)
+)
+
+quality_chain = (
+<span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">“Évalue si la réponse répond bien à la question posée. ‘yes’ ou ‘no’.”</span>),
+(<span class="st">“human”</span>, <span class="st">“Question: {question}\nRéponse: {generation}”</span>),
+])
+| llm.with_structured_output(<span class="cl">AnswerQuality</span>)
+)
+
+<span class="cm"># ── 4. Nœuds du graphe ──────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">decide_retrieval</span>(state: <span class="cl">SelfRAGState</span>) -> dict:
+<span class="st">””“Décide si on a besoin de retrieval.”””</span>
+decision = retrieval_chain.invoke({<span class="st">“question”</span>: state[<span class="st">“question”</span>]})
+<span class="kw">return</span> {<span class="st">“need_retrieval”</span>: decision.need}
+
+<span class="kw">def</span> <span class="fn">retrieve_docs</span>(state: <span class="cl">SelfRAGState</span>) -> dict:
+<span class="st">””“Récupère les documents.”””</span>
+docs = vectorstore.similarity_search(state[<span class="st">“question”</span>], k=<span class="nu">4</span>)
+<span class="kw">return</span> {<span class="st">“documents”</span>: docs}
+
+<span class="kw">def</span> <span class="fn">generate_answer</span>(state: <span class="cl">SelfRAGState</span>) -> dict:
+<span class="st">””“Génère une réponse (avec ou sans docs).”””</span>
+question = state[<span class="st">“question”</span>]
+docs     = state.get(<span class="st">“documents”</span>, [])
+
+```
+<span class="kw">if</span> docs:
+    context = fmt_docs(docs)
+    answer  = (rag_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+        <span class="st">"context"</span>: context, <span class="st">"question"</span>: question
+    })
+<span class="kw">else</span>:
+    answer = llm.invoke(question).content
+
+<span class="kw">return</span> {<span class="st">"generation"</span>: answer, <span class="st">"iterations"</span>: state.get(<span class="st">"iterations"</span>, <span class="nu">0</span>) + <span class="nu">1</span>}
+```
+
+<span class="kw">def</span> <span class="fn">check_hallucination</span>(state: <span class="cl">SelfRAGState</span>) -> dict:
+<span class="st">””“Vérifie si la réponse est bien ancrée dans les documents.”””</span>
+docs = state.get(<span class="st">“documents”</span>, [])
+<span class="kw">if not</span> docs:
+<span class="kw">return</span> {<span class="st">“is_supported”</span>: <span class="st">“yes”</span>}  <span class="cm"># Pas de docs = pas de vérification</span>
+
+```
+result = hallucination_chain.invoke({
+    <span class="st">"documents"</span>: fmt_docs(docs),
+    <span class="st">"generation"</span>: state[<span class="st">"generation"</span>]
+})
+<span class="kw">return</span> {<span class="st">"is_supported"</span>: result.supported}
+```
+
+<span class="cm"># ── 5. Conditions de routage ─────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">route_initial</span>(state: <span class="cl">SelfRAGState</span>) -> str:
+<span class="kw">return</span> <span class="st">“retrieve”</span> <span class="kw">if</span> state.get(<span class="st">“need_retrieval”</span>) == <span class="st">“yes”</span> <span class="kw">else</span> <span class="st">“generate”</span>
+
+<span class="kw">def</span> <span class="fn">route_after_hallucination</span>(state: <span class="cl">SelfRAGState</span>) -> str:
+supported  = state[<span class="st">“is_supported”</span>]
+iterations = state.get(<span class="st">“iterations”</span>, <span class="nu">0</span>)
+
+```
+<span class="kw">if</span> supported == <span class="st">"yes"</span>:
+    <span class="cm"># Vérifier la qualité avant de finir</span>
+    quality = quality_chain.invoke({
+        <span class="st">"question"</span>: state[<span class="st">"question"</span>],
+        <span class="st">"generation"</span>: state[<span class="st">"generation"</span>]
+    })
+    <span class="kw">return</span> <span class="st">"end"</span> <span class="kw">if</span> quality.useful == <span class="st">"yes"</span> <span class="kw">else</span> <span class="st">"regenerate"</span>
+
+<span class="kw">elif</span> supported == <span class="st">"partial"</span> <span class="kw">and</span> iterations < <span class="nu">2</span>:
+    <span class="kw">return</span> <span class="st">"retrieve"</span>  <span class="cm"># Chercher plus de docs</span>
+
+<span class="kw">else</span>:
+    <span class="kw">return</span> <span class="st">"regenerate"</span> <span class="kw">if</span> iterations < <span class="nu">3</span> <span class="kw">else</span> <span class="st">"end"</span>
+```
+
+<span class="cm"># ── 6. Construire le graphe ──────────────────────────────────────</span>
+sg = <span class="cl">StateGraph</span>(<span class="cl">SelfRAGState</span>)
+<span class="kw">for</span> name, fn <span class="kw">in</span> [(<span class="st">“decide”</span>, decide_retrieval), (<span class="st">“retrieve”</span>, retrieve_docs),
+(<span class="st">“generate”</span>, generate_answer), (<span class="st">“check”</span>, check_hallucination)]:
+sg.add_node(name, fn)
+
+sg.set_entry_point(<span class="st">“decide”</span>)
+sg.add_conditional_edges(<span class="st">“decide”</span>,  route_initial,
+{<span class="st">“retrieve”</span>: <span class="st">“retrieve”</span>, <span class="st">“generate”</span>: <span class="st">“generate”</span>})
+sg.add_edge(<span class="st">“retrieve”</span>, <span class="st">“generate”</span>)
+sg.add_edge(<span class="st">“generate”</span>, <span class="st">“check”</span>)
+sg.add_conditional_edges(<span class="st">“check”</span>, route_after_hallucination, {
+<span class="st">“end”</span>:         END,
+<span class="st">“retrieve”</span>:   <span class="st">“retrieve”</span>,   <span class="cm"># Chercher plus</span>
+<span class="st">“regenerate”</span>: <span class="st">“generate”</span>,   <span class="cm"># Régénérer</span>
+})
+
+self_rag = sg.compile()
+
+<span class="cm"># ── 7. Test ──────────────────────────────────────────────────────</span>
+result = self_rag.invoke({
+<span class="st">“question”</span>: <span class="st">“Quelle est la politique de retour produit?”</span>,
+<span class="st">“documents”</span>: [], <span class="st">“generation”</span>: <span class="st">””</span>, <span class="st">“iterations”</span>: <span class="nu">0</span>, <span class="st">“is_supported”</span>: <span class="st">””</span>
+})
+<span class="kw">print</span>(result[<span class="st">“generation”</span>])
+<span class="kw">print</span>(f<span class="st">“Itérations: {result[‘iterations’]}”</span>)</code></pre>
+
+  </div>
+
+  <div class="ca ca-tip">
+    <span class="ca-icon">💡</span>
+    <div class="ca-body">
+      <h4>Conseil pratique — Limiter les itérations</h4>
+      <p>Self-RAG peut boucler si le LLM est trop strict. Définissez toujours un <code>max_iterations=3</code> et un fallback vers une réponse honnête ("Je n'ai pas trouvé d'information suffisante") plutôt qu'une boucle infinie.</p>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <div class="quiz-head"><span style="font-size:20px">🧠</span><h3>Quiz — Module 4 : Self-RAG</h3><span class="qbadge">2 questions</span></div>
+    <div class="qq">
+      <div class="qq-num">Q1 · QCM</div>
+      <div class="qq-text">Quelle est la principale différence entre <strong>CRAG</strong> et <strong>Self-RAG</strong> ?</div>
+      <div class="opts" id="q4-1">
+        <div class="opt" onclick="qa('q4-1',this,false)"><span class="ol">A</span>CRAG utilise LangGraph, Self-RAG non</div>
+        <div class="opt" onclick="qa('q4-1',this,true)"><span class="ol">B</span>CRAG évalue les documents récupérés ; Self-RAG évalue aussi la réponse générée</div>
+        <div class="opt" onclick="qa('q4-1',this,false)"><span class="ol">C</span>Self-RAG ne fait jamais de recherche web</div>
+        <div class="opt" onclick="qa('q4-1',this,false)"><span class="ol">D</span>CRAG est plus précis que Self-RAG dans tous les cas</div>
+      </div>
+      <div class="qa" id="q4-1-a"><strong>✓ B.</strong> CRAG valide les documents <em>avant</em> la génération (pertinence des sources). Self-RAG va plus loin : il valide aussi la réponse <em>après</em> génération (hallucination, utilité). Self-RAG est une boucle de contrôle complète, CRAG s'arrête après la sélection des sources.</div>
+    </div>
+    <div class="qq">
+      <div class="qq-num">Q2 · Ouverte</div>
+      <div class="qq-text">Dans quels cas vaut-il mieux <strong>ne pas utiliser</strong> Self-RAG ?</div>
+      <button class="show-btn" onclick="document.getElementById('q4-2-a').classList.toggle('show')">Voir correction</button>
+      <div class="qa" id="q4-2-a"><strong>✓ Cas à éviter :</strong><br>
+      1. <strong>Applications temps-réel</strong> : Self-RAG peut faire 3-5 appels LLM par question → latence élevée.<br>
+      2. <strong>Questions conversationnelles simples</strong> : "Bonjour", "Merci" ne nécessitent pas de boucle de réflexion.<br>
+      3. <strong>Budgets LLM limités</strong> : chaque itération coûte des tokens.<br>
+      Privilégiez Self-RAG pour les <strong>questions complexes où la précision prime sur la vitesse</strong> : applications médicales, juridiques, financières.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ M5 · GRAPHRAG ════════════ -->
+
+<div class="divider" id="m5"></div>
+<section class="mod-sec">
+<div class="page">
+  <div class="mod-head">
+    <div class="mbadge mb-c">M5</div>
+    <div class="mod-info">
+      <div class="mtag">Module 5 · Expert</div>
+      <h1>GraphRAG — Graphe de Connaissances</h1>
+      <p>Enrichir le RAG avec un graphe de connaissances pour capturer les relations entre entités et répondre à des questions multi-sauts.</p>
+      <span class="mlevel exp"><span class="dot"></span>Expert</span>
+    </div>
+  </div>
+
+  <h2 class="sh">5.1 — Pourquoi le RAG vectoriel a ses limites</h2>
+  <div class="ca ca-warn">
+    <span class="ca-icon">⚠️</span>
+    <div class="ca-body">
+      <h4>Questions multi-sauts — le talon d'Achille du RAG</h4>
+      <p>Exemple : <em>"Quelle est la ville natale du CEO de l'entreprise qui a acquis Twitter?"</em><br>
+      Un RAG vectoriel cherche un chunk unique. Mais la réponse nécessite 3 relations : Twitter → acquéreur → CEO → ville natale. <strong>Un graphe de connaissances navigue ces relations naturellement.</strong></p>
+    </div>
+  </div>
+
+  <h2 class="sh">5.2 — Architecture GraphRAG</h2>
+  <div class="cmp">
+    <div class="cmp-col">
+      <div class="cmp-head bad">RAG Vectoriel seul</div>
+      <div class="cmp-body"><ul>
+        <li>Cherche des chunks <em>similaires</em></li>
+        <li>Pas de navigation entre entités</li>
+        <li>Questions multi-sauts impossibles</li>
+        <li>Pas de contexte relationnel</li>
+      </ul></div>
+    </div>
+    <div class="cmp-col">
+      <div class="cmp-head good">GraphRAG</div>
+      <div class="cmp-body"><ul>
+        <li>Extrait entités + relations des chunks</li>
+        <li>Construit un graphe de connaissances</li>
+        <li>Navigue les relations (multi-sauts)</li>
+        <li>Combine vectorstore + graphe</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <h2 class="sh">5.3 — Implémentation avec NetworkX (local, sans Neo4j)</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">05_graphrag_networkx.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="cm"># pip install networkx langchain-community</span>
+<span class="kw">import</span> networkx <span class="kw">as</span> nx
+<span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> ChatOllama
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> <span class="im">langchain_core.output_parsers</span> <span class="kw">import</span> JsonOutputParser
+<span class="kw">from</span> <span class="im">pydantic</span> <span class="kw">import</span> BaseModel, Field
+
+llm = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>, temperature=<span class="nu">0</span>)
+
+<span class="cm"># ── 1. Schéma d’extraction d’entités/relations ──────────────────</span>
+<span class="kw">class</span> <span class="cl">Triplet</span>(BaseModel):
+sujet:     str = <span class="cl">Field</span>(description=<span class="st">“Entité sujet”</span>)
+relation:  str = <span class="cl">Field</span>(description=<span class="st">“Type de relation”</span>)
+objet:     str = <span class="cl">Field</span>(description=<span class="st">“Entité objet”</span>)
+
+<span class="kw">class</span> <span class="cl">Triplets</span>(BaseModel):
+triplets: list[<span class="cl">Triplet</span>] = <span class="cl">Field</span>(description=<span class="st">“Liste des triplets extraits”</span>)
+
+<span class="cm"># ── 2. Extracteur d’entités et relations ────────────────────────</span>
+extract_prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">””“Extrais tous les triplets (sujet, relation, objet) du texte.
+Relations utiles: est_CEO_de, a_acquis, est_situé_à, travaille_pour,
+est_fondé_par, a_produit, est_concurrent_de, est_filiale_de, etc.
+Normalise les noms propres (majuscules). Sois exhaustif.”””</span>),
+(<span class="st">“human”</span>, <span class="st">“Texte:\n{text}\n\nTriplets:”</span>),
+])
+
+extract_chain = extract_prompt | llm.with_structured_output(<span class="cl">Triplets</span>)
+
+<span class="kw">def</span> <span class="fn">extract_triplets</span>(text: str) -> list[<span class="cl">Triplet</span>]:
+<span class="kw">try</span>:
+result = extract_chain.invoke({<span class="st">“text”</span>: text[:<span class="nu">2000</span>]})
+<span class="kw">return</span> result.triplets
+<span class="kw">except</span>:
+<span class="kw">return</span> []
+
+<span class="cm"># ── 3. Construire le graphe de connaissances ────────────────────</span>
+<span class="kw">def</span> <span class="fn">build_knowledge_graph</span>(documents: list) -> nx.<span class="cl">DiGraph</span>:
+<span class="st">””“Construit un graphe dirigé à partir des documents.”””</span>
+G = nx.<span class="cl">DiGraph</span>()
+
+```
+<span class="kw">for</span> doc <span class="kw">in</span> documents:
+    triplets = extract_triplets(doc.page_content)
+    <span class="kw">for</span> t <span class="kw">in</span> triplets:
+        G.add_node(t.sujet, type=<span class="st">"entity"</span>)
+        G.add_node(t.objet, type=<span class="st">"entity"</span>)
+        G.add_edge(
+            t.sujet, t.objet,
+            relation=t.relation,
+            source=doc.metadata.get(<span class="st">"source"</span>, <span class="st">"?"</span>)
+        )
+
+<span class="kw">print</span>(f<span class="st">"Graphe: {G.number_of_nodes()} nœuds, {G.number_of_edges()} relations"</span>)
+<span class="kw">return</span> G
+```
+
+<span class="cm"># ── 4. Requête sur le graphe ────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">query_graph</span>(G: nx.<span class="cl">DiGraph</span>, entity: str, depth: int = <span class="nu">2</span>) -> str:
+<span class="st">””“Récupère le sous-graphe autour d’une entité.”””</span>
+<span class="kw">if</span> entity <span class="kw">not in</span> G.nodes:
+<span class="cm"># Cherche une entité similaire (insensible à la casse)</span>
+entity = <span class="kw">next</span>(
+(n <span class="kw">for</span> n <span class="kw">in</span> G.nodes <span class="kw">if</span> entity.lower() <span class="kw">in</span> n.lower()),
+<span class="kw">None</span>
+)
+<span class="kw">if not</span> entity:
+<span class="kw">return</span> <span class="st">f”Entité non trouvée dans le graphe.”</span>
+
+```
+<span class="cm"># Sous-graphe à N degrés de profondeur</span>
+sub_nodes = nx.ego_graph(G, entity, radius=depth).nodes
+subgraph  = G.subgraph(sub_nodes)
+
+<span class="cm"># Formater les relations comme texte</span>
+triplets = []
+<span class="kw">for</span> u, v, data <span class="kw">in</span> subgraph.edges(data=<span class="kw">True</span>):
+    triplets.append(f<span class="st">"{u} --[{data['relation']}]--> {v}"</span>)
+
+<span class="kw">return</span> <span class="st">"\n"</span>.join(triplets) <span class="kw">if</span> triplets <span class="kw">else</span> <span class="st">"Aucune relation trouvée."</span>
+```
+
+<span class="cm"># ── 5. Extraire les entités d’une question ──────────────────────</span>
+entity_prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">“Extrais les entités nommées (personnes, entreprises, produits, lieux) de la question. Retourne une liste Python.”</span>),
+(<span class="st">“human”</span>, <span class="st">“Question: {question}\nEntités (liste Python):”</span>),
+])
+
+<span class="kw">def</span> <span class="fn">extract_entities</span>(question: str) -> list[str]:
+result = (entity_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({<span class="st">“question”</span>: question})
+<span class="kw">try</span>:
+<span class="kw">return</span> eval(result.strip())  <span class="cm"># [“Entité1”, “Entité2”]</span>
+<span class="kw">except</span>:
+<span class="kw">return</span> []
+
+<span class="cm"># ── 6. GraphRAG Chain complète ───────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">graphrag_query</span>(question: str, G: nx.<span class="cl">DiGraph</span>, vectorstore) -> str:
+<span class="st">””“Combine contexte vectoriel + contexte graphe.”””</span>
+
+```
+<span class="cm"># Contexte vectoriel classique</span>
+vector_docs    = vectorstore.similarity_search(question, k=<span class="nu">3</span>)
+vector_context = fmt_docs(vector_docs)
+
+<span class="cm"># Contexte graphe (relations entre entités)</span>
+entities      = extract_entities(question)
+graph_context = <span class="st">"\n\n"</span>.join([
+    f<span class="st">"Relations pour '{e}':\n{query_graph(G, e)}"</span>
+    <span class="kw">for</span> e <span class="kw">in</span> entities
+]) <span class="kw">if</span> entities <span class="kw">else</span> <span class="st">""</span>
+
+<span class="cm"># Prompt enrichi avec les deux contextes</span>
+graphrag_prompt = <span class="cl">ChatPromptTemplate</span>.from_template(<span class="st">"""
+Réponds à la question en utilisant:
+1. Les documents récupérés
+2. Le graphe de relations entre entités
+
+Documents:
+{vector_context}
+
+Relations (graphe de connaissances):
+{graph_context}
+
+Question: {question}
+Réponse:"""</span>)
+
+answer = (graphrag_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+    <span class="st">"vector_context"</span>: vector_context,
+    <span class="st">"graph_context"</span>:  graph_context <span class="kw">or</span> <span class="st">"Aucune relation trouvée."</span>,
+    <span class="st">"question"</span>:       question
+})
+<span class="kw">return</span> answer
+```
+
+<span class="cm"># ── 7. Usage complet ────────────────────────────────────────────</span>
+<span class="cm"># Construire le graphe une seule fois</span>
+all_docs = vectorstore.similarity_search(<span class="st">”*”</span>, k=<span class="nu">100</span>)  <span class="cm"># tous les docs</span>
+G = build_knowledge_graph(all_docs)
+
+<span class="cm"># Requête multi-sauts</span>
+answer = graphrag_query(
+<span class="st">“Quel est le lien entre Alice (CEO) et le produit X?”</span>,
+G, vectorstore
+)
+<span class="kw">print</span>(answer)</code></pre>
+
+  </div>
+
+  <h2 class="sh">5.4 — GraphRAG avec Neo4j (production)</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">05_graphrag_neo4j.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="cm"># pip install langchain-community neo4j</span>
+<span class="cm"># Docker: docker run -p 7474:7474 -p 7687:7687 neo4j:latest</span>
+<span class="kw">from</span> <span class="im">langchain_community.graphs</span> <span class="kw">import</span> Neo4jGraph
+<span class="kw">from</span> <span class="im">langchain_community.vectorstores</span> <span class="kw">import</span> Neo4jVector
+<span class="kw">from</span> <span class="im">langchain_experimental.graph_transformers</span> <span class="kw">import</span> LLMGraphTransformer
+
+<span class="cm"># ── Connexion Neo4j ──────────────────────────────────────────────</span>
+graph = <span class="cl">Neo4jGraph</span>(
+url=<span class="st">“bolt://localhost:7687”</span>,
+username=<span class="st">“neo4j”</span>,
+password=<span class="st">“password”</span>
+)
+
+<span class="cm"># ── Transformer les documents en graphe automatiquement ──────────</span>
+transformer = <span class="cl">LLMGraphTransformer</span>(
+llm=<span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>),
+allowed_nodes=[<span class="st">“Personne”</span>, <span class="st">“Entreprise”</span>, <span class="st">“Produit”</span>, <span class="st">“Lieu”</span>],
+allowed_relationships=[<span class="st">“EST_CEO”</span>, <span class="st">“A_ACQUIS”</span>, <span class="st">“PRODUIT”</span>, <span class="st">“EST_SITUE_A”</span>],
+)
+
+graph_docs = transformer.convert_to_graph_documents(docs)
+graph.add_graph_documents(graph_docs, baseEntityLabel=<span class="kw">True</span>, include_source=<span class="kw">True</span>)
+
+<span class="cm"># ── Vectorstore dans Neo4j (embeddings + graphe dans la même DB) ─</span>
+neo4j_vector = <span class="cl">Neo4jVector</span>.from_existing_graph(
+embedding=embeddings,
+url=<span class="st">“bolt://localhost:7687”</span>,
+username=<span class="st">“neo4j”</span>,
+password=<span class="st">“password”</span>,
+index_name=<span class="st">“vector_index”</span>,
+node_label=<span class="st">“Document”</span>,
+text_node_properties=[<span class="st">“text”</span>],
+embedding_node_property=<span class="st">“embedding”</span>
+)
+
+<span class="cm"># ── Requêter le graphe avec Cypher ───────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">cypher_query</span>(question: str) -> str:
+<span class="st">””“Génère et exécute une requête Cypher depuis une question naturelle.”””</span>
+cypher_prompt = f<span class="st">”””
+Schéma: (Personne)-[:EST_CEO]->(Entreprise), (Entreprise)-[:A_ACQUIS]->(Entreprise)
+Question: {question}
+Requête Cypher:”””</span>
+
+```
+cypher = (
+    <span class="cl">ChatPromptTemplate</span>.from_template(cypher_prompt)
+    | llm | <span class="cl">StrOutputParser</span>()
+).invoke({})
+
+result = graph.query(cypher.strip())
+<span class="kw">return</span> str(result)</code></pre>
+```
+
+  </div>
+</div>
+</section>
+
+<!-- ════════════ M6 · ADAPTIVE RAG ════════════ -->
+
+<div class="divider" id="m6"></div>
+<section class="mod-sec">
+<div class="page">
+  <div class="mod-head">
+    <div class="mbadge mb-o">M6</div>
+    <div class="mod-info">
+      <div class="mtag">Module 6 · Production</div>
+      <h1>Adaptive RAG — Routage Intelligent</h1>
+      <p>Router dynamiquement chaque question vers la stratégie RAG optimale — simple, avancé ou sans RAG — pour le meilleur équilibre vitesse/qualité.</p>
+      <span class="mlevel exp"><span class="dot"></span>Expert</span>
+    </div>
+  </div>
+
+  <h2 class="sh">6.1 — Le principe de l'Adaptive RAG</h2>
+  <div class="ca ca-pareto">
+    <span class="ca-icon">🎯</span>
+    <div class="ca-body">
+      <h4>Pareto — Ne pas appliquer la même stratégie à toutes les questions</h4>
+      <p>"Bonjour, comment vas-tu?" ne nécessite pas de RAG. "Explique-moi le fonctionnement du modèle GPT-4" ne nécessite pas vos docs internes. "Quelle est la politique de retour?" nécessite un RAG simple. "Compare nos ventes Q3 avec nos concurrents" nécessite un RAG complexe + web. <strong>Router intelligemment = ×3 sur la performance.</strong></p>
+    </div>
+  </div>
+
+  <h2 class="sh">6.2 — Implémentation Adaptive RAG</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">06_adaptive_rag.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="kw">from</span> <span class="im">langgraph.graph</span> <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> <span class="im">pydantic</span> <span class="kw">import</span> BaseModel, Field
+<span class="kw">from</span> <span class="im">typing</span> <span class="kw">import</span> TypedDict, Literal
+
+llm = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>, temperature=<span class="nu">0</span>)
+
+<span class="cm"># ── 1. État ─────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">AdaptiveState</span>(TypedDict):
+question:   str
+strategy:   str   <span class="cm"># “none” / “simple” / “advanced” / “web”</span>
+documents:  list
+generation: str
+
+<span class="cm"># ── 2. Classificateur de stratégie ──────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">Strategy</span>(BaseModel):
+strategy: Literal[<span class="st">“none”</span>, <span class="st">“simple”</span>, <span class="st">“advanced”</span>, <span class="st">“web”</span>] = <span class="cl">Field</span>(
+description=<span class="st">””“Stratégie à utiliser:
+- none: question conversationnelle, salutation, calcul simple
+- simple: question sur les docs internes, réponse dans 1-2 chunks
+- advanced: question complexe, multi-docs, analyse comparative
+- web: question sur l’actualité, événements récents”””</span>
+)
+reason: str = <span class="cl">Field</span>(description=<span class="st">“Raison du choix”</span>)
+
+router_chain = (
+<span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">””“Tu es un routeur de questions pour un système RAG.
+Classe chaque question dans la stratégie adaptée.
+Base de connaissance: documentation produit et procédures internes.”””</span>),
+(<span class="st">“human”</span>, <span class="st">“Question: {question}”</span>),
+])
+| llm.with_structured_output(<span class="cl">Strategy</span>)
+)
+
+<span class="cm"># ── 3. Nœuds spécialisés ────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">classify</span>(state: <span class="cl">AdaptiveState</span>) -> dict:
+result = router_chain.invoke({<span class="st">“question”</span>: state[<span class="st">“question”</span>]})
+<span class="kw">print</span>(f<span class="st">“Stratégie: {result.strategy} — {result.reason}”</span>)
+<span class="kw">return</span> {<span class="st">“strategy”</span>: result.strategy}
+
+<span class="kw">def</span> <span class="fn">generate_direct</span>(state: <span class="cl">AdaptiveState</span>) -> dict:
+<span class="st">””“Répond sans RAG — pour les questions simples.”””</span>
+answer = llm.invoke(state[<span class="st">“question”</span>]).content
+<span class="kw">return</span> {<span class="st">“generation”</span>: answer, <span class="st">“documents”</span>: []}
+
+<span class="kw">def</span> <span class="fn">rag_simple</span>(state: <span class="cl">AdaptiveState</span>) -> dict:
+<span class="st">””“RAG standard avec 4 chunks.”””</span>
+docs   = vectorstore.similarity_search(state[<span class="st">“question”</span>], k=<span class="nu">4</span>)
+answer = (rag_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+<span class="st">“context”</span>: fmt_docs(docs), <span class="st">“question”</span>: state[<span class="st">“question”</span>]
+})
+<span class="kw">return</span> {<span class="st">“generation”</span>: answer, <span class="st">“documents”</span>: docs}
+
+<span class="kw">def</span> <span class="fn">rag_advanced</span>(state: <span class="cl">AdaptiveState</span>) -> dict:
+<span class="st">””“RAG avancé avec HyDE + Reranking + CRAG.”””</span>
+question = state[<span class="st">“question”</span>]
+
+```
+<span class="cm"># HyDE pour améliorer le rappel</span>
+candidates = hyde_retrieve(question, k=<span class="nu">15</span>)
+
+<span class="cm"># Reranking pour la précision</span>
+docs = rerank(question, candidates, top_k=<span class="nu">5</span>)
+
+<span class="cm"># Vérification CRAG rapide</span>
+relevant = [
+    d <span class="kw">for</span> d <span class="kw">in</span> docs
+    <span class="kw">if</span> grade_chain.invoke({<span class="st">"question"</span>: question, <span class="st">"document"</span>: d.page_content}).score == <span class="st">"yes"</span>
+]
+<span class="kw">if not</span> relevant:
+    relevant = docs  <span class="cm"># fallback si aucun n'est jugé parfait</span>
+
+answer = (rag_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+    <span class="st">"context"</span>: fmt_docs(relevant), <span class="st">"question"</span>: question
+})
+<span class="kw">return</span> {<span class="st">"generation"</span>: answer, <span class="st">"documents"</span>: relevant}
+```
+
+<span class="kw">def</span> <span class="fn">rag_with_web</span>(state: <span class="cl">AdaptiveState</span>) -> dict:
+<span class="st">””“RAG + recherche web pour les questions d’actualité.”””</span>
+question = state[<span class="st">“question”</span>]
+
+```
+<span class="cm"># Docs internes</span>
+int_docs = vectorstore.similarity_search(question, k=<span class="nu">2</span>)
+
+<span class="cm"># Recherche web</span>
+web_result = web_search.run(question)
+web_doc    = <span class="cl">Document</span>(page_content=web_result, metadata={<span class="st">"source"</span>: <span class="st">"web"</span>})
+
+all_docs = int_docs + [web_doc]
+answer   = (rag_prompt | llm | <span class="cl">StrOutputParser</span>()).invoke({
+    <span class="st">"context"</span>: fmt_docs(all_docs), <span class="st">"question"</span>: question
+})
+<span class="kw">return</span> {<span class="st">"generation"</span>: answer, <span class="st">"documents"</span>: all_docs}
+```
+
+<span class="cm"># ── 4. Routage ───────────────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">route</span>(state: <span class="cl">AdaptiveState</span>) -> str:
+<span class="kw">return</span> {
+<span class="st">“none”</span>:     <span class="st">“direct”</span>,
+<span class="st">“simple”</span>:   <span class="st">“simple”</span>,
+<span class="st">“advanced”</span>: <span class="st">“advanced”</span>,
+<span class="st">“web”</span>:      <span class="st">“web”</span>,
+}.get(state[<span class="st">“strategy”</span>], <span class="st">“simple”</span>)
+
+<span class="cm"># ── 5. Graphe Adaptive RAG ───────────────────────────────────────</span>
+ag = <span class="cl">StateGraph</span>(<span class="cl">AdaptiveState</span>)
+ag.add_node(<span class="st">“classify”</span>,  classify)
+ag.add_node(<span class="st">“direct”</span>,    generate_direct)
+ag.add_node(<span class="st">“simple”</span>,    rag_simple)
+ag.add_node(<span class="st">“advanced”</span>,  rag_advanced)
+ag.add_node(<span class="st">“web”</span>,       rag_with_web)
+
+ag.set_entry_point(<span class="st">“classify”</span>)
+ag.add_conditional_edges(<span class="st">“classify”</span>, route,
+{<span class="st">“direct”</span>:<span class="st">“direct”</span>,<span class="st">“simple”</span>:<span class="st">“simple”</span>,<span class="st">“advanced”</span>:<span class="st">“advanced”</span>,<span class="st">“web”</span>:<span class="st">“web”</span>})
+<span class="kw">for</span> node <span class="kw">in</span> [<span class="st">“direct”</span>,<span class="st">“simple”</span>,<span class="st">“advanced”</span>,<span class="st">“web”</span>]:
+ag.add_edge(node, END)
+
+adaptive_graph = ag.compile()
+
+<span class="cm"># ── 6. Tests ─────────────────────────────────────────────────────</span>
+tests = [
+<span class="st">“Bonjour, comment vas-tu?”</span>,          <span class="cm"># → none</span>
+<span class="st">“Quelle est la durée de garantie?”</span>,  <span class="cm"># → simple</span>
+<span class="st">“Compare nos produits avec ceux de nos concurrents”</span>,  <span class="cm"># → advanced</span>
+<span class="st">“Quelles sont les dernières nouvelles sur les LLMs?”</span>,  <span class="cm"># → web</span>
+]
+<span class="kw">for</span> q <span class="kw">in</span> tests:
+result = adaptive_graph.invoke({
+<span class="st">“question”</span>: q, <span class="st">“strategy”</span>: <span class="st">””</span>, <span class="st">“documents”</span>: [], <span class="st">“generation”</span>: <span class="st">””</span>
+})
+<span class="kw">print</span>(f<span class="st">”[{result[‘strategy’]}] {q[:40]}…”</span>)
+<span class="kw">print</span>(f<span class="st">“→ {result[‘generation’][:100]}…\n”</span>)</code></pre>
+
+  </div>
+</div>
+</section>
+
+<!-- ════════════ M7 · PROJET FINAL ════════════ -->
+
+<div class="divider" id="m7"></div>
+<section class="mod-sec">
+<div class="page">
+  <div class="mod-head">
+    <div class="mbadge mb-b">M7</div>
+    <div class="mod-info">
+      <div class="mtag">Module 7 · Projet Final</div>
+      <h1>Projet Final — RAG Production-Grade</h1>
+      <p>Assembler toutes les techniques en un système RAG complet, évalué et déployable.</p>
+      <span class="mlevel exp"><span class="dot"></span>Expert</span>
+    </div>
+  </div>
+
+  <h2 class="sh">7.1 — Architecture finale</h2>
+  <div class="arch">
+<span class="d">rag-expert/</span>
+<span class="s">├──</span> <span class="f">config.py</span>                <span class="c"># Settings centralisés</span>
+<span class="s">├──</span> <span class="f">.env</span>                     <span class="c"># LANGCHAIN_TRACING, modèles...</span>
+<span class="s">│</span>
+<span class="s">├──</span> <span class="d">indexing/</span>
+<span class="s">│   ├──</span> <span class="f">loader.py</span>            <span class="c"># Chargement multi-format</span>
+<span class="s">│   ├──</span> <span class="f">splitter.py</span>          <span class="c"># Chunking adaptatif</span>
+<span class="s">│   └──</span> <span class="f">indexer.py</span>           <span class="c"># Vectorstore + graphe</span>
+<span class="s">│</span>
+<span class="s">├──</span> <span class="d">retrieval/</span>
+<span class="s">│   ├──</span> <span class="f">retrievers.py</span>        <span class="c"># Ensemble BM25 + vectoriel</span>
+<span class="s">│   ├──</span> <span class="f">reranker.py</span>          <span class="hi"># ← Cross-encoder (M1)</span>
+<span class="s">│   └──</span> <span class="f">hyde.py</span>              <span class="hi"># ← HyDE retriever (M2)</span>
+<span class="s">│</span>
+<span class="s">├──</span> <span class="d">pipeline/</span>
+<span class="s">│   ├──</span> <span class="f">crag.py</span>              <span class="hi"># ← Corrective RAG (M3)</span>
+<span class="s">│   ├──</span> <span class="f">self_rag.py</span>          <span class="hi"># ← Self-RAG (M4)</span>
+<span class="s">│   ├──</span> <span class="f">graphrag.py</span>          <span class="hi"># ← GraphRAG (M5)</span>
+<span class="s">│   └──</span> <span class="f">adaptive.py</span>          <span class="hi"># ← Adaptive Router (M6)</span>
+<span class="s">│</span>
+<span class="s">├──</span> <span class="d">evaluation/</span>
+<span class="s">│   ├──</span> <span class="f">dataset.py</span>           <span class="c"># Golden dataset</span>
+<span class="s">│   └──</span> <span class="f">evaluator.py</span>         <span class="c"># LLM-as-Judge + LangSmith</span>
+<span class="s">│</span>
+<span class="s">└──</span> <span class="d">api/</span>
+<span class="s">    └──</span> <span class="f">app.py</span>               <span class="c"># FastAPI + streaming</span>
+  </div>
+
+  <h2 class="sh">7.2 — Pipeline intégré complet</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">07_pipeline_complet.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="cm"># Pipeline RAG expert — toutes les techniques combinées</span>
+<span class="kw">from</span> <span class="im">langsmith</span> <span class="kw">import</span> traceable
+<span class="kw">import</span> time
+
+<span class="kw">class</span> <span class="cl">ExpertRAGPipeline</span>:
+<span class="st">””“Pipeline RAG production combinant toutes les techniques.”””</span>
+
+```
+<span class="kw">def</span> <span class="fn">__init__</span>(self, vectorstore, graph=<span class="kw">None</span>):
+    self.vs       = vectorstore
+    self.graph    = graph
+    self.reranker = <span class="cl">CrossEncoder</span>(<span class="st">"BAAI/bge-reranker-base"</span>)
+    self.llm      = <span class="cl">ChatOllama</span>(model=<span class="st">"llama3.2"</span>, temperature=<span class="nu">0</span>)
+    
+    <span class="cm"># Retriever hybride de base</span>
+    bm25     = <span class="cl">BM25Retriever</span>.from_documents(all_docs); bm25.k = <span class="nu">10</span>
+    vec_r    = vectorstore.as_retriever(search_kwargs={<span class="st">"k"</span>: <span class="nu">10</span>})
+    self.base_retriever = <span class="cl">EnsembleRetriever</span>(
+        retrievers=[bm25, vec_r], weights=[<span class="nu">0.4</span>, <span class="nu">0.6</span>]
+    )
+
+<span class="dc">@traceable</span>(name=<span class="st">"expert_rag"</span>)
+<span class="kw">def</span> <span class="fn">query</span>(self, question: str, strategy: str = <span class="st">"auto"</span>) -> dict:
+    <span class="st">"""Exécute le pipeline complet."""</span>
+    t0 = time.time()
+    
+    <span class="kw">if</span> strategy == <span class="st">"auto"</span>:
+        strategy = self._classify(question)
+    
+    docs   = self._retrieve(question, strategy)
+    answer = self._generate(question, docs, strategy)
+    
+    <span class="kw">return</span> {
+        <span class="st">"answer"</span>:   answer,
+        <span class="st">"sources"</span>:  [d.metadata.get(<span class="st">"source"</span>) <span class="kw">for</span> d <span class="kw">in</span> docs],
+        <span class="st">"strategy"</span>: strategy,
+        <span class="st">"latency"</span>:  round(time.time() - t0, <span class="nu">2</span>),
+    }
+
+<span class="kw">def</span> <span class="fn">_classify</span>(self, q: str) -> str:
+    result = router_chain.invoke({<span class="st">"question"</span>: q})
+    <span class="kw">return</span> result.strategy
+
+<span class="kw">def</span> <span class="fn">_retrieve</span>(self, q: str, strategy: str) -> list:
+    <span class="kw">if</span> strategy == <span class="st">"none"</span>:
+        <span class="kw">return</span> []
+    
+    <span class="kw">if</span> strategy == <span class="st">"simple"</span>:
+        <span class="cm"># Hybride BM25+vectoriel + reranking</span>
+        candidates = self.base_retriever.get_relevant_documents(q)
+        <span class="kw">return</span> rerank(q, candidates, top_k=<span class="nu">4</span>)
+    
+    <span class="kw">elif</span> strategy == <span class="st">"advanced"</span>:
+        <span class="cm"># HyDE pour le rappel + hybride + reranking lourd</span>
+        hyde_docs  = hyde_retrieve(q, k=<span class="nu">10</span>)
+        base_docs  = self.base_retriever.get_relevant_documents(q)
+        candidates = list({d.page_content: d <span class="kw">for</span> d <span class="kw">in</span> hyde_docs + base_docs}.values())
+        
+        <span class="cm"># Filtrage CRAG</span>
+        relevant = [
+            d <span class="kw">for</span> d <span class="kw">in</span> candidates
+            <span class="kw">if</span> grade_chain.invoke({<span class="st">"question"</span>: q, <span class="st">"document"</span>: d.page_content}).score == <span class="st">"yes"</span>
+        ] <span class="kw">or</span> candidates  <span class="cm"># fallback</span>
+        
+        <span class="kw">return</span> rerank(q, relevant, top_k=<span class="nu">5</span>)
+    
+    <span class="kw">elif</span> strategy == <span class="st">"web"</span>:
+        int_docs   = self.base_retriever.get_relevant_documents(q)[:<span class="nu">2</span>]
+        web_result = web_search.run(q)
+        web_doc    = <span class="cl">Document</span>(page_content=web_result, metadata={<span class="st">"source"</span>:<span class="st">"web"</span>})
+        <span class="kw">return</span> int_docs + [web_doc]
+    
+    <span class="kw">return</span> self.base_retriever.get_relevant_documents(q)[:<span class="nu">4</span>]
+
+<span class="kw">def</span> <span class="fn">_generate</span>(self, q: str, docs: list, strategy: str) -> str:
+    <span class="kw">if not</span> docs:
+        <span class="kw">return</span> self.llm.invoke(q).content
+    
+    <span class="cm"># Enrichir avec le graphe si disponible et stratégie avancée</span>
+    graph_ctx = <span class="st">""</span>
+    <span class="kw">if</span> self.graph <span class="kw">and</span> strategy == <span class="st">"advanced"</span>:
+        entities  = extract_entities(q)
+        graph_ctx = <span class="st">"\n"</span>.join(query_graph(self.graph, e) <span class="kw">for</span> e <span class="kw">in</span> entities)
+    
+    context = fmt_docs(docs)
+    <span class="kw">if</span> graph_ctx:
+        context += f<span class="st">"\n\nRelations graphe:\n{graph_ctx}"</span>
+    
+    <span class="kw">return</span> (rag_prompt | self.llm | <span class="cl">StrOutputParser</span>()).invoke({
+        <span class="st">"context"</span>: context, <span class="st">"question"</span>: q
+    })
+```
+
+<span class="cm"># ── Usage ────────────────────────────────────────────────────────</span>
+pipeline = <span class="cl">ExpertRAGPipeline</span>(vectorstore, graph=G)
+result   = pipeline.query(<span class="st">“Compare nos offres Enterprise avec Premium”</span>)
+<span class="kw">print</span>(f<span class="st">“Stratégie: {result[‘strategy’]} | Latence: {result[‘latency’]}s”</span>)
+<span class="kw">print</span>(result[<span class="st">“answer”</span>])</code></pre>
+
+  </div>
+
+  <h2 class="sh">7.3 — Évaluation finale du pipeline</h2>
+  <div class="cb">
+    <div class="cb-head">
+      <span class="cb-fn">07_evaluation.py</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span class="cb-lang">python</span>
+        <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+      </div>
+    </div>
+    <pre><code><span class="kw">from</span> <span class="im">langsmith.evaluation</span> <span class="kw">import</span> evaluate
+<span class="kw">from</span> <span class="im">langsmith</span> <span class="kw">import</span> Client
+
+client = <span class="cl">Client</span>()
+
+<span class="cm"># ── Dataset de 20 questions critiques ───────────────────────────</span>
+GOLDEN_DATASET = [
+{<span class="st">“q”</span>: <span class="st">“Quelle est la politique de remboursement?”</span>,    <span class="st">“a”</span>: <span class="st">“30 jours sans condition”</span>},
+{<span class="st">“q”</span>: <span class="st">“Quels sont nos tarifs Enterprise?”</span>,            <span class="st">“a”</span>: <span class="st">“Sur devis…”</span>},
+{<span class="st">“q”</span>: <span class="st">“Comment contacter le support technique?”</span>,      <span class="st">“a”</span>: <span class="st">“support@…”</span>},
+]
+
+dataset = client.create_dataset(<span class="st">“rag-expert-eval”</span>)
+client.create_examples(
+inputs=[{<span class="st">“question”</span>: d[<span class="st">“q”</span>]} <span class="kw">for</span> d <span class="kw">in</span> GOLDEN_DATASET],
+outputs=[{<span class="st">“answer”</span>: d[<span class="st">“a”</span>]} <span class="kw">for</span> d <span class="kw">in</span> GOLDEN_DATASET],
+dataset_id=dataset.id
+)
+
+<span class="cm"># ── Évaluateur LLM-as-Judge ──────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">EvalScore</span>(BaseModel):
+faithfulness:  int = <span class="cl">Field</span>(ge=<span class="nu">1</span>, le=<span class="nu">10</span>)
+correctness:   int = <span class="cl">Field</span>(ge=<span class="nu">1</span>, le=<span class="nu">10</span>)
+completeness:  int = <span class="cl">Field</span>(ge=<span class="nu">1</span>, le=<span class="nu">10</span>)
+
+judge = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>).with_structured_output(<span class="cl">EvalScore</span>)
+
+<span class="kw">def</span> <span class="fn">evaluator</span>(run, example):
+score = judge.invoke(f<span class="st">”””
+Question: {example.inputs[‘question’]}
+Réponse attendue: {example.outputs[‘answer’]}
+Réponse générée: {run.outputs.get(‘answer’,’’)}
+Évalue de 1 à 10: faithfulness, correctness, completeness”””</span>)
+avg = (score.faithfulness + score.correctness + score.completeness) / <span class="nu">30</span>
+<span class="kw">return</span> {<span class="st">“key”</span>: <span class="st">“rag_quality”</span>, <span class="st">“score”</span>: avg}
+
+<span class="cm"># ── Lancer l’évaluation ──────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">run_pipeline</span>(inputs):
+result = pipeline.query(inputs[<span class="st">“question”</span>])
+<span class="kw">return</span> {<span class="st">“answer”</span>: result[<span class="st">“answer”</span>], <span class="st">“strategy”</span>: result[<span class="st">“strategy”</span>]}
+
+results = evaluate(
+run_pipeline,
+data=<span class="st">“rag-expert-eval”</span>,
+evaluators=[evaluator],
+experiment_prefix=<span class="st">“expert-rag-v1”</span>
+)
+<span class="kw">print</span>(results.to_pandas()[[<span class="st">“inputs.question”</span>, <span class="st">“feedback.rag_quality”</span>, <span class="st">“outputs.strategy”</span>]])</code></pre>
+
+  </div>
+
+  <div class="quiz">
+    <div class="quiz-head"><span style="font-size:20px">🚀</span><h3>Quiz Final — Maîtrise globale</h3><span class="qbadge">4 questions</span></div>
+    <div class="qq">
+      <div class="qq-num">Q1 · QCM</div>
+      <div class="qq-text">Dans quel ordre appliquer Reranking et HyDE pour obtenir la meilleure précision ?</div>
+      <div class="opts" id="qf-1">
+        <div class="opt" onclick="qa('qf-1',this,false)"><span class="ol">A</span>Reranking d'abord, puis HyDE</div>
+        <div class="opt" onclick="qa('qf-1',this,true)"><span class="ol">B</span>HyDE pour récupérer les candidats, Reranking pour les classer</div>
+        <div class="opt" onclick="qa('qf-1',this,false)"><span class="ol">C</span>Reranking et HyDE en parallèle</div>
+        <div class="opt" onclick="qa('qf-1',this,false)"><span class="ol">D</span>L'ordre n'a aucune importance</div>
+      </div>
+      <div class="qa" id="qf-1-a"><strong>✓ B.</strong> HyDE améliore le <em>rappel</em> (trouver les bons docs), Reranking améliore la <em>précision</em> (les mettre dans le bon ordre). L'ordre logique : HyDE → large pool de candidats → Reranking → top-k précis. Inverser n'aurait aucun sens.</div>
+    </div>
+    <div class="qq">
+      <div class="qq-num">Q2 · QCM</div>
+      <div class="qq-text">Quelle technique est la plus efficace pour les questions nécessitant de traverser plusieurs relations entre entités ?</div>
+      <div class="opts" id="qf-2">
+        <div class="opt" onclick="qa('qf-2',this,false)"><span class="ol">A</span>Self-RAG (boucle de réflexion)</div>
+        <div class="opt" onclick="qa('qf-2',this,false)"><span class="ol">B</span>CRAG (validation des documents)</div>
+        <div class="opt" onclick="qa('qf-2',this,true)"><span class="ol">C</span>GraphRAG (navigation du graphe de connaissances)</div>
+        <div class="opt" onclick="qa('qf-2',this,false)"><span class="ol">D</span>HyDE (document hypothétique)</div>
+      </div>
+      <div class="qa" id="qf-2-a"><strong>✓ C.</strong> Les questions multi-sauts (A→B→C) nécessitent de naviguer des relations. Un vectorstore cherche des passages similaires mais ne "suit" pas les relations. Le graphe de connaissances est structurellement fait pour cela : <code>MATCH (a)-[:REL1]->(b)-[:REL2]->(c)</code>.</div>
+    </div>
+    <div class="qq">
+      <div class="qq-num">Q3 · Architecture</div>
+      <div class="qq-text">Pour un chatbot de support client avec 50 000 documents PDF, une latence max de 3 secondes et 99% de précision requise, quelle architecture choisiriez-vous et pourquoi ?</div>
+      <button class="show-btn" onclick="document.getElementById('qf-3-a').classList.toggle('show')">Voir correction</button>
+      <div class="qa" id="qf-3-a"><strong>✓ Architecture recommandée :</strong><br><br>
+      <strong>Indexation :</strong> Chroma ou Qdrant (production) avec embeddings nomic-embed-text. Chunking 1000/200 chars. Métadonnées riches (catégorie, date, produit).<br><br>
+      <strong>Retrieval :</strong> EnsembleRetriever BM25+vectoriel (fetch_k=20) → Cross-Encoder BGE-Reranker (top_k=5). Latence ~400ms.<br><br>
+      <strong>Pipeline :</strong> Adaptive RAG pour le routage → CRAG pour la validation (web search si docs insuffisants). Self-RAG désactivé en prod (trop lent). GraphRAG uniquement pour les questions de comparaison produits.<br><br>
+      <strong>Optimisations :</strong> Cache Redis (requêtes fréquentes), streaming côté client (UX), LangSmith pour monitoring continu des scores faithfulness.<br><br>
+      <strong>Pourquoi pas Self-RAG ?</strong> La boucle de réflexion peut prendre 5-15s. Pour la contrainte de 3s, CRAG + Reranking offre 95% de la qualité à 20% de la latence.</div>
+    </div>
+    <div class="qq">
+      <div class="qq-num">Q4 · Ouverte</div>
+      <div class="qq-text">Comment mesureriez-vous l'amélioration apportée par chaque technique ajoutée à votre pipeline RAG ?</div>
+      <button class="show-btn" onclick="document.getElementById('qf-4-a').classList.toggle('show')">Voir correction</button>
+      <div class="qa" id="qf-4-a"><strong>✓ Méthodologie A/B rigoureuse :</strong><br><br>
+      1. <strong>Golden Dataset</strong> : 50+ questions avec réponses validées manuellement par des experts métier.<br>
+      2. <strong>Métriques</strong> : Faithfulness (réponse ancrée dans les docs), Correctness (vs réponse attendue), Latency P50/P95.<br>
+      3. <strong>Baseline</strong> : RAG simple (vectorstore + LLM), mesurer les métriques.<br>
+      4. <strong>+Reranking</strong> : mesurer le delta. +Reranking typiquement +20-40% correctness.<br>
+      5. <strong>+HyDE</strong> : mesurer le delta supplémentaire. Utile surtout sur questions courtes.<br>
+      6. <strong>+CRAG</strong> : mesurer réduction hallucinations (-50% attendu).<br>
+      7. Décision : ajouter une technique seulement si gain &gt; coût de latence ajoutée.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ M8 · ANNEXES ════════════ -->
+
+<div class="divider" id="m8"></div>
+<section class="mod-sec">
+<div class="page">
+  <div class="mod-head">
+    <div class="mbadge mb-g">M8</div>
+    <div class="mod-info">
+      <div class="mtag">Module 8 · Ressources</div>
+      <h1>Annexes — Références & Checklist Expert</h1>
+      <span class="mlevel"><span class="dot"></span>Tous niveaux</span>
+    </div>
+  </div>
+
+  <h2 class="sh">8.1 — Tableau de décision — Quelle technique utiliser ?</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Situation</th><th>Technique recommandée</th><th>Priorité</th></tr></thead>
+      <tbody>
+        <tr><td>Résultats peu précis, mauvais ordre</td><td>+ Reranking Cross-Encoder</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+        <tr><td>Questions courtes, mauvais rappel</td><td>+ HyDE</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+        <tr><td>Trop d'hallucinations</td><td>+ CRAG (validation sources)</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+        <tr><td>Questions complexes, haute précision requise</td><td>+ Self-RAG</td><td class="stars">⭐⭐⭐⭐</td></tr>
+        <tr><td>Questions sur relations entités</td><td>+ GraphRAG (NetworkX ou Neo4j)</td><td class="stars">⭐⭐⭐⭐</td></tr>
+        <tr><td>Mix de types de questions</td><td>+ Adaptive RAG (routing)</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+        <tr><td>Questions sur l'actualité</td><td>+ Web Search fallback</td><td class="stars">⭐⭐⭐⭐</td></tr>
+        <tr><td>Termes exacts importants (noms, codes)</td><td>+ BM25 dans EnsembleRetriever</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="sh">8.2 — Papers fondamentaux</h2>
+  <div class="grid">
+    <div class="gcard"><div class="gtop gt-o"></div><div class="gcard-ic">📄</div><div class="gcard-t">RAG (2020)</div><div class="gcard-d">Lewis et al. — Le papier original qui a défini le paradigme RAG</div></div>
+    <div class="gcard"><div class="gtop gt-o"></div><div class="gcard-ic">📄</div><div class="gcard-t">Self-RAG (2023)</div><div class="gcard-d">Asai et al. — Retrieval par réflexion avec tokens spéciaux</div></div>
+    <div class="gcard"><div class="gtop gt-p"></div><div class="gcard-ic">📄</div><div class="gcard-t">CRAG (2024)</div><div class="gcard-d">Yan et al. — Évaluation corrective des documents récupérés</div></div>
+    <div class="gcard"><div class="gtop gt-c"></div><div class="gcard-ic">📄</div><div class="gcard-t">GraphRAG (2024)</div><div class="gcard-d">Edge et al. (Microsoft) — Graphe de connaissances pour le RAG</div></div>
+    <div class="gcard"><div class="gtop gt-g"></div><div class="gcard-ic">📄</div><div class="gcard-t">HyDE (2022)</div><div class="gcard-d">Gao et al. — Hypothetical Document Embeddings</div></div>
+    <div class="gcard"><div class="gtop gt-o"></div><div class="gcard-ic">📄</div><div class="gcard-t">Lost in Middle (2023)</div><div class="gcard-d">Liu et al. — Pourquoi l'ordre des chunks compte</div></div>
+  </div>
+
+  <h2 class="sh">8.3 — Checklist Expert RAG</h2>
+  <h3 class="shs">Retrieval</h3>
+  <div class="cl-list">
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'utilise un EnsembleRetriever (BM25 + vectoriel) comme base</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'applique le Reranking Cross-Encoder sur 15-20 candidats</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'utilise HyDE pour les questions courtes ou ambiguës</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je mesure le Recall@K avant et après chaque technique</span></div>
+  </div>
+  <h3 class="shs">Validation & Qualité</h3>
+  <div class="cl-list">
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'évalue la pertinence des documents avec CRAG</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'ai un golden dataset d'au moins 30 questions critiques</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je mesure faithfulness, correctness et latence</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je trace tout dans LangSmith et alerte si le score baisse</span></div>
+  </div>
+  <h3 class="shs">Production</h3>
+  <div class="cl-list">
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'ai un routeur Adaptive RAG pour optimiser vitesse/qualité</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je gère un fallback web search quand les docs sont insuffisants</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Le Self-RAG ou CRAG détecte et évite les hallucinations</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'ai un cache Redis pour les requêtes fréquentes</span></div>
+    <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Le GraphRAG est activé pour les questions multi-entités</span></div>
+  </div>
+</div>
+</section>
+
+<!-- FOOTER -->
+
+<div class="divider"></div>
+<div class="footer">
+  <p style="font-size:26px;margin-bottom:10px">🎓</p>
+  <p style="color:var(--white);font-size:16px;font-weight:700;margin-bottom:6px">Vous maîtrisez maintenant le RAG de niveau expert !</p>
+  <p>Self-RAG · CRAG · GraphRAG · Reranking · HyDE · Adaptive RAG</p>
+  <p style="margin-top:14px;color:var(--orange)">🚀 Mesurez, itérez, améliorez — c'est la seule vraie stratégie.</p>
+</div>
+
+</main>
+
+<button id="stb" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+function cp(btn) {
+  var pre = btn.closest('.cb').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(function() {
+    btn.textContent = '✓ Copié';
+    btn.classList.add('ok');
+    setTimeout(function(){ btn.textContent='⧉ Copier'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+
+function goto(id) {
+  var el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function qa(gId, el, correct) {
+  var g = document.getElementById(gId);
+  if (!g || g.dataset.done) return;
+  g.dataset.done = '1';
+  el.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) {
+    g.querySelectorAll('.opt').forEach(function(o) {
+      if ((o.getAttribute('onclick')||'').indexOf('true') > -1) o.classList.add('correct');
+    });
+  }
+  var a = document.getElementById(gId + '-a');
+  if (a) a.classList.add('show');
+}
+
+function ck(el) {
+  el.classList.toggle('done');
+  el.querySelector('.cl-box').textContent = el.classList.contains('done') ? '✓' : '';
+  updateProgress();
+}
+
+function updateProgress() {
+  var all  = document.querySelectorAll('.cl-item').length;
+  var done = document.querySelectorAll('.cl-item.done').length;
+  var pct  = all ? Math.round(done / all * 100) : 0;
+  var fill = document.getElementById('bar');
+  var pEl  = document.getElementById('pct');
+  if (fill) fill.style.width = pct + '%';
+  if (pEl)  pEl.textContent  = pct + '%';
+}
+
+var smap = {
+  'hero':'Accueil','m1':'M1 · Reranking','m2':'M2 · HyDE',
+  'm3':'M3 · CRAG','m4':'M4 · Self-RAG','m5':'M5 · GraphRAG',
+  'm6':'M6 · Adaptive RAG','m7':'M7 · Projet Final','m8':'M8 · Annexes'
+};
+var secs = Object.keys(smap).map(function(id){ return document.getElementById(id); }).filter(Boolean);
+var navs = document.querySelectorAll('.sb-item');
+var curEl = document.getElementById('cur');
+
+var io = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      var id = e.target.id;
+      navs.forEach(function(n) {
+        n.classList.toggle('active', (n.getAttribute('onclick')||'').indexOf("'"+id+"'") > -1);
+      });
+      if (curEl && smap[id]) curEl.textContent = smap[id];
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+
+secs.forEach(function(s){ io.observe(s); });
+
+window.addEventListener('scroll', function() {
+  document.getElementById('stb').classList.toggle('vis', window.scrollY > 400);
+});
+
+navs.forEach(function(n) {
+  n.addEventListener('click', function() {
+    if (window.innerWidth <= 820) document.getElementById('sb').classList.remove('open');
+  });
+});
+
+updateProgress();
+</script>
+
+</body>
+</html>

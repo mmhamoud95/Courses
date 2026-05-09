@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formation AI Agents — Cours Complet</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f7f3ee;
+  --ink:#18120e;
+  --ink2:#3d2f26;
+  --muted:#8a7a6a;
+  --border:#ddd5c8;
+  --surface:#fff;
+  --surface2:#f2ede6;
+
+–vital:#1a6b4a;      /* vert agent — vital */
+–vital-l:rgba(26,107,74,.08);
+–vital-m:rgba(26,107,74,.18);
+–useful:#2471a3;
+–useful-l:rgba(36,113,163,.08);
+–skip:#aaa;
+–skip-l:rgba(0,0,0,.04);
+–warn:#c0392b;
+–warn-l:rgba(192,57,43,.08);
+
+/* couleurs par jour */
+–d1:#1a6b4a; –d2:#2471a3; –d3:#7d3c98;
+–d4:#d4840a; –d5:#b03a2e; –d6:#1a5a8a;
+–d7:#2d6a4f; –d8:#8b5cf6; –d9:#c0392b; –d10:#18120e;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+background:var(–bg);
+color:var(–ink);
+font-family:‘Bricolage Grotesque’,sans-serif;
+font-size:15px;
+line-height:1.6;
+}
+
+body::before{
+content:’’;
+position:fixed;inset:0;
+background-image:url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘400’ height=‘400’%3E%3Cfilter id=‘n’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=’.65’ numOctaves=‘3’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘400’ height=‘400’ filter=‘url(%23n)’ opacity=’.025’/%3E%3C/svg%3E”);
+pointer-events:none;z-index:0;
+}
+
+.page{max-width:920px;margin:0 auto;padding:56px 24px 88px;position:relative;z-index:1;}
+
+/* ── HERO ── */
+.hero{margin-bottom:48px;animation:up .5s ease both;}
+
+.suite-badge{
+display:inline-flex;align-items:center;gap:9px;
+background:var(–vital);color:#fff;
+font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+padding:5px 14px;border-radius:3px;margin-bottom:20px;
+}
+
+h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;line-height:1.05;letter-spacing:-.025em;margin-bottom:16px;}
+h1 em{font-style:italic;color:var(–vital);}
+
+.hero-desc{color:var(–muted);font-size:.95rem;max-width:560px;margin-bottom:28px;line-height:1.65;}
+
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;}
+.kpi{background:var(–surface);border:1.5px solid var(–border);border-radius:8px;padding:12px 18px;display:flex;flex-direction:column;gap:2px;}
+.kpi-v{font-family:‘JetBrains Mono’,monospace;font-size:1rem;font-weight:500;color:var(–ink);}
+.kpi-l{font-size:.68rem;color:var(–muted);text-transform:uppercase;letter-spacing:.09em;}
+
+/* ── CONTINUITY BANNER ── */
+.continuity{
+display:flex;align-items:center;gap:16px;
+background:var(–surface);border:1.5px solid var(–border);
+border-left:4px solid var(–vital);
+border-radius:10px;padding:16px 22px;margin-bottom:32px;
+animation:up .5s .06s ease both;
+}
+.continuity-icon{font-size:1.4rem;flex-shrink:0;}
+.continuity p{font-size:.85rem;color:var(–ink2);line-height:1.5;}
+.continuity strong{color:var(–vital);}
+
+/* ── ROADMAP VISUELLE ── */
+.roadmap{
+background:var(–surface);border:1.5px solid var(–border);
+border-radius:10px;padding:24px 26px;margin-bottom:40px;
+animation:up .5s .1s ease both;
+overflow-x:auto;
+}
+.roadmap h3{font-family:‘JetBrains Mono’,monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(–muted);margin-bottom:20px;}
+.rm-phases{display:flex;gap:0;align-items:stretch;}
+.rm-phase{
+flex:1;min-width:120px;
+border-radius:8px;padding:14px 12px;
+display:flex;flex-direction:column;gap:6px;
+position:relative;
+}
+.rm-phase+.rm-phase::before{
+content:‘→’;
+position:absolute;left:-10px;top:50%;transform:translateY(-50%);
+color:var(–muted);font-size:.9rem;
+}
+.rm-phase.p1{background:rgba(26,107,74,.08);border:1px solid rgba(26,107,74,.2);}
+.rm-phase.p2{background:rgba(36,113,163,.08);border:1px solid rgba(36,113,163,.2);}
+.rm-phase.p3{background:rgba(125,60,152,.08);border:1px solid rgba(125,60,152,.2);}
+.rm-phase.p4{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);}
+.rm-phase.p5{background:rgba(24,18,14,.06);border:1px solid rgba(24,18,14,.15);}
+.rm-phase-title{font-family:‘JetBrains Mono’,monospace;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+.rm-phase.p1 .rm-phase-title{color:var(–d1);}
+.rm-phase.p2 .rm-phase-title{color:var(–d2);}
+.rm-phase.p3 .rm-phase-title{color:var(–d3);}
+.rm-phase.p4 .rm-phase-title{color:var(–d8);}
+.rm-phase.p5 .rm-phase-title{color:var(–d10);}
+.rm-phase-days{font-size:.72rem;color:var(–muted);margin-bottom:4px;}
+.rm-phase ul{list-style:none;display:flex;flex-direction:column;gap:3px;}
+.rm-phase li{font-size:.72rem;color:var(–ink2);line-height:1.3;}
+
+/* ── PROGRESS ── */
+.tracker{background:var(–surface);border:1.5px solid var(–border);border-radius:10px;padding:20px 24px;margin-bottom:40px;animation:up .5s .16s ease both;}
+.tracker-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.tracker-top h3{font-family:‘JetBrains Mono’,monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(–muted);}
+#pct-label{font-family:‘JetBrains Mono’,monospace;font-size:.78rem;color:var(–ink);}
+.ddots{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;}
+.ddot{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;}
+.ddot .d{width:100%;height:6px;border-radius:99px;background:var(–border);transition:all .2s;}
+.ddot:hover .d{transform:scaleY(2);}
+.ddot.done .d{background:var(–vital);}
+.ddot .dl{font-family:‘JetBrains Mono’,monospace;font-size:.58rem;color:var(–muted);}
+
+/* ── SECTION TITLE ── */
+.sh{display:flex;align-items:center;gap:12px;margin:44px 0 20px;}
+.sh span{font-family:‘JetBrains Mono’,monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(–muted);white-space:nowrap;}
+.sh .ln{flex:1;height:1px;background:var(–border);}
+
+/* ── PHASE HEADER ── */
+.phase-hdr{
+display:flex;align-items:center;gap:12px;
+padding:12px 18px;border-radius:8px;
+margin:32px 0 14px;
+border:1px solid;
+}
+.phase-hdr .ph-num{
+font-family:‘JetBrains Mono’,monospace;font-size:.65rem;font-weight:700;
+text-transform:uppercase;letter-spacing:.1em;
+padding:3px 10px;border-radius:3px;
+}
+.phase-hdr h2{font-size:1rem;font-weight:700;}
+.phase-hdr .ph-sub{font-size:.8rem;color:var(–muted);margin-left:auto;}
+
+/* ── DAY CARDS ── */
+.days{display:flex;flex-direction:column;gap:14px;}
+.dc{background:var(–surface);border:1.5px solid var(–border);border-radius:12px;overflow:hidden;animation:up .4s ease both;transition:box-shadow .2s;}
+.dc:hover{box-shadow:3px 3px 0 var(–border);}
+.dc-head{display:flex;align-items:stretch;cursor:pointer;}
+.dc-accent{width:5px;flex-shrink:0;}
+.dc-num{width:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;flex-shrink:0;}
+.dc-num .n{font-size:1.8rem;font-weight:800;line-height:1;font-family:‘Bricolage Grotesque’,sans-serif;}
+.dc-num .l{font-family:‘JetBrains Mono’,monospace;font-size:.55rem;color:var(–muted);text-transform:uppercase;letter-spacing:.1em;}
+.dc-info{flex:1;padding:16px 14px;}
+.dc-info h3{font-size:.97rem;font-weight:700;line-height:1.3;margin-bottom:3px;}
+.dc-info .sub{font-size:.77rem;color:var(–muted);}
+.dc-meta{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:7px;padding:16px 18px 16px 8px;flex-shrink:0;}
+.tbadge{font-family:‘JetBrains Mono’,monospace;font-size:.67rem;background:var(–surface2);border:1px solid var(–border);border-radius:5px;padding:3px 8px;color:var(–muted);white-space:nowrap;}
+.chev{width:24px;height:24px;border-radius:5px;background:var(–surface2);display:flex;align-items:center;justify-content:center;color:var(–muted);font-size:.7rem;transition:transform .25s;}
+.dc.open .chev{transform:rotate(180deg);}
+
+.dc-tags{display:flex;gap:6px;flex-wrap:wrap;padding:0 18px 12px 67px;}
+.tg{font-family:‘JetBrains Mono’,monospace;font-size:.6rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:4px;border:1px solid;}
+
+.dc-body{display:none;border-top:1px solid rgba(0,0,0,.06);padding:22px 22px 24px;}
+.dc.open .dc-body{display:block;}
+
+/* ── CONCEPT SCHEMA ── */
+.schema{
+background:var(–surface2);border-radius:9px;padding:16px 20px;
+margin-bottom:16px;border:1px solid var(–border);
+font-family:‘JetBrains Mono’,monospace;font-size:.72rem;
+color:var(–ink2);line-height:1.9;
+white-space:pre-wrap;
+word-break:break-word;
+}
+.schema .sa{color:var(–vital);font-weight:700;}   /* action */
+.schema .sb{color:var(–d2);font-weight:700;}        /* tool */
+.schema .sc-{color:var(–d3);font-weight:700;}       /* thought */
+.schema .sd{color:var(–muted);}                     /* arrow/separator */
+
+/* ── SPLIT 2-COL ── */
+.pareto-split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+@media(max-width:580px){.pareto-split{grid-template-columns:1fr;}.dc-tags{padding-left:18px;}}
+.psplit{border-radius:9px;padding:16px 18px;border:1.5px solid;}
+.psplit.vital{background:var(–vital-l);border-color:rgba(26,107,74,.2);}
+.psplit.useful{background:var(–useful-l);border-color:rgba(36,113,163,.2);}
+.psplit.skip-box{background:var(–skip-l);border-color:rgba(0,0,0,.08);}
+.psplit.warn-box{background:var(–warn-l);border-color:rgba(192,57,43,.2);}
+.psplit-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;}
+.psplit-head .badge{font-family:‘JetBrains Mono’,monospace;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:2px 7px;border-radius:3px;border:1px solid;}
+.psplit.vital .badge{color:var(–vital);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08);}
+.psplit.useful .badge{color:var(–useful);border-color:rgba(36,113,163,.3);background:rgba(36,113,163,.08);}
+.psplit.skip-box .badge{color:var(–skip);border-color:rgba(0,0,0,.15);background:rgba(0,0,0,.04);}
+.psplit.warn-box .badge{color:var(–warn);border-color:rgba(192,57,43,.3);background:rgba(192,57,43,.08);}
+.psplit h4{font-size:.82rem;font-weight:700;color:var(–ink2);}
+.psplit ul{list-style:none;display:flex;flex-direction:column;gap:7px;margin:0;}
+.psplit li{display:flex;gap:8px;font-size:.83rem;color:var(–ink2);line-height:1.42;align-items:flex-start;}
+.psplit li .b{width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:7px;}
+.psplit.vital li .b{background:var(–vital);}
+.psplit.useful li .b{background:var(–useful);}
+.psplit.skip-box li .b{background:var(–skip);}
+.psplit.warn-box li .b{background:var(–warn);}
+.psplit.skip-box li{color:var(–muted);text-decoration:line-through;font-size:.79rem;}
+
+/* ── CODE ── */
+.code-wrap{background:#16120e;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.06);margin-bottom:16px;}
+.code-head-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.04);}
+.code-head-bar .fn{font-family:‘JetBrains Mono’,monospace;font-size:.68rem;color:#8a7a6a;}
+pre{padding:18px 20px;overflow-x:auto;font-family:‘JetBrains Mono’,monospace;font-size:.75rem;line-height:1.78;color:#c8c0b4;white-space:pre;}
+.k{color:#c792ea;}.s{color:#f9c860;}.c{color:#3d7a4a;}.f{color:#7ec8e3;}.n{color:#f07178;}.o{color:#c3e88d;}
+.hl{background:rgba(26,107,74,.2);display:block;margin:0 -20px;padding:0 20px;}
+
+/* ── PIÈGE ── */
+.piege{background:#fff8f0;border:1.5px solid #f0a060;border-radius:9px;padding:14px 18px;margin-bottom:14px;display:flex;gap:11px;align-items:flex-start;}
+.piege-icon{font-size:1rem;flex-shrink:0;margin-top:2px;}
+.piege-text strong{display:block;font-family:‘JetBrains Mono’,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#c0680a;margin-bottom:4px;}
+.piege-text p{font-size:.82rem;color:#5a3a1a;line-height:1.5;}
+
+/* ── TEACH ── */
+.teach{background:#f0f7ff;border:1.5px solid #a0c4e8;border-radius:9px;padding:14px 18px;margin-bottom:14px;display:flex;gap:11px;align-items:flex-start;}
+.teach strong{display:block;font-family:‘JetBrains Mono’,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#1a5a8a;margin-bottom:4px;}
+.teach p{font-size:.82rem;color:#1a3a5a;line-height:1.5;}
+
+/* ── LIVRABLE ── */
+.livrable{border-radius:9px;padding:15px 18px;display:flex;gap:12px;align-items:flex-start;border:1.5px solid;}
+.liv-icon{font-size:1.3rem;flex-shrink:0;}
+.liv-text strong{display:block;font-family:‘JetBrains Mono’,monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+.liv-text p{font-size:.83rem;line-height:1.5;}
+
+/* ── CHECKLIST ── */
+.check80{background:var(–surface2);border-radius:9px;padding:14px 18px;margin-bottom:14px;border:1px solid var(–border);}
+.check80 h4{font-family:‘JetBrains Mono’,monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(–muted);margin-bottom:10px;}
+.check80 ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.check80 li{display:flex;gap:9px;font-size:.83rem;align-items:flex-start;}
+.check80 li input[type=checkbox]{accent-color:var(–vital);margin-top:3px;flex-shrink:0;cursor:pointer;}
+
+/* ── CONCEPT CARDS (pour les définitions) ── */
+.concept-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:16px;}
+.concept-card{background:var(–surface);border:1.5px solid var(–border);border-radius:9px;padding:14px 16px;}
+.concept-card .cc-icon{font-size:1.3rem;margin-bottom:6px;}
+.concept-card h4{font-size:.83rem;font-weight:700;margin-bottom:4px;color:var(–ink);}
+.concept-card p{font-size:.76rem;color:var(–muted);line-height:1.45;}
+
+/* ── FINAL ── */
+.final{margin-top:52px;background:var(–ink);color:#f7f3ee;border-radius:14px;padding:44px 44px 36px;position:relative;overflow:hidden;animation:up .5s .3s ease both;}
+.final::after{content:‘AGENTS’;position:absolute;bottom:-20px;right:24px;font-size:6rem;font-weight:800;letter-spacing:-.04em;color:rgba(255,255,255,.03);line-height:1;pointer-events:none;}
+.final-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(26,107,74,.25);border:1px solid rgba(26,107,74,.4);border-radius:99px;padding:5px 14px;font-family:‘JetBrains Mono’,monospace;font-size:.65rem;color:#6effc0;text-transform:uppercase;letter-spacing:.1em;margin-bottom:20px;}
+.final h2{font-size:1.8rem;font-weight:800;line-height:1.1;margin-bottom:12px;}
+.final h2 em{font-style:italic;color:#6effc0;}
+.final .fdesc{color:rgba(247,243,238,.6);font-size:.9rem;max-width:500px;margin-bottom:28px;line-height:1.6;}
+.final-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.fg{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:14px;}
+.fg .fgi{font-size:1.2rem;margin-bottom:7px;}
+.fg h4{font-size:.84rem;font-weight:700;margin-bottom:2px;}
+.fg p{font-size:.73rem;color:rgba(247,243,238,.5);line-height:1.35;}
+
+/* ── STACK ── */
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;}
+.sc{background:var(–surface);border:1.5px solid var(–border);border-radius:10px;padding:13px 15px;display:flex;gap:11px;align-items:flex-start;transition:border-color .2s,transform .15s;cursor:default;}
+.sc:hover{border-color:var(–vital);transform:translateY(-2px);}
+.sc .si{font-size:1.2rem;flex-shrink:0;margin-top:2px;}
+.sc .sn{font-weight:700;font-size:.83rem;margin-bottom:1px;}
+.sc .sd{font-size:.7rem;color:var(–muted);line-height:1.3;}
+
+@keyframes up{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.dc:nth-child(1){animation-delay:.04s}.dc:nth-child(2){animation-delay:.08s}.dc:nth-child(3){animation-delay:.12s}
+.dc:nth-child(4){animation-delay:.16s}.dc:nth-child(5){animation-delay:.2s}.dc:nth-child(6){animation-delay:.24s}
+.dc:nth-child(7){animation-delay:.28s}.dc:nth-child(8){animation-delay:.32s}.dc:nth-child(9){animation-delay:.36s}
+.dc:nth-child(10){animation-delay:.4s}
+</style>
+
+</head>
+<body>
+<div class="page">
+
+<!-- HERO -->
+
+<div class="hero">
+  <div class="suite-badge">🤖 Suite du cours RAG</div>
+  <h1>Maîtriser les <em>AI Agents</em><br>de zéro à la production</h1>
+  <p class="hero-desc">Le cours complet sur les agents autonomes : de la boucle ReAct au graph multi-agents LangGraph, avec outils, mémoire longue, supervision humaine et déploiement. Stack : Ollama + Mistral + LangChain v1.</p>
+  <div class="kpi-row">
+    <div class="kpi"><span class="kpi-v">10 jours</span><span class="kpi-l">Durée</span></div>
+    <div class="kpi"><span class="kpi-v">45–60 min</span><span class="kpi-l">Par jour</span></div>
+    <div class="kpi"><span class="kpi-v">5 phases</span><span class="kpi-l">Progressives</span></div>
+    <div class="kpi"><span class="kpi-v">LangGraph</span><span class="kpi-l">Framework principal</span></div>
+    <div class="kpi"><span class="kpi-v">Ollama + Mistral</span><span class="kpi-l">LLM local</span></div>
+  </div>
+</div>
+
+<!-- CONTINUITY BANNER -->
+
+<div class="continuity">
+  <div class="continuity-icon">🔗</div>
+  <p><strong>Suite directe du cours RAG.</strong> Tu réutilises la base ChromaDB, les embeddings HuggingFace et le pattern LCEL déjà maîtrisés. Le RAG devient un <em>outil</em> que l'agent peut appeler — tu vas le voir dès J3.</p>
+</div>
+
+<!-- ROADMAP -->
+
+<div class="roadmap">
+  <h3>Carte de la formation — 5 phases</h3>
+  <div class="rm-phases">
+    <div class="rm-phase p1">
+      <div class="rm-phase-title">Phase 1</div>
+      <div class="rm-phase-days">J1 – J2</div>
+      <ul>
+        <li>🧠 Fondations</li>
+        <li>Boucle ReAct</li>
+        <li>Premier agent</li>
+      </ul>
+    </div>
+    <div class="rm-phase p2">
+      <div class="rm-phase-title">Phase 2</div>
+      <div class="rm-phase-days">J3 – J4</div>
+      <ul>
+        <li>🔧 Outils custom</li>
+        <li>RAG comme outil</li>
+        <li>Outils sécurisés</li>
+      </ul>
+    </div>
+    <div class="rm-phase p3">
+      <div class="rm-phase-title">Phase 3</div>
+      <div class="rm-phase-days">J5 – J6</div>
+      <ul>
+        <li>📊 LangGraph</li>
+        <li>Graphe d'état</li>
+        <li>Cycles & branches</li>
+      </ul>
+    </div>
+    <div class="rm-phase p4">
+      <div class="rm-phase-title">Phase 4</div>
+      <div class="rm-phase-days">J7 – J8</div>
+      <ul>
+        <li>🤝 Multi-agents</li>
+        <li>Mémoire longue</li>
+        <li>Human-in-loop</li>
+      </ul>
+    </div>
+    <div class="rm-phase p5">
+      <div class="rm-phase-title">Phase 5</div>
+      <div class="rm-phase-days">J9 – J10</div>
+      <ul>
+        <li>🚀 Production</li>
+        <li>Évaluation</li>
+        <li>Agent final</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- TRACKER -->
+
+<div class="tracker">
+  <div class="tracker-top">
+    <h3>Progression</h3>
+    <span id="pct-label">Clique pour cocher ✓</span>
+  </div>
+  <div class="ddots" id="ddots"></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PHASE 1 : FONDATIONS
+══════════════════════════════════════ -->
+
+<div class="phase-hdr p1" style="background:rgba(26,107,74,.06);border-color:rgba(26,107,74,.2);">
+  <span class="ph-num" style="background:rgba(26,107,74,.15);color:var(--d1)">Phase 1</span>
+  <h2>Fondations — Comprendre ce qu'est vraiment un Agent</h2>
+  <span class="ph-sub">J1 – J2</span>
+</div>
+<div class="days">
+
+<!-- ══ J1 ══ -->
+
+<div class="dc" id="dc1">
+  <div class="dc-head" onclick="tog(1)">
+    <div class="dc-accent" style="background:var(--d1)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d1)">1</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Agent vs Chatbot — La différence fondamentale</h3>
+      <div class="sub">Boucle ReAct, raisonnement autonome, cycle Thought → Action → Observation</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 45 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d1);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Théorie 20 min</span>
+    <span class="tg" style="color:var(--d2);border-color:rgba(36,113,163,.3);background:var(--useful-l)">Code 25 min</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="concept-row">
+  <div class="concept-card">
+    <div class="cc-icon">💬</div>
+    <h4>Chatbot (RAG)</h4>
+    <p>Question → cherche → répond. <strong>Réactif.</strong> Une seule passe.</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">🤖</div>
+    <h4>Agent</h4>
+    <p>Objectif → raisonne → agit → observe → recommence. <strong>Autonome.</strong> Multi-passes.</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">🔁</div>
+    <h4>Boucle ReAct</h4>
+    <p><strong>Re</strong>asoning + <strong>Act</strong>ing. Le LLM alterne pensée et action jusqu'au but.</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">🛠️</div>
+    <h4>Outil (Tool)</h4>
+    <p>Fonction que l'agent peut appeler : calcul, recherche, API, base de données...</p>
+  </div>
+</div>
+
+<div class="schema">
+```
+
+<span class="sc-">🧠 THOUGHT :</span> “Je dois trouver les règles VPN de l’entreprise, puis vérifier si elles s’appliquent au télétravail.”
+<span class="sd">     ↓</span>
+<span class="sa">⚡ ACTION :</span> <span class="sb">search_docs</span>(<span class="s">“règles VPN entreprise”</span>)
+<span class="sd">     ↓</span>
+👁️ OBSERVATION : <span class="o">“VPN obligatoire hors bureaux, MFA requis, 2FA sur appareil pro uniquement”</span>
+<span class="sd">     ↓</span>
+<span class="sc-">🧠 THOUGHT :</span> “Je dois maintenant chercher les spécificités télétravail.”
+<span class="sd">     ↓</span>
+<span class="sa">⚡ ACTION :</span> <span class="sb">search_docs</span>(<span class="s">“politique télétravail accès distant”</span>)
+<span class="sd">     ↓</span>
+👁️ OBSERVATION : <span class="o">“Télétravail : VPN obligatoire + MFA, max 2j/semaine”</span>
+<span class="sd">     ↓</span>
+✅ FINAL ANSWER : <span class="o">“Oui, le VPN avec MFA s’applique aussi en télétravail…”</span></div>
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Concepts vitaux</span></div>
+    <ul>
+      <li><div class="b"></div><strong>ReAct = Reason + Act</strong> en boucle, pas en ligne droite</li>
+      <li><div class="b"></div><strong>L'agent décide lui-même</strong> quand s'arrêter (condition de fin)</li>
+      <li><div class="b"></div><strong>max_iterations</strong> : toujours définir un plafond — sans lui l'agent tourne à l'infini</li>
+      <li><div class="b"></div><strong>Un outil = une fonction Python</strong> décorée avec <code>@tool</code></li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer J1</span></div>
+    <ul>
+      <li><div class="b"></div>Différences MRKL vs ReAct vs Reflexion (théorie pure)</li>
+      <li><div class="b"></div>Plan-and-Execute agents</li>
+      <li><div class="b"></div>OpenAI Function Calling vs Tool Calling</li>
+      <li><div class="b"></div>Prompt engineering avancé pour ReAct</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour1_premier_agent.py — Agent ReAct minimaliste avec Mistral</span></div>
+```
+
+<pre><span class="c"># pip install langchain langchain-ollama langchain-core
+# Prérequis : ollama serve  |  ollama pull mistral
+# LangChain v1 : create_agent() remplace create_react_agent + AgentExecutor</span>
+<span class="k">from</span> langchain.agents <span class="k">import</span> create_agent   <span class="c"># ← nouvelle API v1 unifiée</span>
+<span class="k">from</span> langchain_core.tools <span class="k">import</span> tool
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+
+<span class="c"># ── DÉFINIR LES OUTILS : fonctions Python décorées @tool ──────────────</span>
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">calculatrice</span>(expression: str) -> str:
+    <span class="s">"""Calcule une expression mathématique Python. Ex: '2 + 2', '15 * 3.5'"""</span>
+    <span class="k">try</span>: <span class="k">return</span> str(eval(expression, {<span class="s">"__builtins__"</span>: {}}, {}))
+    <span class="k">except</span> Exception <span class="k">as</span> e: <span class="k">return</span> <span class="s">f"Erreur : {e}"</span></span>
+
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">convertir_devises</span>(montant: float, devise_source: str, devise_cible: str) -> str:
+    <span class="s">"""Convertit un montant entre EUR, USD, GBP."""</span>
+    taux = {(<span class="s">"EUR"</span>,<span class="s">"USD"</span>):<span class="n">1.08</span>, (<span class="s">"USD"</span>,<span class="s">"EUR"</span>):<span class="n">0.93</span>, (<span class="s">"EUR"</span>,<span class="s">"GBP"</span>):<span class="n">0.86</span>, (<span class="s">"GBP"</span>,<span class="s">"EUR"</span>):<span class="n">1.16</span>}
+    key = (devise_source.upper(), devise_cible.upper())
+    <span class="k">if</span> key <span class="k">in</span> taux: <span class="k">return</span> <span class="s">f"{montant * taux[key]:.2f} {devise_cible}"</span>
+    <span class="k">return</span> <span class="s">f"Taux non disponible pour {devise_source}→{devise_cible}"</span></span>
+
+<span class="c"># ── CRÉER L'AGENT : create_agent() v1 ─────────────────────────────────</span>
+<span class="c"># Plus de prompt template manuel, plus d'AgentExecutor, plus de handle_parsing_errors</span>
+<span class="hl">agent = create_agent(
+    model=ChatOllama(model=<span class="s">"mistral"</span>, temperature=<span class="n">0</span>),
+    tools=[calculatrice, convertir_devises],
+    system_prompt=<span class="s">"""Tu es un assistant de calcul et de change.
+Utilise les outils disponibles pour répondre précisément.
+Montre ton raisonnement avant chaque appel d'outil."""</span>,
+    debug=<span class="k">True</span>,   <span class="c"># ← log chaque étape : nœuds model/tools dans la console</span>
+)</span>
+
+<span class="c"># ── INVOQUER : format standard messages list ───────────────────────────</span>
+taches = [
+    <span class="s">"Si j'ai un budget de 1500 EUR, combien ça fait en USD ? Puis calcule 15% de cette somme."</span>,
+    <span class="s">"Calcule (256 * 4) + (1024 / 8) et dis-moi si c'est supérieur à 1100."</span>,
+]
+
+<span class="k">for</span> tache <span class="k">in</span> taches:
+    <span class="k">print</span>(<span class="s">f"\n{'='*60}\n🎯 {tache}\n{'='*60}"</span>)
+    result = agent.invoke({<span class="s">"messages"</span>: [{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: tache}]})
+    <span class="k">print</span>(<span class="s">f"\n✅ RÉPONSE FINALE : {result['messages'][-1].content}"</span>)
+
+<span class="o">
+# Avec debug=True tu vois dans la console :
+# [model] tool_calls: [convertir_devises(montant=1500, devise_source="EUR", devise_cible="USD")]
+# [tools] "1620.00 USD"
+# [model] tool_calls: [calculatrice(expression="1620 * 0.15")]
+# [tools] "243.0"
+# [model] Final: "1500 EUR = 1620 USD, dont 15% = 243 USD"</span></pre>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fréquent J1 — Mistral 7B et le tool calling</strong>
+    <p>Mistral 7B peut être moins fiable sur le tool calling que GPT-4 ou Claude. Si l'agent ne choisit pas le bon outil, améliore la <strong>docstring</strong> du @tool — c'est elle que le LLM lit pour décider. Avec <code>debug=True</code> tu vois exactement quel outil est choisi et pourquoi. Plus besoin de <code>handle_parsing_errors</code> — <code>create_agent()</code> gère ça nativement en v1.</p>
+  </div>
+
+</div>
+
+<div class="teach">
+  <strong>🎓 Pour enseigner</strong>
+  <p>Lance avec <code>stream_mode="updates"</code> et projette le terminal. Chaque chunk affiché = un nœud du graphe (model → tools → model...). C'est visuellement très lisible. Pose : <em>"Combien d'appels d'outils l'agent a-t-il faits ?"</em> — les étudiants comptent les chunks <code>{'tools': ...}</code>.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J2</h4>
+  <ul>
+    <li><input type="checkbox"> L'agent utilise les deux outils sur la tâche 1 (conversion + calcul)</li>
+    <li><input type="checkbox"> <code>result['messages'][-1].content</code> contient la réponse finale correcte</li>
+    <li><input type="checkbox"> <code>debug=True</code> affiche les nœuds model/tools dans la console</li>
+    <li><input type="checkbox"> Tu peux expliquer la différence <code>create_agent()</code> vs ancien <code>AgentExecutor</code></li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(26,107,74,.06);border-color:rgba(26,107,74,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d1)">Livrable J1</strong>
+    <p>Agent ReAct fonctionnel avec 2 outils, raisonnement visible. Tu comprends la différence fondamentale entre un chatbot et un agent autonome.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J2 ══ -->
+
+<div class="dc" id="dc2">
+  <div class="dc-head" onclick="tog(2)">
+    <div class="dc-accent" style="background:var(--d2)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d2)">2</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Mémoire d'Agent — Court terme, Long terme, Épisodique</h3>
+      <div class="sub">Les 4 types de mémoire et quand utiliser chacun</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 45 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d2);border-color:rgba(36,113,163,.3);background:var(--useful-l)">Mémoire agent</span>
+    <span class="tg" style="color:var(--d1);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Vital</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="concept-row">
+  <div class="concept-card">
+    <div class="cc-icon">⚡</div>
+    <h4>In-context (court terme)</h4>
+    <p>Le scratchpad ReAct dans la fenêtre de contexte. Disparaît à la fin de la session.</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">🗄️</div>
+    <h4>External (long terme)</h4>
+    <p>ChromaDB, fichier JSON, SQLite. Persiste entre sessions. Tu l'as déjà fait avec le RAG !</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">📖</div>
+    <h4>Épisodique</h4>
+    <p>Journal des actions passées. "La dernière fois j'ai fait X, ça a marché."</p>
+  </div>
+  <div class="concept-card">
+    <div class="cc-icon">💡</div>
+    <h4>Sémantique</h4>
+    <p>Faits sur l'utilisateur/le domaine. "Mohamed préfère les réponses en français."</p>
+  </div>
+</div>
+
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Implémenter maintenant</span></div>
+    <ul>
+      <li><div class="b"></div><strong>Mémoire court terme</strong> : liste <code>[HumanMessage, AIMessage]</code> passée à l'agent (comme J6 du RAG)</li>
+      <li><div class="b"></div><strong>Mémoire long terme simple</strong> : fichier JSON pour stocker des faits sur l'utilisateur</li>
+      <li><div class="b"></div><strong>Résumé d'historique</strong> : résumer les anciens tours pour économiser le contexte</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer pour l'instant</span></div>
+    <ul>
+      <li><div class="b"></div>Redis comme backend mémoire (overkill en dev)</li>
+      <li><div class="b"></div>Zep memory server</li>
+      <li><div class="b"></div>Knowledge graphs pour mémoire sémantique</li>
+      <li><div class="b"></div>Memory consolidation automatique</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour2_memoire.py — Agent avec mémoire persistante JSON</span></div>
+```
+
+<pre><span class="c"># LangChain v1 : mémoire long terme via InMemoryStore (LangGraph store)
+# pip install langchain langchain-ollama langgraph</span>
+<span class="k">import</span> json
+<span class="k">from</span> dataclasses <span class="k">import</span> dataclass
+<span class="k">from</span> langchain.agents <span class="k">import</span> create_agent
+<span class="k">from</span> langchain.tools <span class="k">import</span> tool, ToolRuntime   <span class="c"># ← ToolRuntime = accès au store depuis l'outil</span>
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langgraph.store.memory <span class="k">import</span> InMemoryStore  <span class="c"># ← store officiel LangGraph v1</span>
+<span class="k">from</span> langgraph.checkpoint.memory <span class="k">import</span> InMemorySaver
+
+<span class="c"># ── CONTEXTE : identifie l'utilisateur courant ─────────────────────────</span>
+<span class="hl">@dataclass
+<span class="k">class</span> <span class="f">Context</span>:
+    user_id: str   <span class="c"># passé à chaque invocation pour isoler les données par user</span></span>
+
+<span class="c"># ── STORE : base de mémoire long terme ────────────────────────────────</span>
+<span class="hl">store = InMemoryStore()   <span class="c"># En prod → PostgresStore ou RedisStore</span></span>
+
+<span class="c"># ── OUTILS DE MÉMOIRE avec ToolRuntime ────────────────────────────────</span>
+<span class="c"># ToolRuntime injecte automatiquement le store et le contexte dans l'outil</span>
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">memoriser</span>(fait: str, runtime: ToolRuntime[Context]) -> str:
+    <span class="s">"""Enregistre un fait important sur l'utilisateur pour s'en souvenir plus tard."""</span>
+    <span class="c"># Namespace = (user_id, "faits") — chaque user a son espace isolé</span>
+    existing = runtime.store.get((<span class="s">"faits"</span>,), runtime.context.user_id)
+    faits = existing.value[<span class="s">"liste"</span>] <span class="k">if</span> existing <span class="k">else</span> []
+    faits.append(fait)
+    runtime.store.put((<span class="s">"faits"</span>,), runtime.context.user_id, {<span class="s">"liste"</span>: faits})
+    <span class="k">return</span> <span class="s">f"✓ Mémorisé : {fait}"</span></span>
+
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">rappeler</span>(sujet: str, runtime: ToolRuntime[Context]) -> str:
+    <span class="s">"""Cherche dans la mémoire persistante des infos sur un sujet."""</span>
+    existing = runtime.store.get((<span class="s">"faits"</span>,), runtime.context.user_id)
+    <span class="k">if</span> <span class="k">not</span> existing: <span class="k">return</span> <span class="s">"Aucun souvenir encore."</span>
+    faits = [f <span class="k">for</span> f <span class="k">in</span> existing.value[<span class="s">"liste"</span>] <span class="k">if</span> sujet.lower() <span class="k">in</span> f.lower()]
+    <span class="k">return</span> <span class="s">"\n"</span>.join(faits) <span class="k">if</span> faits <span class="k">else</span> <span class="s">f"Aucun souvenir sur '{sujet}'"</span></span>
+
+<span class="c"># ── CRÉER L'AGENT avec store ────────────────────────────────────────────</span>
+<span class="hl">agent = create_agent(
+    model=ChatOllama(model=<span class="s">"mistral"</span>, temperature=<span class="n">0</span>),
+    tools=[memoriser, rappeler],
+    system_prompt=<span class="s">"Tu es un assistant avec mémoire persistante. Utilise memoriser() pour tout fait important. Utilise rappeler() pour retrouver une info."</span>,
+    store=store,                   <span class="c"># ← store partagé avec les outils via ToolRuntime</span>
+    checkpointer=InInMemorySaver(),  <span class="c"># ← nécessaire pour la persistance de session</span>
+    context_schema=Context,        <span class="c"># ← schéma du contexte injecté dans ToolRuntime</span>
+)</span>
+
+<span class="c"># ── SESSION 1 : l'agent apprend ────────────────────────────────────────</span>
+config = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"s1"</span>, <span class="s">"context"</span>: Context(user_id=<span class="s">"mohamed"</span>)}}
+agent.invoke({<span class="s">"messages"</span>: [{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Je m'appelle Mohamed, je travaille chez JEMS Group en DevOps. Mémorise ça."</span>}]}, config)
+
+<span class="c"># ── SESSION 2 : l'agent se souvient (nouveau thread_id, même user_id) ─</span>
+config2 = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"s2"</span>, <span class="s">"context"</span>: Context(user_id=<span class="s">"mohamed"</span>)}}
+result = agent.invoke({<span class="s">"messages"</span>: [{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Où est-ce que je travaille ?"</span>}]}, config2)
+<span class="k">print</span>(<span class="s">f"\n✅ {result['messages'][-1].content}"</span>)
+
+<span class="o">
+# Sortie attendue :
+# Session 1 : "✓ Mémorisé : Mohamed travaille chez JEMS Group en DevOps"
+# Session 2 : "Tu travailles chez JEMS Group en tant que DevOps."
+# La mémoire persiste grâce au store InMemoryStore — chaque user_id est isolé.</span></pre>
+
+```
+</div>
+
+<div class="teach">
+  <strong>🎓 Pour enseigner</strong>
+  <p>Lance les deux sessions l'une après l'autre en live. Le "wow" : session 2 répond correctement sans que l'info ait été donnée dans ce thread. Montre que <code>thread_id="s2"</code> est différent — c'est bien le <strong>store</strong> (et non l'historique de conversation) qui persiste la mémoire. Clé pédagogique : store = mémoire inter-sessions, checkpointer = mémoire intra-session.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J3</h4>
+  <ul>
+    <li><input type="checkbox"> Session 2 (thread_id différent) retrouve les faits de session 1</li>
+    <li><input type="checkbox"> Tu comprends la différence <code>store</code> (inter-sessions) vs <code>checkpointer</code> (intra-session)</li>
+    <li><input type="checkbox"> Tu peux expliquer les 4 types de mémoire et quand les utiliser</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(36,113,163,.06);border-color:rgba(36,113,163,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d2)">Livrable J2</strong>
+    <p>Agent avec mémoire long terme via <code>InMemoryStore</code> (pattern officiel v1). Chaque utilisateur a son espace mémoire isolé via <code>user_id</code> dans le contexte.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+</div><!-- /days phase 1 -->
+
+<!-- ══════════════════════════════════════
+     PHASE 2 : OUTILS
+══════════════════════════════════════ -->
+
+<div class="phase-hdr p2" style="background:rgba(36,113,163,.06);border-color:rgba(36,113,163,.2);">
+  <span class="ph-num" style="background:rgba(36,113,163,.15);color:var(--d2)">Phase 2</span>
+  <h2>Outils Puissants — Connecter l'Agent au Monde Réel</h2>
+  <span class="ph-sub">J3 – J4</span>
+</div>
+<div class="days">
+
+<!-- ══ J3 ══ -->
+
+<div class="dc" id="dc3">
+  <div class="dc-head" onclick="tog(3)">
+    <div class="dc-accent" style="background:var(--d3)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d3)">3</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>RAG comme Outil d'Agent — Connecter tes Documents</h3>
+      <div class="sub">Transformer le RAG du cours précédent en outil appelable par l'agent</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 50 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d3);border-color:rgba(125,60,152,.3);background:rgba(125,60,152,.08)">🔗 Connexion RAG</span>
+    <span class="tg" style="color:var(--d1);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Vital</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Le concept clé</span></div>
+    <ul>
+      <li><div class="b"></div>La base ChromaDB du cours RAG devient <strong>un outil</strong> que l'agent choisit d'utiliser ou non</li>
+      <li><div class="b"></div>L'agent peut combiner : recherche docs + calcul + mémorisation dans une même tâche</li>
+      <li><div class="b"></div><strong>La description du @tool est critique</strong> : c'est ce que le LLM lit pour décider de l'appeler</li>
+      <li><div class="b"></div>Ajouter plusieurs "sources documentaires" comme outils séparés (RH, IT, Juridique)</li>
+    </ul>
+  </div>
+  <div class="psplit useful">
+    <div class="psplit-head"><span class="badge">💡 Aller plus loin</span></div>
+    <ul>
+      <li><div class="b"></div>Outil de recherche web (DuckDuckGo) à combiner avec docs internes</li>
+      <li><div class="b"></div>Outil de lecture de fichiers (CSV, Excel) à la volée</li>
+      <li><div class="b"></div>Outil de génération de rapport (export Markdown)</li>
+    </ul>
+  </div>
+</div>
+```
+
+<span class="c"># LangChain v1 : RAG encapsulé dans @tool, agent créé avec create_agent()</span>
+<span class="k">from</span> langchain.agents <span class="k">import</span> create_agent
+<span class="k">from</span> langchain.tools <span class="k">import</span> tool
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_chroma <span class="k">import</span> Chroma
+<span class="k">from</span> langchain_huggingface <span class="k">import</span> HuggingFaceEmbeddings
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate
+<span class="k">from</span> langchain_core.output_parsers <span class="k">import</span> StrOutputParser
+
+<span class="c"># ── CHARGER LA BASE VECTORIELLE DU COURS RAG ──────────────────────────</span>
+emb = HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>)
+vectordb = Chroma(persist_directory=<span class="s">”./base_entreprise”</span>, embedding_function=emb)
+retriever = vectordb.as_retriever(search_kwargs={<span class="s">“k”</span>: <span class="n">3</span>})
+llm = ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>)
+
+<span class="c"># ── ENCAPSULER LE RAG DANS UN @tool ───────────────────────────────────</span>
+<span class="c"># La docstring = ce que le LLM lit pour décider d’appeler cet outil</span>
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">recherche_docs_internes</span>(question: str) -> str:
+<span class="s">””“Recherche dans la base documentaire interne de l’entreprise.
+Utilise pour : politiques RH, procédures IT, règles sécurité, RGPD, incidents.
+NE PAS utiliser pour des questions générales ou des calculs.”””</span>
+docs = retriever.invoke(question)
+<span class="k">if</span> <span class="k">not</span> docs: <span class="k">return</span> <span class="s">“Aucun document pertinent trouvé.”</span>
+contexte = <span class="s">”\n\n”</span>.join(<span class="s">f”[{d.metadata.get(‘source’,’?’)}]\n{d.page_content}”</span> <span class="k">for</span> d <span class="k">in</span> docs)
+chain = (
+ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">“Réponds UNIQUEMENT avec le contexte. Cite la source.\n\nContexte:\n{context}”</span>),
+(<span class="s">“human”</span>, <span class="s">”{question}”</span>),
+]) | llm | StrOutputParser()
+)
+<span class="k">return</span> chain.invoke({<span class="s">“context”</span>: contexte, <span class="s">“question”</span>: question})</span>
+
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">calculatrice</span>(expression: str) -> str:
+<span class="s">””“Calcule une expression mathématique Python.”””</span>
+<span class="k">try</span>: <span class="k">return</span> str(eval(expression, {<span class="s">”**builtins**”</span>: {}}, {}))
+<span class="k">except</span> Exception <span class="k">as</span> e: <span class="k">return</span> <span class="s">f”Erreur : {e}”</span></span>
+
+<span class="c"># ── CRÉER L’AGENT v1 — plus de prompt template manuel ─────────────────</span>
+<span class="hl">agent = create_agent(
+model=llm,
+tools=[recherche_docs_internes, calculatrice],
+system_prompt=<span class="s">””“Assistant documentaire avec accès aux docs internes.
+Raisonne avant chaque action. Cite toujours tes sources documentaires.”””</span>,
+)</span>
+
+<span class="c"># ── QUESTIONS MULTI-SOURCES ────────────────────────────────────────────</span>
+questions = [
+<span class="s">“Quelles sont les règles VPN ET combien de jours de télétravail sont autorisés ?”</span>,
+<span class="s">“Si je travaille 3 jours en télétravail par semaine pendant 4 semaines, combien de jours dépassent la limite ?”</span>,
+]
+<span class="k">for</span> q <span class="k">in</span> questions:
+<span class="k">print</span>(<span class="s">f”\n{’=’*60}\n{q}”</span>)
+result = agent.invoke({<span class="s">“messages”</span>: [{<span class="s">“role”</span>: <span class="s">“user”</span>, <span class="s">“content”</span>: q}]})
+<span class="k">print</span>(result[<span class="s">“messages”</span>][-<span class="n">1</span>].content)
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fréquent J3 — La docstring de @tool est capitale</strong>
+    <p>Si la description est vague (<em>"cherche des infos"</em>), l'agent l'appellera pour tout — y compris les calculs. Sois explicite sur CE QUI est dans la base et ce qui n'y est PAS. Une bonne docstring = 80% de la fiabilité de l'agent.</p>
+  </div>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J4</h4>
+  <ul>
+    <li><input type="checkbox"> L'agent utilise recherche_docs_internes pour les questions RH/IT</li>
+    <li><input type="checkbox"> L'agent utilise calculatrice pour les calculs (sans appeler les docs)</li>
+    <li><input type="checkbox"> La question multi-étapes (télétravail + calcul) fonctionne en une seule invocation</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(125,60,152,.06);border-color:rgba(125,60,152,.25);">
+  <div class="liv-icon">🔗</div>
+  <div class="liv-text">
+    <strong style="color:var(--d3)">Livrable J3 — MILESTONE</strong>
+    <p>Le RAG et l'Agent sont fusionnés. L'agent peut répondre à des questions complexes qui nécessitent à la fois des docs internes ET du raisonnement mathématique.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J4 ══ -->
+
+<div class="dc" id="dc4">
+  <div class="dc-head" onclick="tog(4)">
+    <div class="dc-accent" style="background:var(--d4)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d4)">4</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Outils Avancés — APIs, Fichiers, Validation et Sécurité</h3>
+      <div class="sub">Appels HTTP, lecture/écriture de fichiers, validation des inputs d'outils</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 50 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d4);border-color:rgba(212,132,10,.3);background:rgba(212,132,10,.08)">APIs & Fichiers</span>
+    <span class="tg" style="color:var(--warn);border-color:rgba(192,57,43,.3);background:var(--warn-l)">Sécurité</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ 3 patterns essentiels</span></div>
+    <ul>
+      <li><div class="b"></div><strong>Outil HTTP</strong> : appeler une API REST et retourner le JSON formaté</li>
+      <li><div class="b"></div><strong>Outil fichier</strong> : lire un CSV/JSON, filtrer, résumer — sans charger dans le contexte</li>
+      <li><div class="b"></div><strong>Validation Pydantic</strong> : définir les types exacts des arguments d'outil via BaseModel</li>
+    </ul>
+  </div>
+  <div class="psplit warn-box">
+    <div class="psplit-head"><span class="badge">🔐 Règles de sécurité</span></div>
+    <ul>
+      <li><div class="b"></div><strong>Jamais eval() sans sandbox</strong> sur du code venant du LLM</li>
+      <li><div class="b"></div><strong>Toujours valider</strong> les chemins de fichiers (Path traversal)</li>
+      <li><div class="b"></div><strong>Timeout obligatoire</strong> sur les appels HTTP (requests timeout=10)</li>
+      <li><div class="b"></div><strong>Whitelist des URLs</strong> autorisées si l'agent appelle des APIs</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour4_outils_avances.py — Outils HTTP + fichier avec validation Pydantic</span></div>
+  <pre><span class="k">import</span> requests, json, csv
+```
+
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+<span class="k">from</span> pydantic <span class="k">import</span> BaseModel, Field
+<span class="k">from</span> langchain_core.tools <span class="k">import</span> tool, StructuredTool
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+
+<span class="c"># ── OUTIL 1 : API HTTP avec timeout et gestion d’erreur ───────────────</span>
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">meteo_ville</span>(ville: str) -> str:
+<span class="s">””“Retourne la météo actuelle d’une ville française (Open-Meteo, gratuit, sans clé).”””</span>
+<span class="c"># Geocoding d’abord</span>
+geo = requests.get(
+<span class="s">f”https://geocoding-api.open-meteo.com/v1/search?name={ville}&count=1&language=fr”</span>,
+timeout=<span class="n">10</span>
+).json()
+<span class="k">if</span> <span class="k">not</span> geo.get(<span class="s">“results”</span>): <span class="k">return</span> <span class="s">f”Ville ‘{ville}’ non trouvée.”</span>
+lat, lon = geo[<span class="s">“results”</span>][<span class="n">0</span>][<span class="s">“latitude”</span>], geo[<span class="s">“results”</span>][<span class="n">0</span>][<span class="s">“longitude”</span>]
+<span class="c"># Météo</span>
+data = requests.get(
+<span class="s">f”https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m”</span>,
+timeout=<span class="n">10</span>
+).json()[<span class="s">“current”</span>]
+<span class="k">return</span> <span class="s">f”{ville} : {data[‘temperature_2m’]}°C, vent {data[‘wind_speed_10m’]} km/h”</span></span>
+
+<span class="c"># ── OUTIL 2 : Lecture CSV avec validation Pydantic ─────────────────────</span>
+<span class="hl"><span class="k">class</span> <span class="f">LectureCSVInput</span>(BaseModel):
+chemin: str = Field(description=<span class="s">“Chemin relatif vers le fichier CSV”</span>)
+max_lignes: int = Field(default=<span class="n">10</span>, description=<span class="s">“Nombre max de lignes à retourner”</span>, ge=<span class="n">1</span>, le=<span class="n">100</span>)
+
+<span class="k">def</span> <span class="f">lire_csv_fn</span>(chemin: str, max_lignes: int = <span class="n">10</span>) -> str:
+<span class="c"># Sécurité : restreindre aux fichiers dans le répertoire courant</span>
+p = Path(chemin).resolve()
+<span class="k">if</span> <span class="k">not</span> str(p).startswith(str(Path(<span class="s">”.”</span>).resolve())):
+<span class="k">return</span> <span class="s">“❌ Accès refusé : chemin hors du répertoire autorisé.”</span>
+<span class="k">if</span> <span class="k">not</span> p.exists(): <span class="k">return</span> <span class="s">f”Fichier introuvable : {chemin}”</span>
+rows = list(csv.DictReader(p.open(encoding=<span class="s">“utf-8”</span>)))
+sample = rows[:max_lignes]
+<span class="k">return</span> json.dumps(sample, ensure_ascii=<span class="k">False</span>, indent=<span class="n">2</span>)
+
+lire_csv = StructuredTool.from_function(
+func=lire_csv_fn,
+name=<span class="s">“lire_csv”</span>,
+description=<span class="s">“Lit et retourne le contenu d’un fichier CSV. Utile pour analyser des données tabulaires.”</span>,
+args_schema=LectureCSVInput
+)</span>
+
+<span class="c"># ── OUTIL 3 : Sauvegarder un rapport ──────────────────────────────────</span>
+@tool
+<span class="k">def</span> <span class="f">sauvegarder_rapport</span>(nom_fichier: str, contenu: str) -> str:
+<span class="s">””“Sauvegarde un rapport ou résumé dans un fichier Markdown.”””</span>
+<span class="k">if</span> <span class="k">not</span> nom_fichier.endswith(<span class="s">”.md”</span>): nom_fichier += <span class="s">”.md”</span>
+Path(nom_fichier).write_text(contenu, encoding=<span class="s">“utf-8”</span>)
+<span class="k">return</span> <span class="s">f”✓ Rapport sauvegardé : {nom_fichier}”</span>
+
+<span class="c"># Test rapide des outils sans agent</span>
+<span class="k">print</span>(meteo_ville.invoke(<span class="s">“Paris”</span>))
+<span class="k">print</span>(lire_csv.invoke({<span class="s">“chemin”</span>: <span class="s">“employes.csv”</span>, <span class="s">“max_lignes”</span>: <span class="n">5</span>}))</pre>
+</div>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fréquent J4 — L'agent génère des chemins de fichiers arbitraires</strong>
+    <p>Sans validation, l'agent peut tenter <code>../../etc/passwd</code> ou <code>~/.ssh/id_rsa</code>. Toujours utiliser <code>Path.resolve()</code> et vérifier que le chemin résolu est dans un répertoire autorisé avant toute lecture/écriture.</p>
+  </div>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J5</h4>
+  <ul>
+    <li><input type="checkbox"> L'outil météo retourne les données sans clé API</li>
+    <li><input type="checkbox"> La validation Path bloque les chemins hors répertoire</li>
+    <li><input type="checkbox"> Tu comprends la différence entre @tool et StructuredTool</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(212,132,10,.06);border-color:rgba(212,132,10,.25);">
+  <div class="liv-icon">📦</div>
+  <div class="liv-text">
+    <strong style="color:var(--d4)">Livrable J4</strong>
+    <p>Boîte à outils d'entreprise : HTTP, CSV, fichiers — avec validation de sécurité. Prête à être branchée sur n'importe quel agent.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+</div><!-- /days phase 2 -->
+
+<!-- ══════════════════════════════════════
+     PHASE 3 : LANGGRAPH
+══════════════════════════════════════ -->
+
+<div class="phase-hdr p3" style="background:rgba(125,60,152,.06);border-color:rgba(125,60,152,.2);">
+  <span class="ph-num" style="background:rgba(125,60,152,.15);color:var(--d3)">Phase 3</span>
+  <h2>LangGraph — Agents Structurés par Graphes d'État</h2>
+  <span class="ph-sub">J5 – J6</span>
+</div>
+<div class="days">
+
+<!-- ══ J5 ══ -->
+
+<div class="dc" id="dc5">
+  <div class="dc-head" onclick="tog(5)">
+    <div class="dc-accent" style="background:var(--d5)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d5)">5</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>LangGraph — Orchestration avancée au-delà de create_agent()</h3>
+      <div class="sub">Nodes, edges, StateGraph — le pattern moderne des agents en production</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 55 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d5);border-color:rgba(176,58,46,.3);background:rgba(176,58,46,.08)">LangGraph</span>
+    <span class="tg" style="color:var(--d1);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Vital</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Pourquoi LangGraph ?</span></div>
+    <ul>
+      <li><div class="b"></div><strong>create_agent() = rapide et suffisant pour 80% des cas</strong>. LangGraph = contrôle total pour les workflows complexes</li>
+      <li><div class="b"></div><strong>État (State)</strong> : une TypedDict qui circule entre les nœuds</li>
+      <li><div class="b"></div><strong>Nœuds (Nodes)</strong> : fonctions Python qui modifient l'état</li>
+      <li><div class="b"></div><strong>Arêtes (Edges)</strong> : conditions de routage entre nœuds</li>
+      <li><div class="b"></div><code>END</code> : nœud terminal, la sortie du graphe</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Ignorer J5</span></div>
+    <ul>
+      <li><div class="b"></div>Subgraphs et graphes imbriqués</li>
+      <li><div class="b"></div>Checkpointing avec SQLite/PostgreSQL</li>
+      <li><div class="b"></div>Streaming token par token</li>
+      <li><div class="b"></div>LangGraph Studio (UI de debug)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="schema">
+```
+
+<span class="sc-">TypedDict State :</span> { messages: list, outils_utilisés: list, réponse_finale: str }
+<span class="sd">
+┌─────────────┐</span>
+│  START      │
+<span class="sd">  └──────┬──────┘</span>
+↓
+┌─────────────┐
+│ <span class="sa">llm_node</span>   │  ← LLM décide : répondre ou appeler un outil
+<span class="sd">  └──────┬──────┘</span>
+↓ <span class="sc-">condition</span>
+┌────┴────┐
+↓         ↓
+<span class="sb">tool_node</span>   <span class="o">END</span>    ← outil appelé → résultat injecté dans State → retour au LLM
+↓
+└────→ <span class="sa">llm_node</span> (boucle)</div>
+
+```
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour5_langgraph.py — Premier graphe LangGraph avec Mistral</span></div>
+  <pre><span class="c"># pip install langgraph langchain-ollama langchain-core</span>
+```
+
+<span class="k">from</span> typing <span class="k">import</span> TypedDict, Annotated, Sequence
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> BaseMessage, HumanMessage, AIMessage
+<span class="k">from</span> langchain_core.tools <span class="k">import</span> tool
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, END
+<span class="k">from</span> langgraph.prebuilt <span class="k">import</span> ToolNode
+<span class="k">import</span> operator
+
+<span class="c"># ── 1. DÉFINIR L’ÉTAT ─────────────────────────────────────────────────</span>
+<span class="c"># L’état circule entre tous les nœuds — c’est la mémoire du graphe</span>
+<span class="hl"><span class="k">class</span> <span class="f">AgentState</span>(TypedDict):
+<span class="c"># Annotated + operator.add = les messages s’accumulent (pas de remplacement)</span>
+messages: Annotated[Sequence[BaseMessage], operator.add]</span>
+
+<span class="c"># ── 2. OUTILS ─────────────────────────────────────────────────────────</span>
+@tool
+<span class="k">def</span> <span class="f">calculatrice</span>(expression: str) -> str:
+<span class="s">””“Calcule une expression mathématique.”””</span>
+<span class="k">try</span>: <span class="k">return</span> str(eval(expression, {<span class="s">”**builtins**”</span>: {}}, {}))
+<span class="k">except</span> Exception <span class="k">as</span> e: <span class="k">return</span> <span class="s">f”Erreur : {e}”</span>
+
+tools = [calculatrice]
+llm = ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>).bind_tools(tools)  <span class="c"># ← bind_tools v1</span>
+
+<span class="c"># ── 3. NŒUDS : fonctions qui modifient l’état ─────────────────────────</span>
+<span class="hl"><span class="k">def</span> <span class="f">llm_node</span>(state: AgentState) -> dict:
+<span class="s">“Le LLM reçoit tous les messages et génère une réponse (ou un appel d’outil)”</span>
+response = llm.invoke(state[<span class="s">“messages”</span>])
+<span class="k">return</span> {<span class="s">“messages”</span>: [response]}  <span class="c"># ajouté à la liste via operator.add</span>
+
+tool_node = ToolNode(tools)  <span class="c"># nœud prêt-à-l’emploi qui exécute les outils</span></span>
+
+<span class="c"># ── 4. CONDITION DE ROUTAGE ────────────────────────────────────────────</span>
+<span class="k">def</span> <span class="f">doit_continuer</span>(state: AgentState) -> str:
+<span class="s">“Si le dernier message contient un appel d’outil → tools. Sinon → END”</span>
+last = state[<span class="s">“messages”</span>][-<span class="n">1</span>]
+<span class="k">if</span> hasattr(last, <span class="s">“tool_calls”</span>) <span class="k">and</span> last.tool_calls:
+<span class="k">return</span> <span class="s">“tools”</span>
+<span class="k">return</span> END
+
+<span class="c"># ── 5. CONSTRUIRE LE GRAPHE ────────────────────────────────────────────</span>
+<span class="hl">graph = StateGraph(AgentState)
+graph.add_node(<span class="s">“llm”</span>, llm_node)
+graph.add_node(<span class="s">“tools”</span>, tool_node)
+graph.set_entry_point(<span class="s">“llm”</span>)
+graph.add_conditional_edges(<span class="s">“llm”</span>, doit_continuer, {<span class="s">“tools”</span>: <span class="s">“tools”</span>, END: END})
+graph.add_edge(<span class="s">“tools”</span>, <span class="s">“llm”</span>)  <span class="c"># après outil → retour au LLM</span>
+app = graph.compile()</span>
+
+<span class="c"># ── 6. INVOQUER ───────────────────────────────────────────────────────</span>
+result = app.invoke({<span class="s">“messages”</span>: [HumanMessage(content=<span class="s">“Calcule (128 * 4) + (256 / 2)”</span>)]})
+<span class="k">print</span>(result[<span class="s">“messages”</span>][-<span class="n">1</span>].content)
+
+<span class="c"># Visualiser le graphe (optionnel)</span>
+<span class="k">try</span>:
+<span class="k">from</span> IPython.display <span class="k">import</span> Image
+Image(app.get_graph().draw_mermaid_png())
+<span class="k">except</span>: <span class="k">print</span>(<span class="s">“Graph:\n”</span>, app.get_graph().draw_ascii())</pre>
+</div>
+
+```
+<div class="teach">
+  <strong>🎓 Pour enseigner LangGraph</strong>
+  <p>Explique quand utiliser create_agent() vs LangGraph directement : create_agent() pour la majorité des cas (v1), LangGraph pour les workflows déterministes, les boucles personnalisées, ou les graphes multi-agents complexes. La question clé : <em>"Est-ce que mes besoins dépassent ce que create_agent() + middleware offre ?"</em> Si oui → LangGraph.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J6</h4>
+  <ul>
+    <li><input type="checkbox"> Le graphe compile sans erreur</li>
+    <li><input type="checkbox"> Tu vois la boucle llm → tools → llm dans le résultat</li>
+    <li><input type="checkbox"> Tu peux dessiner le graphe de tête (nœuds + arêtes + condition)</li>
+    <li><input type="checkbox"> Tu comprends pourquoi <code>operator.add</code> sur messages est crucial</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(176,58,46,.06);border-color:rgba(176,58,46,.25);">
+  <div class="liv-icon">📊</div>
+  <div class="liv-text">
+    <strong style="color:var(--d5)">Livrable J5</strong>
+    <p>Premier graphe LangGraph fonctionnel avec boucle LLM ↔ outils. La base de tout agent de production.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J6 ══ -->
+
+<div class="dc" id="dc6">
+  <div class="dc-head" onclick="tog(6)">
+    <div class="dc-accent" style="background:var(--d6)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d6)">6</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>LangGraph Avancé — Branches, Conditions et Graphe RAG+Agent</h3>
+      <div class="sub">Routage conditionnel, nœud de validation, intégrer le RAG du cours précédent</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 55 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d6);border-color:rgba(26,90,138,.3);background:rgba(26,90,138,.08)">LangGraph avancé</span>
+    <span class="tg" style="color:var(--d2);border-color:rgba(36,113,163,.3);background:var(--useful-l)">Utile</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Patterns à maîtriser</span></div>
+    <ul>
+      <li><div class="b"></div><strong>Routage conditionnel</strong> : <code>add_conditional_edges</code> avec dict de mapping</li>
+      <li><div class="b"></div><strong>Nœud de classification</strong> : le LLM classe la question avant de router</li>
+      <li><div class="b"></div><strong>État étendu</strong> : ajouter des champs (catégorie, confiance, sources) à TypedDict</li>
+      <li><div class="b"></div><strong>RAG dans un nœud</strong> : transformer le retriever en nœud LangGraph</li>
+    </ul>
+  </div>
+  <div class="psplit useful">
+    <div class="psplit-head"><span class="badge">💡 Architecture complète</span></div>
+    <ul>
+      <li><div class="b"></div>Question → Classifier → IT ? → nœud RAG IT</li>
+      <li><div class="b"></div>Question → Classifier → RH ? → nœud RAG RH</li>
+      <li><div class="b"></div>Question → Classifier → Calcul ? → nœud calculatrice</li>
+      <li><div class="b"></div>Tous → nœud synthèse → réponse finale</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour6_graph_avance.py — Graphe avec routage intelligent</span></div>
+  <pre><span class="k">from</span> typing <span class="k">import</span> TypedDict, Annotated, Sequence, Literal
+```
+
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> BaseMessage, HumanMessage
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate
+<span class="k">from</span> langchain_core.output_parsers <span class="k">import</span> StrOutputParser
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_chroma <span class="k">import</span> Chroma
+<span class="k">from</span> langchain_huggingface <span class="k">import</span> HuggingFaceEmbeddings
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, END
+<span class="k">import</span> operator
+
+llm = ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>)
+emb = HuggingFaceEmbeddings(model_name=<span class="s">“all-MiniLM-L6-v2”</span>)
+vectordb = Chroma(persist_directory=<span class="s">”./base_entreprise”</span>, embedding_function=emb)
+
+<span class="c"># ── ÉTAT ÉTENDU ───────────────────────────────────────────────────────</span>
+<span class="hl"><span class="k">class</span> <span class="f">State</span>(TypedDict):
+messages: Annotated[Sequence[BaseMessage], operator.add]
+categorie: str          <span class="c"># “it”, “rh”, “calcul”, “general”</span>
+contexte_docs: str      <span class="c"># chunks RAG récupérés</span>
+reponse: str            <span class="c"># réponse finale</span></span>
+
+<span class="c"># ── NŒUD 1 : CLASSIFIER ───────────────────────────────────────────────</span>
+<span class="hl"><span class="k">def</span> <span class="f">classifier_node</span>(state: State) -> dict:
+question = state[<span class="s">“messages”</span>][-<span class="n">1</span>].content
+prompt = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">“Classe la question en UNE seule catégorie : it | rh | calcul | general. Réponds uniquement avec la catégorie.”</span>),
+(<span class="s">“human”</span>, <span class="s">”{q}”</span>),
+])
+cat = (prompt | llm | StrOutputParser()).invoke({<span class="s">“q”</span>: question}).strip().lower()
+<span class="k">return</span> {<span class="s">“categorie”</span>: cat <span class="k">if</span> cat <span class="k">in</span> [<span class="s">“it”</span>,<span class="s">“rh”</span>,<span class="s">“calcul”</span>] <span class="k">else</span> <span class="s">“general”</span>}</span>
+
+<span class="c"># ── NŒUD 2 : RAG (IT + RH combinés ici pour simplifier) ───────────────</span>
+<span class="k">def</span> <span class="f">rag_node</span>(state: State) -> dict:
+question = state[<span class="s">“messages”</span>][-<span class="n">1</span>].content
+docs = vectordb.as_retriever(search_kwargs={<span class="s">“k”</span>:<span class="n">3</span>}).invoke(question)
+ctx = <span class="s">”\n\n”</span>.join(<span class="s">f”[{d.metadata.get(‘source’,’?’)}] {d.page_content}”</span> <span class="k">for</span> d <span class="k">in</span> docs)
+<span class="k">return</span> {<span class="s">“contexte_docs”</span>: ctx}
+
+<span class="c"># ── NŒUD 3 : SYNTHÈSE FINALE ──────────────────────────────────────────</span>
+<span class="k">def</span> <span class="f">synthese_node</span>(state: State) -> dict:
+question = state[<span class="s">“messages”</span>][-<span class="n">1</span>].content
+prompt = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">“Réponds à la question avec le contexte fourni. Si pas de contexte, réponds avec tes connaissances.\n\nContexte:\n{ctx}”</span>),
+(<span class="s">“human”</span>, <span class="s">”{q}”</span>),
+])
+reponse = (prompt | llm | StrOutputParser()).invoke({<span class="s">“ctx”</span>: state.get(<span class="s">“contexte_docs”</span>,<span class="s">””</span>), <span class="s">“q”</span>: question})
+<span class="k">return</span> {<span class="s">“reponse”</span>: reponse}
+
+<span class="c"># ── ROUTAGE : selon la catégorie ──────────────────────────────────────</span>
+<span class="k">def</span> <span class="f">router</span>(state: State) -> str:
+cat = state.get(<span class="s">“categorie”</span>, <span class="s">“general”</span>)
+<span class="k">return</span> <span class="s">“rag”</span> <span class="k">if</span> cat <span class="k">in</span> [<span class="s">“it”</span>, <span class="s">“rh”</span>] <span class="k">else</span> <span class="s">“synthese”</span>  <span class="c"># calcul et general → direct synthese</span>
+
+<span class="c"># ── CONSTRUIRE LE GRAPHE ──────────────────────────────────────────────</span>
+<span class="hl">g = StateGraph(State)
+g.add_node(<span class="s">“classifier”</span>, classifier_node)
+g.add_node(<span class="s">“rag”</span>, rag_node)
+g.add_node(<span class="s">“synthese”</span>, synthese_node)
+g.set_entry_point(<span class="s">“classifier”</span>)
+g.add_conditional_edges(<span class="s">“classifier”</span>, router, {<span class="s">“rag”</span>: <span class="s">“rag”</span>, <span class="s">“synthese”</span>: <span class="s">“synthese”</span>})
+g.add_edge(<span class="s">“rag”</span>, <span class="s">“synthese”</span>)
+g.add_edge(<span class="s">“synthese”</span>, END)
+app = g.compile()</span>
+
+<span class="c"># ── TEST ──────────────────────────────────────────────────────────────</span>
+<span class="k">for</span> q <span class="k">in</span> [<span class="s">“Quelles sont les règles VPN ?”</span>, <span class="s">“Calcule 15% de 2400”</span>, <span class="s">“Qu’est-ce que le RGPD ?”</span>]:
+r = app.invoke({<span class="s">“messages”</span>: [HumanMessage(content=q)], <span class="s">“categorie”</span>: <span class="s">””</span>, <span class="s">“contexte_docs”</span>: <span class="s">””</span>, <span class="s">“reponse”</span>: <span class="s">””</span>})
+<span class="k">print</span>(<span class="s">f”\n[{r[‘categorie’].upper()}] {q}\n→ {r[‘reponse’][:200]}”</span>)</pre>
+</div>
+
+```
+<div class="check80">
+  <h4>✅ Checklist — Passer au J7</h4>
+  <ul>
+    <li><input type="checkbox"> La question IT/RH passe par le nœud RAG avant la synthèse</li>
+    <li><input type="checkbox"> La question calcul bypass le RAG et va directement à synthèse</li>
+    <li><input type="checkbox"> Tu peux ajouter un nouveau nœud sans casser le reste</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(26,90,138,.06);border-color:rgba(26,90,138,.25);">
+  <div class="liv-icon">📊</div>
+  <div class="liv-text">
+    <strong style="color:var(--d6)">Livrable J6</strong>
+    <p>Graphe LangGraph complet avec classification, routage conditionnel et RAG intégré. Architecture d'agent d'entreprise production-ready.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+</div><!-- /days phase 3 -->
+
+<!-- ══════════════════════════════════════
+     PHASE 4 : MULTI-AGENTS & SUPERVISION
+══════════════════════════════════════ -->
+
+<div class="phase-hdr p4" style="background:rgba(139,92,246,.06);border-color:rgba(139,92,246,.2);">
+  <span class="ph-num" style="background:rgba(139,92,246,.15);color:var(--d8)">Phase 4</span>
+  <h2>Multi-Agents, Mémoire Longue & Human-in-the-Loop</h2>
+  <span class="ph-sub">J7 – J8</span>
+</div>
+<div class="days">
+
+<!-- ══ J7 ══ -->
+
+<div class="dc" id="dc7">
+  <div class="dc-head" onclick="tog(7)">
+    <div class="dc-accent" style="background:var(--d7)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d7)">7</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Multi-Agents — Superviseur + Agents Spécialisés</h3>
+      <div class="sub">Pattern orchestrateur / travailleur avec LangGraph</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 55 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d7);border-color:rgba(45,106,79,.3);background:rgba(45,106,79,.08)">Multi-agents</span>
+    <span class="tg" style="color:var(--d8);border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08)">Orchestration</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Pattern v1 — create_agent() + name=</span></div>
+    <ul>
+      <li><div class="b"></div><strong>Sous-agent v1</strong> : <code>create_agent(model, tools, name="rh_agent")</code> — le <code>name=</code> identifie le nœud dans le graphe superviseur</li>
+      <li><div class="b"></div><strong>Superviseur = un create_agent()</strong> dont les "outils" sont d'autres agents compilés</li>
+      <li><div class="b"></div><strong>StateGraph reste valide</strong> pour les workflows déterministes complexes</li>
+      <li><div class="b"></div>Le graphe ci-dessous montre les deux approches : StateGraph (explicite) + pattern name= (v1 moderne)</li>
+    </ul>
+  </div>
+  <div class="psplit useful">
+    <div class="psplit-head"><span class="badge">💡 Cas d'usage entreprise</span></div>
+    <ul>
+      <li><div class="b"></div>Agent RH : répond sur les congés, salaires, procédures</li>
+      <li><div class="b"></div>Agent IT : répond sur les incidents, accès, outils</li>
+      <li><div class="b"></div>Agent Finance : calcule des budgets, retourne des chiffres</li>
+      <li><div class="b"></div>Superviseur : "Pour ta question sur les notes de frais télétravail, je consulte RH et Finance"</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour7_multi_agents.py — Superviseur + 3 agents spécialisés</span></div>
+  <pre><span class="k">from</span> typing <span class="k">import</span> TypedDict, Annotated, Sequence
+```
+
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> BaseMessage, HumanMessage, AIMessage
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate
+<span class="k">from</span> langchain_core.output_parsers <span class="k">import</span> StrOutputParser
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, END
+<span class="k">import</span> operator
+
+llm = ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>)
+
+<span class="c"># ── ÉTAT PARTAGÉ ENTRE TOUS LES AGENTS ────────────────────────────────</span>
+<span class="hl"><span class="k">class</span> <span class="f">MultiAgentState</span>(TypedDict):
+messages: Annotated[Sequence[BaseMessage], operator.add]
+next_agent: str           <span class="c"># décision du superviseur</span>
+resultats: dict           <span class="c"># résultats de chaque sous-agent</span>
+iteration: int            <span class="c"># compteur anti-boucle infinie</span></span>
+
+<span class="c"># ── FACTORY : créer un agent spécialisé ───────────────────────────────</span>
+<span class="k">def</span> <span class="f">make_agent</span>(specialite: str, instructions: str):
+<span class="k">def</span> <span class="f">agent_node</span>(state: MultiAgentState) -> dict:
+question = state[<span class="s">“messages”</span>][<span class="n">0</span>].content
+prompt = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">f”Tu es l’agent {specialite}. {instructions}\nRéponds de façon concise.”</span>),
+(<span class="s">“human”</span>, <span class="s">”{q}”</span>),
+])
+reponse = (prompt | llm | StrOutputParser()).invoke({<span class="s">“q”</span>: question})
+resultats = dict(state.get(<span class="s">“resultats”</span>, {}))
+resultats[specialite] = reponse
+<span class="k">return</span> {<span class="s">“resultats”</span>: resultats, <span class="s">“next_agent”</span>: <span class="s">“superviseur”</span>}
+<span class="k">return</span> agent_node
+
+<span class="c"># ── 3 AGENTS SPÉCIALISÉS ──────────────────────────────────────────────</span>
+<span class="hl">agent_rh = make_agent(<span class="s">“RH”</span>, <span class="s">“Tu réponds sur les congés, télétravail, onboarding, avantages.”</span>)
+agent_it = make_agent(<span class="s">“IT”</span>, <span class="s">“Tu réponds sur les accès, VPN, incidents, outils, sécurité.”</span>)
+agent_finance = make_agent(<span class="s">“Finance”</span>, <span class="s">“Tu réponds sur les notes de frais, budgets, remboursements.”</span>)</span>
+
+<span class="c"># ── SUPERVISEUR : décide qui appeler ──────────────────────────────────</span>
+<span class="hl"><span class="k">def</span> <span class="f">superviseur_node</span>(state: MultiAgentState) -> dict:
+question = state[<span class="s">“messages”</span>][<span class="n">0</span>].content
+resultats = state.get(<span class="s">“resultats”</span>, {})
+iteration = state.get(<span class="s">“iteration”</span>, <span class="n">0</span>) + <span class="n">1</span>
+
+```
+<span class="k">if</span> iteration > <span class="n">4</span>: <span class="k">return</span> {<span class="s">"next_agent"</span>: <span class="s">"synthese"</span>, <span class="s">"iteration"</span>: iteration}
+
+agents_dispo = [a <span class="k">for</span> a <span class="k">in</span> [<span class="s">"RH"</span>,<span class="s">"IT"</span>,<span class="s">"Finance"</span>] <span class="k">if</span> a <span class="k">not in</span> resultats]
+<span class="k">if</span> <span class="k">not</span> agents_dispo: <span class="k">return</span> {<span class="s">"next_agent"</span>: <span class="s">"synthese"</span>, <span class="s">"iteration"</span>: iteration}
+
+prompt = ChatPromptTemplate.from_messages([
+    (<span class="s">"system"</span>, <span class="s">f"Agents disponibles : {agents_dispo}. Agents déjà consultés : {list(resultats.keys())}.\nQuel agent consulter MAINTENANT ? Réponds uniquement avec le nom de l'agent ou 'TERMINER'."</span>),
+    (<span class="s">"human"</span>, <span class="s">"{q}"</span>),
+])
+decision = (prompt | llm | StrOutputParser()).invoke({<span class="s">"q"</span>: question}).strip()
+
+next_a = <span class="s">"synthese"</span>
+<span class="k">for</span> a <span class="k">in</span> agents_dispo:
+    <span class="k">if</span> a.lower() <span class="k">in</span> decision.lower(): next_a = a.lower(); <span class="k">break</span>
+<span class="k">if</span> <span class="s">"termin"</span> <span class="k">in</span> decision.lower(): next_a = <span class="s">"synthese"</span>
+
+<span class="k">return</span> {<span class="s">"next_agent"</span>: next_a, <span class="s">"iteration"</span>: iteration}</span>
+```
+
+<span class="c"># ── SYNTHÈSE FINALE ────────────────────────────────────────────────────</span>
+<span class="k">def</span> <span class="f">synthese_node</span>(state: MultiAgentState) -> dict:
+resultats = state.get(<span class="s">“resultats”</span>, {})
+synthese = <span class="s">”\n\n”</span>.join(<span class="s">f”**{agent}** : {rep}”</span> <span class="k">for</span> agent, rep <span class="k">in</span> resultats.items())
+<span class="k">return</span> {<span class="s">“messages”</span>: [AIMessage(content=<span class="s">f”Synthèse multi-agents :\n\n{synthese}”</span>)]}
+
+<span class="c"># ── CONSTRUIRE ────────────────────────────────────────────────────────</span>
+<span class="hl">g = StateGraph(MultiAgentState)
+g.add_node(<span class="s">“superviseur”</span>, superviseur_node)
+g.add_node(<span class="s">“rh”</span>, agent_rh); g.add_node(<span class="s">“it”</span>, agent_it); g.add_node(<span class="s">“finance”</span>, agent_finance)
+g.add_node(<span class="s">“synthese”</span>, synthese_node)
+g.set_entry_point(<span class="s">“superviseur”</span>)
+g.add_conditional_edges(<span class="s">“superviseur”</span>, <span class="k">lambda</span> s: s[<span class="s">“next_agent”</span>], {<span class="s">“rh”</span>:<span class="s">“rh”</span>,<span class="s">“it”</span>:<span class="s">“it”</span>,<span class="s">“finance”</span>:<span class="s">“finance”</span>,<span class="s">“synthese”</span>:<span class="s">“synthese”</span>})
+<span class="k">for</span> a <span class="k">in</span> [<span class="s">“rh”</span>,<span class="s">“it”</span>,<span class="s">“finance”</span>]: g.add_edge(a, <span class="s">“superviseur”</span>)
+g.add_edge(<span class="s">“synthese”</span>, END)
+app = g.compile()</span>
+
+r = app.invoke({<span class="s">“messages”</span>:[HumanMessage(<span class="s">“Quelles sont les règles de remboursement des frais de télétravail ?”</span>)],<span class="s">“next_agent”</span>:<span class="s">””</span>,<span class="s">“resultats”</span>:{},<span class="s">“iteration”</span>:<span class="n">0</span>})
+<span class="k">print</span>(r[<span class="s">“messages”</span>][-<span class="n">1</span>].content)</pre>
+</div>
+
+```
+<div class="check80">
+  <h4>✅ Checklist — Passer au J8</h4>
+  <ul>
+    <li><input type="checkbox"> Le superviseur consulte RH ET Finance pour la question sur les frais</li>
+    <li><input type="checkbox"> L'itération est bornée (pas de boucle infinie)</li>
+    <li><input type="checkbox"> La synthèse combine les deux réponses</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(45,106,79,.06);border-color:rgba(45,106,79,.25);">
+  <div class="liv-icon">🤝</div>
+  <div class="liv-text">
+    <strong style="color:var(--d7)">Livrable J7</strong>
+    <p>Système multi-agents avec superviseur. La base d'un assistant d'entreprise qui route intelligemment vers les bons experts.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J8 ══ -->
+
+<div class="dc" id="dc8">
+  <div class="dc-head" onclick="tog(8)">
+    <div class="dc-accent" style="background:var(--d8)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d8)">8</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Human-in-the-Loop — Supervision et Approbation Humaine</h3>
+      <div class="sub">Interruption du graphe, validation humaine, checkpointing LangGraph</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 50 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d8);border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.08)">Human-in-loop</span>
+    <span class="tg" style="color:var(--d1);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Production critique</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Pourquoi c'est critique</span></div>
+    <ul>
+      <li><div class="b"></div>Un agent autonome peut prendre de mauvaises décisions — <strong>l'humain doit pouvoir intervenir</strong></li>
+      <li><div class="b"></div><strong>interrupt_before</strong> : pause le graphe avant un nœud dangereux (envoi email, suppression)</li>
+      <li><div class="b"></div><strong>Checkpointer</strong> : sauvegarde l'état du graphe pour reprendre après validation</li>
+      <li><div class="b"></div><strong>thread_id</strong> : identifiant de session pour reprendre une conversation interrompue</li>
+    </ul>
+  </div>
+  <div class="psplit useful">
+    <div class="psplit-head"><span class="badge">💡 Cas d'usage</span></div>
+    <ul>
+      <li><div class="b"></div>Agent qui génère un email → pause → humain valide → envoi</li>
+      <li><div class="b"></div>Agent qui propose une modification de config → pause → admin confirme</li>
+      <li><div class="b"></div>Agent qui va créer un ticket → pause → utilisateur vérifie les détails</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour8_human_in_loop.py — Graphe avec pause et validation humaine</span></div>
+```
+
+<pre><span class="c"># LangChain v1 : human-in-loop via HumanInTheLoopMiddleware — plus de StateGraph manuel
+# pip install langchain langchain-ollama langgraph</span>
+<span class="k">from</span> langchain.agents <span class="k">import</span> create_agent
+<span class="k">from</span> langchain.tools <span class="k">import</span> tool
+<span class="k">from</span> langchain.agents.middleware <span class="k">import</span> HumanInTheLoopMiddleware  <span class="c"># ← middleware officiel v1</span>
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langgraph.checkpoint.memory <span class="k">import</span> InMemorySaver  <span class="c"># ← InMemorySaver (pas MemorySaver)</span>
+
+<span class="c"># ── OUTILS (dont certains nécessitent une approbation humaine) ─────────</span>
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">rediger_email</span>(destinataire: str, sujet: str, corps: str) -> str:
+    <span class="s">"""Rédige et envoie un email professionnel. Action irréversible — nécessite validation."""</span>
+    <span class="k">print</span>(<span class="s">f"\n📧 EMAIL ENVOYÉ à {destinataire}\nSujet: {sujet}\n{corps}"</span>)
+    <span class="k">return</span> <span class="s">f"Email envoyé à {destinataire}"</span></span>
+
+<span class="hl">@tool
+<span class="k">def</span> <span class="f">lire_docs</span>(query: str) -> str:
+    <span class="s">"""Lit des documents internes — action sûre, pas d'approbation requise."""</span>
+    <span class="k">return</span> <span class="s">f"Résultats pour '{query}' : [contenu des docs...]"</span></span>
+
+<span class="c"># ── CRÉER L'AGENT AVEC HumanInTheLoopMiddleware ─────────────────────────</span>
+<span class="hl">agent = create_agent(
+    model=ChatOllama(model=<span class="s">"mistral"</span>, temperature=<span class="n">0</span>),
+    tools=[rediger_email, lire_docs],
+    system_prompt=<span class="s">"Tu es un assistant d'entreprise. Pour les emails, prépare le contenu complet."</span>,
+    middleware=[
+        HumanInTheLoopMiddleware(
+            interrupt_on={
+                <span class="s">"rediger_email"</span>: <span class="k">True</span>,   <span class="c"># ← approve / edit / reject autorisés</span>
+                <span class="s">"lire_docs"</span>: <span class="k">False</span>,      <span class="c"># ← auto-approuvé, pas d'interruption</span>
+            },
+            description_prefix=<span class="s">"Validation requise avant envoi"</span>,
+        ),
+    ],
+    <span class="c"># InMemorySaver obligatoire pour persister l'état pendant l'interruption</span>
+    checkpointer=InInMemorySaver(),
+)</span>
+
+<span class="c"># ── ÉTAPE 1 : L'agent propose l'email et s'arrête ─────────────────────</span>
+config = {<span class="s">"configurable"</span>: {<span class="s">"thread_id"</span>: <span class="s">"email_001"</span>}}
+tache = <span class="s">"Prépare un email à direction@jems.fr pour reporter la réunion de demain matin."</span>
+
+<span class="k">for</span> chunk <span class="k">in</span> agent.stream({<span class="s">"messages"</span>: [{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: tache}]}, config, stream_mode=<span class="s">"updates"</span>):
+    <span class="k">if</span> <span class="s">"__interrupt__"</span> <span class="k">in</span> chunk:
+        interrupt = chunk[<span class="s">"__interrupt__"</span>][<span class="n">0</span>]
+        <span class="k">print</span>(<span class="s">f"\n⏸️ INTERRUPTION : {interrupt.value}"</span>)
+        <span class="k">break</span>
+
+<span class="c"># ── ÉTAPE 2 : L'humain décide ─────────────────────────────────────────</span>
+<span class="k">from</span> langchain.agents.middleware <span class="k">import</span> HITLResponse, ApproveDecision, RejectDecision
+choix = input(<span class="s">"Approuver (a) / Refuser (r) ? : "</span>).strip().lower()
+
+<span class="hl"><span class="k">if</span> choix == <span class="s">"a"</span>:
+    decision = HITLResponse(decisions=[ApproveDecision()])
+<span class="k">elif</span> choix == <span class="s">"e"</span>:
+    <span class="c"># Modifier les arguments avant exécution</span>
+    <span class="k">from</span> langchain.agents.middleware <span class="k">import</span> EditDecision
+    decision = HITLResponse(decisions=[EditDecision(
+        arguments={<span class="s">"destinataire"</span>: <span class="s">"equipe@jems.fr"</span>, <span class="s">"sujet"</span>: <span class="s">"Report réunion"</span>, <span class="s">"corps"</span>: <span class="s">"La réunion est reportée."</span>}
+    )])
+<span class="k">else</span>:
+    decision = HITLResponse(decisions=[RejectDecision(reason=<span class="s">"Reporter à la semaine prochaine plutôt"</span>)])
+
+<span class="c"># Reprendre le graphe avec la décision humaine</span>
+agent.invoke(decision, config)</span>
+
+<span class="o">
+# SORTIE APPROUVER :
+# ⏸️ INTERRUPTION : Validation requise avant envoi: rediger_email(destinataire="direction@jems.fr",...)
+# Approuver (a) / Refuser (r) ? : a
+# 📧 EMAIL ENVOYÉ à direction@jems.fr
+
+# SORTIE REFUSER :
+# Approuver (a) / Refuser (r) ? : r
+# → L'agent reçoit le rejet et adapte sa réponse en conséquence</span></pre>
+
+```
+<div class="piege">
+  <div class="piege-icon">⚠️</div>
+  <div class="piege-text">
+    <strong>Piège fréquent J8 — InMemorySaver ne persiste pas entre processus</strong>
+    <p>InMemorySaver garde l'état en RAM — parfait pour les tests, mais si le processus redémarre l'état est perdu. Pour la production, utilise <code>AsyncPostgresSaver</code> (recommandé dans la doc v1) ou <code>SqliteSaver</code>. Le thread_id doit être unique par conversation utilisateur.</p>
+  </div>
+
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J9</h4>
+  <ul>
+    <li><input type="checkbox"> L'interruption <code>__interrupt__</code> apparaît bien dans le stream avant l'appel de rediger_email</li>
+    <li><input type="checkbox"> <code>RejectDecision</code> annule l'envoi et l'agent répond avec le motif de refus</li>
+    <li><input type="checkbox"> <code>EditDecision</code> fonctionne pour modifier le destinataire avant envoi</li>
+    <li><input type="checkbox"> Tu comprends la différence InMemorySaver (dev) vs AsyncPostgresSaver (prod)</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(139,92,246,.06);border-color:rgba(139,92,246,.25);">
+  <div class="liv-icon">🛑</div>
+  <div class="liv-text">
+    <strong style="color:var(--d8)">Livrable J8</strong>
+    <p>Graphe avec validation humaine obligatoire avant toute action irréversible. Le pattern de sécurité incontournable pour les agents en production.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+</div><!-- /days phase 4 -->
+
+<!-- ══════════════════════════════════════
+     PHASE 5 : PRODUCTION
+══════════════════════════════════════ -->
+
+<div class="phase-hdr p5" style="background:rgba(24,18,14,.05);border-color:rgba(24,18,14,.15);">
+  <span class="ph-num" style="background:rgba(24,18,14,.1);color:var(--d10)">Phase 5</span>
+  <h2>Production — Évaluation, Observabilité et Agent Final</h2>
+  <span class="ph-sub">J9 – J10</span>
+</div>
+<div class="days">
+
+<!-- ══ J9 ══ -->
+
+<div class="dc" id="dc9">
+  <div class="dc-head" onclick="tog(9)">
+    <div class="dc-accent" style="background:var(--d9)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d9)">9</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Évaluer et Déboguer un Agent — Trajets, Erreurs, Métriques</h3>
+      <div class="sub">Tracer les décisions, mesurer la fiabilité, identifier les points de rupture</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 50 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d9);border-color:rgba(192,57,43,.3);background:rgba(192,57,43,.08)">Évaluation</span>
+    <span class="tg" style="color:var(--d4);border-color:rgba(212,132,10,.3);background:rgba(212,132,10,.08)">Observabilité</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Les 3 métriques clés</span></div>
+    <ul>
+      <li><div class="b"></div><strong>Taux de succès</strong> : l'agent atteint-il le bon résultat final ? (évaluation humaine ou LLM-as-judge)</li>
+      <li><div class="b"></div><strong>Nb d'itérations</strong> : combien de tours pour atteindre la réponse ? (économie de tokens)</li>
+      <li><div class="b"></div><strong>Taux d'erreur outil</strong> : combien d'appels d'outils échouent ? (robustesse)</li>
+    </ul>
+  </div>
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Tracer sans LangSmith</span></div>
+    <ul>
+      <li><div class="b"></div><strong>debug=True</strong> dans create_agent() : log natif de chaque nœud</li>
+      <li><div class="b"></div><strong>ModelCallLimitMiddleware</strong> : limiter les appels LLM pour éviter les boucles infinies</li>
+      <li><div class="b"></div><strong>ToolCallLimitMiddleware</strong> : limiter les appels d'outils par session</li>
+      <li><div class="b"></div><strong>get_state_history</strong> de LangGraph (avec checkpointer) : rejouer toute l'exécution</li>
+      <li><div class="b"></div><strong>LLM-as-judge</strong> : demander à Mistral d'évaluer la qualité de sa propre réponse</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour9_evaluation.py — Logger + LLM-as-judge sans LangSmith</span></div>
+  <pre><span class="k">import</span> json, time
+```
+
+<span class="k">from</span> datetime <span class="k">import</span> datetime
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+<span class="k">from</span> langchain_core.callbacks <span class="k">import</span> BaseCallbackHandler
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langchain_core.prompts <span class="k">import</span> ChatPromptTemplate
+<span class="k">from</span> langchain_core.output_parsers <span class="k">import</span> StrOutputParser
+
+<span class="c"># ── CALLBACK : logge chaque action de l’agent ─────────────────────────</span>
+<span class="hl"><span class="k">class</span> <span class="f">AgentLogger</span>(BaseCallbackHandler):
+<span class="k">def</span> <span class="f">**init**</span>(self, log_file=<span class="s">“agent_trace.jsonl”</span>):
+self.log_file = Path(log_file)
+self.session = {<span class="s">“debut”</span>: datetime.now().isoformat(), <span class="s">“actions”</span>: [], <span class="s">“iterations”</span>: <span class="n">0</span>}
+
+```
+<span class="k">def</span> <span class="f">on_tool_start</span>(self, serialized, input_str, **kwargs):
+    self.session[<span class="s">"actions"</span>].append({<span class="s">"type"</span>: <span class="s">"tool_call"</span>, <span class="s">"outil"</span>: serialized.get(<span class="s">"name"</span>), <span class="s">"input"</span>: input_str[:200], <span class="s">"ts"</span>: time.time()})
+    self.session[<span class="s">"iterations"</span>] += <span class="n">1</span>
+
+<span class="k">def</span> <span class="f">on_tool_error</span>(self, error, **kwargs):
+    <span class="k">if</span> self.session[<span class="s">"actions"</span>]: self.session[<span class="s">"actions"</span>][-<span class="n">1</span>][<span class="s">"erreur"</span>] = str(error)
+
+<span class="k">def</span> <span class="f">on_agent_finish</span>(self, finish, **kwargs):
+    self.session[<span class="s">"reponse_finale"</span>] = finish.return_values.get(<span class="s">"output"</span>, <span class="s">""</span>)[:500]
+    self.session[<span class="s">"fin"</span>] = datetime.now().isoformat()
+    <span class="k">with</span> self.log_file.open(<span class="s">"a"</span>, encoding=<span class="s">"utf-8"</span>) <span class="k">as</span> f:
+        f.write(json.dumps(self.session, ensure_ascii=<span class="k">False</span>) + <span class="s">"\n"</span>)</span>
+```
+
+<span class="c"># ── LLM-AS-JUDGE : évaluer la qualité de la réponse ──────────────────</span>
+<span class="hl"><span class="k">def</span> <span class="f">evaluer_reponse</span>(question: str, reponse: str, llm) -> dict:
+<span class="s">””“Demande au LLM d’évaluer sa propre réponse (ou celle d’un autre agent).”””</span>
+prompt = ChatPromptTemplate.from_messages([
+(<span class="s">“system”</span>, <span class="s">””“Évalue la réponse suivante sur 3 critères (score 1-5) :
+
+1. PERTINENCE : répond-elle à la question ?
+1. PRÉCISION : les informations sont-elles exactes et complètes ?
+1. CONCISION : la réponse est-elle bien calibrée (ni trop courte, ni trop longue) ?
+
+Réponds UNIQUEMENT en JSON : {“pertinence”: X, “precision”: X, “concision”: X, “commentaire”: “…”}”””</span>),
+(<span class="s">“human”</span>, <span class="s">“QUESTION : {q}\n\nRÉPONSE : {r}”</span>),
+])
+raw = (prompt | llm | StrOutputParser()).invoke({<span class="s">“q”</span>: question, <span class="s">“r”</span>: reponse})
+<span class="k">try</span>:
+<span class="c"># Nettoyer le JSON si Mistral ajoute du texte autour</span>
+debut = raw.find(<span class="s">”{”</span>); fin = raw.rfind(<span class="s">”}”</span>) + <span class="n">1</span>
+<span class="k">return</span> json.loads(raw[debut:fin])
+<span class="k">except</span>: <span class="k">return</span> {<span class="s">“erreur”</span>: <span class="s">“parsing JSON échoué”</span>, <span class="s">“raw”</span>: raw}</span>
+
+<span class="c"># ── DATASET D’ÉVALUATION ──────────────────────────────────────────────</span>
+dataset = [
+{<span class="s">“question”</span>: <span class="s">“Quelles sont les règles VPN ?”</span>, <span class="s">“reponse_attendue_keyword”</span>: <span class="s">“MFA”</span>},
+{<span class="s">“question”</span>: <span class="s">“Combien de jours de télétravail ?”</span>, <span class="s">“reponse_attendue_keyword”</span>: <span class="s">“2”</span>},
+{<span class="s">“question”</span>: <span class="s">“Quelle est la capitale de la France ?”</span>, <span class="s">“reponse_attendue_keyword”</span>: <span class="s">“Paris”</span>},
+]
+
+llm = ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>)
+logger = AgentLogger()
+
+<span class="c"># Simuler un agent qui répond (simplifié pour l’exercice)</span>
+resultats = []
+<span class="k">for</span> item <span class="k">in</span> dataset:
+reponse = llm.invoke(item[<span class="s">“question”</span>]).content
+scores = evaluer_reponse(item[<span class="s">“question”</span>], reponse, llm)
+keyword_ok = item[<span class="s">“reponse_attendue_keyword”</span>].lower() <span class="k">in</span> reponse.lower()
+resultats.append({**item, <span class="s">“reponse”</span>: reponse[:<span class="n">100</span>], <span class="s">“scores”</span>: scores, <span class="s">“keyword_ok”</span>: keyword_ok})
+<span class="k">print</span>(<span class="s">f”Q: {item[‘question’][:50]}”</span>)
+<span class="k">print</span>(<span class="s">f”   Keyword ({‘✅’ if keyword_ok else ‘❌’}) | Scores: {scores}”</span>)
+
+<span class="k">print</span>(<span class="s">f”\nTaux de succès keyword : {sum(r[‘keyword_ok’] for r in resultats)}/{len(resultats)}”</span>)</pre>
+</div>
+
+```
+<div class="teach">
+  <strong>🎓 Pour enseigner l'évaluation</strong>
+  <p>Le LLM-as-judge est le concept qui surprend le plus les étudiants : "on demande au modèle de s'évaluer lui-même ?" Oui — et c'est souvent cohérent. Montre les limites : un modèle peu fiable va bien noter ses propres mauvaises réponses. D'où l'importance du keyword test comme vérification externe.</p>
+</div>
+
+<div class="check80">
+  <h4>✅ Checklist — Passer au J10</h4>
+  <ul>
+    <li><input type="checkbox"> Le fichier agent_trace.jsonl est créé après exécution</li>
+    <li><input type="checkbox"> LLM-as-judge retourne un JSON valide</li>
+    <li><input type="checkbox"> Tu peux identifier quel type de question a le plus mauvais score</li>
+  </ul>
+</div>
+
+<div class="livrable" style="background:rgba(192,57,43,.06);border-color:rgba(192,57,43,.25);">
+  <div class="liv-icon">📊</div>
+  <div class="liv-text">
+    <strong style="color:var(--d9)">Livrable J9</strong>
+    <p>Système de logging + évaluation automatique LLM-as-judge. Indispensable pour itérer sur un agent en production.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ══ J10 ══ -->
+
+<div class="dc" id="dc10">
+  <div class="dc-head" onclick="tog(10)">
+    <div class="dc-accent" style="background:var(--d10)"></div>
+    <div class="dc-num"><div class="n" style="color:var(--d10)">10</div><div class="l">Jour</div></div>
+    <div class="dc-info">
+      <h3>Agent Final — Assistant d'Entreprise Complet avec Streamlit</h3>
+      <div class="sub">Assembler les 9 jours en un agent production-ready déployable</div>
+    </div>
+    <div class="dc-meta"><span class="tbadge">⏱ 60 min</span><div class="chev">▾</div></div>
+  </div>
+  <div class="dc-tags">
+    <span class="tg" style="color:var(--d10);border-color:rgba(24,18,14,.3);background:rgba(24,18,14,.06)">🏆 Projet final</span>
+    <span class="tg" style="color:var(--d1);border-color:rgba(26,107,74,.3);background:rgba(26,107,74,.08)">Déployable</span>
+  </div>
+  <div class="dc-body">
+
+```
+<div class="pareto-split">
+  <div class="psplit vital">
+    <div class="psplit-head"><span class="badge">✅ Ce que tu assembles (J1→J9)</span></div>
+    <ul>
+      <li><div class="b"></div><strong>J1–J2</strong> : Agent ReAct + Mémoire persistante JSON</li>
+      <li><div class="b"></div><strong>J3–J4</strong> : RAG comme outil + outils HTTP/fichiers sécurisés</li>
+      <li><div class="b"></div><strong>J5–J6</strong> : Graphe LangGraph avec routage conditionnel</li>
+      <li><div class="b"></div><strong>J7–J8</strong> : Multi-agents + human-in-the-loop</li>
+      <li><div class="b"></div><strong>J9</strong> : Logging et évaluation automatique</li>
+    </ul>
+  </div>
+  <div class="psplit skip-box">
+    <div class="psplit-head"><span class="badge">❌ Hors scope J10</span></div>
+    <ul>
+      <li><div class="b"></div>Authentification multi-utilisateurs</li>
+      <li><div class="b"></div>Docker / Kubernetes</li>
+      <li><div class="b"></div>CI/CD pour agents (tests auto)</li>
+      <li><div class="b"></div>Intégration Slack / Teams native</li>
+    </ul>
+  </div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-head-bar"><span class="fn">📁 agents/jour10_agent_final.py — Architecture complète (structure)</span></div>
+  <pre><span class="c"># Structure du projet final
+```
+
+# ─────────────────────────────────────────
+
+# agent_final/
+
+# ├── app.py               ← Streamlit UI
+
+# ├── graph.py             ← Graphe LangGraph principal
+
+# ├── tools/
+
+# │   ├── rag_tool.py      ← RAG ChromaDB (cours RAG J3)
+
+# │   ├── calc_tool.py     ← Calculatrice sécurisée
+
+# │   ├── file_tool.py     ← Lecture fichiers (J4)
+
+# │   └── memory_tool.py   ← Mémoriser/rappeler (J2)
+
+# ├── memory/
+
+# │   └── InMemoryStore (clé : user_id) ← Mémoire persistante
+
+# ├── logs/
+
+# │   └── agent_trace.jsonl ← Traces (J9)
+
+# └── requirements.txt</span>
+
+<span class="c"># ── graph.py — Le cœur de l’agent ─────────────────────────────────────</span>
+<span class="k">from</span> typing <span class="k">import</span> TypedDict, Annotated, Sequence
+<span class="k">from</span> langchain_core.messages <span class="k">import</span> BaseMessage, HumanMessage, AIMessage
+<span class="k">from</span> langchain_ollama <span class="k">import</span> ChatOllama
+<span class="k">from</span> langgraph.graph <span class="k">import</span> StateGraph, END
+<span class="k">from</span> langgraph.prebuilt <span class="k">import</span> ToolNode
+<span class="k">from</span> langgraph.checkpoint.memory <span class="k">import</span> MemorySaver
+<span class="k">from</span> tools.rag_tool <span class="k">import</span> recherche_docs_internes
+<span class="k">from</span> tools.calc_tool <span class="k">import</span> calculatrice
+<span class="k">from</span> tools.file_tool <span class="k">import</span> lire_csv
+<span class="k">from</span> tools.memory_tool <span class="k">import</span> memoriser, rappeler
+<span class="k">import</span> operator
+
+<span class="hl">TOOLS = [recherche_docs_internes, calculatrice, lire_csv, memoriser, rappeler]
+
+<span class="c"># ── Pattern v1 : create_agent() avec middleware — simple et production-ready</span>
+<span class="k">def</span> <span class="f">build_agent</span>():
+<span class="k">from</span> langchain.agents.middleware <span class="k">import</span> HumanInTheLoopMiddleware, ModelCallLimitMiddleware
+<span class="k">from</span> langgraph.checkpoint.memory <span class="k">import</span> InMemorySaver
+<span class="k">return</span> create_agent(
+model=ChatOllama(model=<span class="s">“mistral”</span>, temperature=<span class="n">0</span>),
+tools=TOOLS,
+system_prompt=<span class="s">””“Assistant d’entreprise complet.
+Tu as accès aux docs internes, à la calculatrice, aux fichiers et à ta mémoire.
+Cite toujours tes sources documentaires. Mémorise les infos importantes sur l’utilisateur.”””</span>,
+middleware=[
+ModelCallLimitMiddleware(max_calls=<span class="n">10</span>),   <span class="c"># anti-boucle infinie</span>
+HumanInTheLoopMiddleware(interrupt_on={
+<span class="s">“rediger_email”</span>: <span class="k">True</span>,
+<span class="s">“sauvegarder_rapport”</span>: {<span class="s">“allowed_decisions”</span>: [<span class="s">“approve”</span>, <span class="s">“reject”</span>]},
+}),
+],
+checkpointer=InInMemorySaver(),
+store=InMemoryStore(),     <span class="c"># mémoire long terme inter-sessions</span>
+context_schema=Context,
+)</span>
+
+<span class="c"># ── app.py — Interface Streamlit ───────────────────────────────────────</span>
+<span class="c"># import streamlit as st
+
+# from graph import build_graph
+
+# from langchain_core.messages import HumanMessage, AIMessage
+
+# 
+
+# st.title(“🤖 Assistant d’Entreprise — Mistral + LangGraph”)
+
+# graph = build_graph()
+
+# thread = {“configurable”: {“thread_id”: “session_principale”}}
+
+# 
+
+# if “messages” not in st.session_state: st.session_state.messages = []
+
+# for m in st.session_state.messages:
+
+# with st.chat_message(m[“role”]): st.markdown(m[“content”])
+
+# 
+
+# if q := st.chat_input(“Posez votre question…”):
+
+# st.session_state.messages.append({“role”: “user”, “content”: q})
+
+# with st.chat_message(“user”): st.markdown(q)
+
+# with st.chat_message(“assistant”), st.spinner(“Mistral réfléchit…”):
+
+# result = graph.invoke({“messages”: [HumanMessage(content=q)]}, thread)
+
+# ans = result[“messages”][-1].content
+
+# st.markdown(ans)
+
+# st.session_state.messages.append({“role”: “assistant”, “content”: ans})</span></pre>
+
+```
+</div>
+
+<div class="teach">
+  <strong>🎓 Pour enseigner le projet final</strong>
+  <p>Organise une démonstration où les étudiants posent des questions en direct : une question RH, une question IT, un calcul, une question hors contexte. L'agent choisit le bon outil à chaque fois. La question clé : <em>"Que se passe-t-il si je pose une question pour laquelle aucun outil n'est adapté ?"</em> — l'agent doit répondre honnêtement avec ses connaissances générales.</p>
+</div>
+
+<div class="livrable" style="background:rgba(24,18,14,.05);border-color:rgba(24,18,14,.2);">
+  <div class="liv-icon">🏆</div>
+  <div class="liv-text">
+    <strong style="color:var(--d10)">Livrable Final — 10 jours</strong>
+    <p>Un assistant d'entreprise complet : RAG intégré, mémoire persistante, multi-outils, logging automatique, interface Streamlit. Déployable localement avec Ollama + Mistral. Zéro coût API.</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+</div><!-- /days phase 5 -->
+
+<!-- FINAL -->
+
+<div class="final">
+  <div class="final-badge">🏁 Périmètre complet couvert</div>
+  <h2>De ReAct à la production<br><em>en 10 jours</em></h2>
+  <p class="fdesc">Tu maîtrises maintenant l'intégralité du spectre des agents IA — des fondations théoriques au déploiement d'un système multi-agents en entreprise.</p>
+  <div class="final-grid">
+    <div class="fg"><div class="fgi">🔁</div><h4>Boucle ReAct</h4><p>Thought → Action → Observation — J1</p></div>
+    <div class="fg"><div class="fgi">🧠</div><h4>Mémoire 4 types</h4><p>Court/long terme, épisodique, sémantique — J2</p></div>
+    <div class="fg"><div class="fgi">🔗</div><h4>RAG + Agent fusionnés</h4><p>Docs internes comme outil — J3</p></div>
+    <div class="fg"><div class="fgi">🔐</div><h4>Outils sécurisés</h4><p>HTTP, CSV, validation Pydantic — J4</p></div>
+    <div class="fg"><div class="fgi">📊</div><h4>LangGraph complet</h4><p>Graphes, routage, état — J5–J6</p></div>
+    <div class="fg"><div class="fgi">🤝</div><h4>Multi-agents</h4><p>Superviseur + spécialistes — J7</p></div>
+    <div class="fg"><div class="fgi">🛑</div><h4>Human-in-loop</h4><p>Validation humaine, checkpointing — J8</p></div>
+    <div class="fg"><div class="fgi">📈</div><h4>Évaluation</h4><p>Logging, LLM-as-judge — J9</p></div>
+  </div>
+</div>
+
+<!-- STACK -->
+
+<div style="margin-top:48px;">
+  <div class="sh"><span>Stack complète — Agents v1</span><div class="ln"></div></div>
+  <div class="stack-grid">
+    <div class="sc"><div class="si">🦙</div><div><div class="sn">Ollama + Mistral</div><div class="sd">LLM local, 0 coût API</div></div></div>
+    <div class="sc"><div class="si">📊</div><div><div class="sn">LangGraph</div><div class="sd">Graphes d'état pour agents</div></div></div>
+    <div class="sc"><div class="si">🦜</div><div><div class="sn">LangChain v1</div><div class="sd">LCEL, tools, prompts</div></div></div>
+    <div class="sc"><div class="si">🗄️</div><div><div class="sn">ChromaDB</div><div class="sd">RAG vectoriel (cours précédent)</div></div></div>
+    <div class="sc"><div class="si">🖥️</div><div><div class="sn">Streamlit</div><div class="sd">Interface web déployable</div></div></div>
+    <div class="sc"><div class="si">🐍</div><div><div class="sn">Pydantic v2</div><div class="sd">Validation outils</div></div></div>
+  </div>
+</div>
+
+<div style="margin-top:32px;padding:20px 24px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;">
+  <p style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Commande d'installation unique</p>
+  <code style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink2);line-height:1.8;">pip install langchain langchain-ollama langchain-core langchain-chroma langchain-huggingface langchain-text-splitters langgraph langgraph-checkpoint-sqlite pydantic streamlit requests pypdf</code>
+</div>
+
+</div><!-- /page -->
+
+<script>
+function tog(n){document.getElementById('dc'+n).classList.toggle('open');}
+
+const colors=['#1a6b4a','#2471a3','#7d3c98','#d4840a','#b03a2e','#1a5a8a','#2d6a4f','#8b5cf6','#c0392b','#18120e'];
+const done=new Set();
+const cont=document.getElementById('ddots');
+Array.from({length:10},(_,i)=>{
+  const w=document.createElement('div');
+  w.className='ddot';w.dataset.day=i+1;
+  w.innerHTML=`<div class="d"></div><span class="dl">J${i+1}</span>`;
+  w.onclick=()=>{
+    const d=i+1;
+    if(done.has(d)){done.delete(d);w.classList.remove('done');w.querySelector('.d').style.background='';}
+    else{done.add(d);w.classList.add('done');w.querySelector('.d').style.background=colors[i];}
+    const pct=Math.round(done.size/10*100);
+    document.getElementById('pct-label').textContent=
+      done.size===0?'Clique pour cocher ✓':done.size===10?'🎉 Formation Agents complète !':
+      `${pct}% — ${done.size}/10 jours`;
+  };
+  cont.appendChild(w);
+});
+document.getElementById('dc1').classList.add('open');
+</script>
+
+</body>
+</html>

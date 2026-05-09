@@ -1,0 +1,2346 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangChain · LangGraph · LangSmith — Cours Pareto</title>
+<style>
+/* ═══════════════════════════════════════════
+   VARIABLES
+═══════════════════════════════════════════ */
+:root {
+  --bg:       #0c0f14;
+  --bg2:      #12161d;
+  --bg3:      #181d26;
+  --card:     #1c2230;
+  --border:   #252d3d;
+  --border2:  #2e3a50;
+  --text:     #c9d6ea;
+  --text2:    #7a90b0;
+  --text3:    #4a5a72;
+  --white:    #f0f4ff;
+  --blue:     #4a9eff;
+  --blue2:    #2d7dd6;
+  --green:    #34d399;
+  --green2:   #059669;
+  --orange:   #fb923c;
+  --purple:   #a78bfa;
+  --cyan:     #22d3ee;
+  --yellow:   #fbbf24;
+  --red:      #f87171;
+  --code-bg:  #0d1117;
+  --code-fg:  #e6edf3;
+  --r:        8px;
+  --r2:       12px;
+}
+
+/* ═══════════════════════════════════════════
+RESET
+═══════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto}
+body{background:var(–bg);color:var(–text);font-family:‘Segoe UI’,system-ui,sans-serif;font-size:15px;line-height:1.7;display:flex;min-height:100vh}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(–bg)}
+::-webkit-scrollbar-thumb{background:var(–border2);border-radius:4px}
+a{color:var(–blue);text-decoration:none}
+strong{color:var(–white);font-weight:600}
+code{font-family:‘Cascadia Code’,‘Fira Code’,‘Consolas’,monospace;font-size:12.5px;background:rgba(74,158,255,0.1);color:var(–blue);padding:1px 5px;border-radius:4px;border:1px solid rgba(74,158,255,0.2)}
+
+/* ═══════════════════════════════════════════
+SIDEBAR
+═══════════════════════════════════════════ */
+#sidebar{
+position:fixed;left:0;top:0;bottom:0;width:260px;
+background:var(–bg2);border-right:1px solid var(–border);
+overflow-y:auto;z-index:100;display:flex;flex-direction:column;
+}
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid var(–border)}
+.sb-logo .eyebrow{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(–blue);display:block;margin-bottom:5px}
+.sb-logo h2{font-size:15px;font-weight:700;color:var(–white);line-height:1.3}
+
+.sb-prog{padding:12px 18px;border-bottom:1px solid var(–border)}
+.sb-prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(–text2);margin-bottom:6px;font-family:monospace}
+.sb-bar{height:3px;background:var(–bg3);border-radius:3px;overflow:hidden}
+.sb-bar-fill{height:100%;background:linear-gradient(90deg,var(–blue),var(–green));border-radius:3px;width:0;transition:width .4s}
+
+.sb-nav{padding:10px 0;flex:1}
+.sb-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(–text3);padding:8px 18px 3px}
+.sb-item{
+display:flex;align-items:center;gap:9px;padding:7px 18px;
+cursor:pointer;font-size:12.5px;color:var(–text2);
+border-left:2px solid transparent;transition:all .15s;
+}
+.sb-item:hover{background:var(–bg3);color:var(–text);border-left-color:var(–border2)}
+.sb-item.active{background:rgba(74,158,255,.07);color:var(–blue);border-left-color:var(–blue)}
+.sb-item .ic{width:18px;text-align:center;font-size:13px}
+.sb-item .badge{margin-left:auto;font-size:9px;font-family:monospace;background:var(–bg3);padding:1px 5px;border-radius:3px;color:var(–text3)}
+.sb-item.active .badge{background:rgba(74,158,255,.15);color:var(–blue)}
+
+/* ═══════════════════════════════════════════
+MAIN
+═══════════════════════════════════════════ */
+#main{margin-left:260px;flex:1}
+
+.topbar{
+position:sticky;top:0;
+background:rgba(12,15,20,.95);backdrop-filter:blur(8px);
+border-bottom:1px solid var(–border);
+height:46px;padding:0 36px;
+display:flex;align-items:center;justify-content:space-between;
+z-index:50;
+}
+.tb-bc{font-family:monospace;font-size:11px;color:var(–text2);display:flex;align-items:center;gap:6px}
+.tb-bc .sep{color:var(–border2)}
+.tb-bc .cur{color:var(–text)}
+.tb-actions{display:flex;gap:8px}
+.tb-btn{background:var(–bg3);border:1px solid var(–border);color:var(–text2);font-size:11px;padding:4px 12px;border-radius:6px;cursor:pointer;font-family:monospace}
+.tb-btn:hover{border-color:var(–blue);color:var(–blue)}
+
+/* ═══════════════════════════════════════════
+CONTENT AREA
+═══════════════════════════════════════════ */
+.page{padding:48px 48px 100px;max-width:860px}
+
+/* ═══════════════════════════════════════════
+HERO
+═══════════════════════════════════════════ */
+.hero{padding:52px 48px 0}
+.hero-pill{
+display:inline-flex;align-items:center;gap:7px;
+background:rgba(74,158,255,.09);border:1px solid rgba(74,158,255,.22);
+color:var(–blue);font-size:10px;font-weight:700;letter-spacing:2px;
+text-transform:uppercase;padding:5px 12px;border-radius:99px;margin-bottom:22px;
+}
+.hero-title{font-size:clamp(28px,4vw,48px);font-weight:800;color:var(–white);line-height:1.1;letter-spacing:-1px;margin-bottom:10px}
+.hero-title .hi{color:var(–blue)}
+.hero-title .hg{color:var(–green)}
+.hero-title .hp{color:var(–purple)}
+.hero-sub{font-size:15px;color:var(–text2);max-width:580px;margin-bottom:28px;line-height:1.6}
+.hero-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:40px}
+.chip{padding:4px 10px;border-radius:5px;font-size:11px;font-family:monospace;font-weight:600;border:1px solid}
+.chip-b{color:var(–blue);border-color:rgba(74,158,255,.3);background:rgba(74,158,255,.07)}
+.chip-g{color:var(–green);border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.07)}
+.chip-p{color:var(–purple);border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.07)}
+.chip-o{color:var(–orange);border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.07)}
+.chip-c{color:var(–cyan);border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.07)}
+
+.stats-row{display:flex;border:1px solid var(–border);border-radius:var(–r2);overflow:hidden;margin-bottom:44px;background:var(–bg2)}
+.stat{flex:1;padding:16px 20px;border-right:1px solid var(–border)}
+.stat:last-child{border-right:none}
+.stat-n{font-size:24px;font-weight:800;color:var(–white);line-height:1}
+.stat-n span{font-size:14px;color:var(–blue)}
+.stat-l{font-size:11px;color:var(–text2);margin-top:3px;font-family:monospace}
+
+/* ═══════════════════════════════════════════
+MODULE SECTIONS
+═══════════════════════════════════════════ */
+.mod-section{padding:52px 48px 0}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(–border),transparent);margin:0}
+
+.mod-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:28px;padding-bottom:22px;border-bottom:1px solid var(–border)}
+.mod-badge{
+width:48px;height:48px;border-radius:12px;
+display:flex;align-items:center;justify-content:center;
+font-size:18px;font-weight:800;color:var(–white);flex-shrink:0;
+}
+.mb-blue  {background:linear-gradient(135deg,#1a3a6e,#0a1a3a);border:1px solid rgba(74,158,255,.3);color:var(–blue)}
+.mb-green {background:linear-gradient(135deg,#0f3324,#06180f);border:1px solid rgba(52,211,153,.3);color:var(–green)}
+.mb-purple{background:linear-gradient(135deg,#2a1a5e,#120a2e);border:1px solid rgba(167,139,250,.3);color:var(–purple)}
+.mb-orange{background:linear-gradient(135deg,#3e1e0a,#1e0a00);border:1px solid rgba(251,146,60,.3);color:var(–orange)}
+.mb-cyan  {background:linear-gradient(135deg,#0a2e3e,#001620);border:1px solid rgba(34,211,238,.3);color:var(–cyan)}
+.mb-red   {background:linear-gradient(135deg,#3e0a0a,#200000);border:1px solid rgba(248,113,113,.3);color:var(–red)}
+
+.mod-info .mod-tag{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(–text2);margin-bottom:4px}
+.mod-info h1{font-size:24px;font-weight:800;color:var(–white);letter-spacing:-.3px;margin-bottom:5px}
+.mod-info p{font-size:13px;color:var(–text2);line-height:1.55}
+.mod-level{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-family:monospace;border:1px solid var(–border);padding:2px 8px;border-radius:99px;color:var(–text2);margin-top:7px}
+.mod-level .dot{width:5px;height:5px;border-radius:50%;background:var(–green)}
+.mod-level.inter .dot{background:var(–orange)}
+.mod-level.adv .dot{background:var(–red)}
+.mod-level.exp .dot{background:var(–purple)}
+
+/* ═══════════════════════════════════════════
+TYPOGRAPHY
+═══════════════════════════════════════════ */
+h2.sh{
+font-size:18px;font-weight:700;color:var(–white);
+margin:36px 0 14px;
+display:flex;align-items:center;gap:9px;
+}
+h2.sh::before{content:’’;display:block;width:3px;height:18px;border-radius:2px;background:var(–blue);flex-shrink:0}
+h3.shs{font-size:14px;font-weight:700;color:var(–text);margin:22px 0 10px}
+p{margin-bottom:12px;font-size:14px;line-height:1.7}
+ul,ol{padding-left:20px;margin-bottom:14px}
+li{margin-bottom:5px;font-size:14px;line-height:1.65}
+ul li::marker{color:var(–blue)}
+ol li::marker{color:var(–blue);font-family:monospace;font-size:12px}
+
+/* ═══════════════════════════════════════════
+CODE BLOCKS
+═══════════════════════════════════════════ */
+.cb{background:var(–code-bg);border:1px solid var(–border);border-radius:var(–r2);margin:16px 0;overflow:hidden}
+.cb-head{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#161b22;border-bottom:1px solid var(–border)}
+.cb-name{font-size:11px;color:var(–text2);font-family:monospace;display:flex;align-items:center;gap:7px}
+.cb-name::before{content:’’;width:7px;height:7px;border-radius:50%;background:var(–green);box-shadow:0 0 5px var(–green);display:inline-block}
+.cb-lang{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(–blue);background:rgba(74,158,255,.1);padding:2px 7px;border-radius:3px}
+.cp-btn{background:none;border:1px solid var(–border);color:var(–text2);font-size:10px;font-family:monospace;padding:2px 9px;border-radius:5px;cursor:pointer}
+.cp-btn:hover{border-color:var(–blue);color:var(–blue)}
+.cp-btn.ok{border-color:var(–green);color:var(–green)}
+pre{padding:18px;overflow-x:auto;font-size:12.5px;line-height:1.7;tab-size:2}
+pre code{background:none;color:var(–code-fg);padding:0;border:none;font-size:12.5px}
+/* syntax */
+.kw{color:#ff7b72}.fn{color:#d2a8ff}.st{color:#a5d6ff}.cm{color:#6e7681}
+.nu{color:#f78166}.cl{color:#ffa657}.im{color:#79c0ff}.dc{color:#d2a8ff}
+.ky{color:#7ee787}.op{color:#ff7b72}
+
+/* ═══════════════════════════════════════════
+CALLOUTS
+═══════════════════════════════════════════ */
+.callout{border-radius:var(–r2);padding:14px 18px;margin:14px 0;border-left:3px solid;display:flex;gap:12px}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-body h4{font-size:13px;font-weight:700;margin-bottom:4px}
+.callout-body p,.callout-body li{font-size:13px;line-height:1.6;margin:0}
+.callout-body ul{margin:6px 0 0}
+.ci{background:rgba(74,158,255,.07);border-color:var(–blue)}
+.ci .callout-body h4{color:#7bb8ff}
+.ct{background:rgba(52,211,153,.07);border-color:var(–green)}
+.ct .callout-body h4{color:var(–green)}
+.cw{background:rgba(251,146,60,.07);border-color:var(–orange)}
+.cw .callout-body h4{color:var(–orange)}
+.cp2{background:rgba(167,139,250,.07);border-color:var(–purple)}
+.cp2 .callout-body h4{color:var(–purple)}
+
+/* ═══════════════════════════════════════════
+TABLES
+═══════════════════════════════════════════ */
+.tw{overflow-x:auto;margin:14px 0;border-radius:var(–r2);border:1px solid var(–border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(–card)}
+thead th{padding:10px 14px;text-align:left;font-family:monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(–text2);border-bottom:1px solid var(–border)}
+tbody tr{border-bottom:1px solid var(–border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(74,158,255,.03)}
+td{padding:9px 14px;color:var(–text);vertical-align:top;font-size:13px}
+td:first-child{color:var(–blue);font-family:monospace;font-size:12px;font-weight:600}
+.stars{color:var(–yellow)}
+
+/* ═══════════════════════════════════════════
+QUIZ
+═══════════════════════════════════════════ */
+.quiz{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r2);padding:22px;margin:26px 0}
+.quiz-head{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(–border)}
+.quiz-head h3{font-size:16px;font-weight:700;color:var(–white)}
+.quiz-badge{background:rgba(167,139,250,.12);color:var(–purple);font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:99px;text-transform:uppercase;border:1px solid rgba(167,139,250,.25)}
+.qq{background:var(–card);border:1px solid var(–border);border-radius:var(–r);padding:16px;margin-bottom:12px}
+.qq-num{font-size:9px;font-weight:700;letter-spacing:2px;color:var(–purple);text-transform:uppercase;margin-bottom:6px;font-family:monospace}
+.qq-text{font-size:13.5px;color:var(–text);margin-bottom:12px;font-weight:500;line-height:1.55}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:flex-start;gap:9px;padding:8px 12px;border-radius:7px;border:1px solid var(–border);cursor:pointer;font-size:13px;color:var(–text2);transition:all .12s}
+.opt:hover{border-color:var(–border2);background:var(–bg3);color:var(–text)}
+.opt.correct{border-color:var(–green);background:rgba(52,211,153,.07);color:var(–green)}
+.opt.wrong{border-color:var(–red);background:rgba(248,113,113,.07);color:var(–red)}
+.opt-l{font-family:monospace;font-size:10px;font-weight:700;background:var(–bg3);width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qa{display:none;margin-top:12px;padding:12px;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:7px;font-size:13px;color:#6ee7b7;line-height:1.6}
+.qa.show{display:block}
+.qa strong{color:var(–green)}
+.show-btn{margin-top:10px;padding:5px 14px;border-radius:6px;border:1px solid var(–border2);background:var(–bg3);color:var(–text2);font-size:11px;font-family:monospace;cursor:pointer}
+.show-btn:hover{border-color:var(–purple);color:var(–purple)}
+
+/* ═══════════════════════════════════════════
+GRID CARDS
+═══════════════════════════════════════════ */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:14px 0}
+.gcard{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r2);padding:16px;cursor:pointer;position:relative;overflow:hidden}
+.gcard:hover{border-color:var(–border2)}
+.gcard-top{height:2px;position:absolute;top:0;left:0;right:0}
+.bt-b{background:linear-gradient(90deg,var(–blue),var(–cyan))}
+.bt-g{background:linear-gradient(90deg,var(–green),var(–cyan))}
+.bt-p{background:linear-gradient(90deg,var(–purple),var(–blue))}
+.bt-o{background:linear-gradient(90deg,var(–orange),var(–red))}
+.gcard-ic{font-size:20px;margin-bottom:8px}
+.gcard-title{font-size:13px;font-weight:700;color:var(–white);margin-bottom:4px}
+.gcard-text{font-size:12px;color:var(–text2);line-height:1.5}
+
+/* ═══════════════════════════════════════════
+ARCH DIAGRAM
+═══════════════════════════════════════════ */
+.arch{background:var(–code-bg);border:1px solid var(–border);border-radius:var(–r2);padding:20px;margin:14px 0;font-family:monospace;font-size:12.5px;color:var(–text2);line-height:1.9;overflow-x:auto}
+.arch .d{color:var(–blue);font-weight:600}
+.arch .f{color:var(–text)}
+.arch .c{color:#4a5568}
+.arch .s{color:var(–border2)}
+
+/* ═══════════════════════════════════════════
+CHECKLIST
+═══════════════════════════════════════════ */
+.cl-list{display:flex;flex-direction:column;gap:5px;margin:12px 0}
+.cl-item{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(–text);padding:5px 0;cursor:pointer}
+.cl-box{width:17px;height:17px;border-radius:4px;border:1.5px solid var(–border2);background:var(–card);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+.cl-item:hover .cl-box{border-color:var(–green)}
+.cl-item.done .cl-box{background:var(–green);border-color:var(–green);color:#000}
+.cl-item.done .cl-label{text-decoration:line-through;color:var(–text2)}
+
+/* ═══════════════════════════════════════════
+COMPARE
+═══════════════════════════════════════════ */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.cmp-col{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r2);overflow:hidden}
+.cmp-head{padding:10px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(–border)}
+.cmp-head.bad{background:rgba(248,113,113,.07);color:var(–red);border-top:2px solid var(–red)}
+.cmp-head.good{background:rgba(52,211,153,.07);color:var(–green);border-top:2px solid var(–green)}
+.cmp-body{padding:12px 16px}
+.cmp-body li{font-size:13px;margin-bottom:4px}
+
+/* ═══════════════════════════════════════════
+FOOTER
+═══════════════════════════════════════════ */
+.footer{padding:40px 48px;border-top:1px solid var(–border);text-align:center;color:var(–text2);font-size:13px}
+
+/* ═══════════════════════════════════════════
+SCROLL TOP
+═══════════════════════════════════════════ */
+#stb{position:fixed;bottom:24px;right:24px;width:38px;height:38px;background:var(–card);border:1px solid var(–border);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(–text2);opacity:0;pointer-events:none;z-index:200}
+#stb.vis{opacity:1;pointer-events:auto}
+#stb:hover{border-color:var(–blue);color:var(–blue)}
+
+/* ═══════════════════════════════════════════
+MOBILE
+═══════════════════════════════════════════ */
+#mob-btn{display:none;position:fixed;top:10px;left:10px;z-index:150;width:36px;height:36px;background:var(–card);border:1px solid var(–border);border-radius:8px;cursor:pointer;align-items:center;justify-content:center;font-size:15px;color:var(–text)}
+@media(max-width:800px){
+#sidebar{transform:translateX(-100%);transition:transform .25s}
+#sidebar.open{transform:translateX(0)}
+#main{margin-left:0}
+#mob-btn{display:flex}
+.page,.mod-section,.hero{padding-left:20px;padding-right:20px}
+.cmp{grid-template-columns:1fr}
+.stats-row{flex-direction:column}
+.stat{border-right:none;border-bottom:1px solid var(–border)}
+.stat:last-child{border-bottom:none}
+}
+</style>
+
+</head>
+<body>
+
+<!-- SIDEBAR -->
+
+<nav id="sidebar">
+  <div class="sb-logo">
+    <span class="eyebrow">Cursus Pareto 80/20</span>
+    <h2>LangChain · LangGraph<br>LangSmith</h2>
+  </div>
+  <div class="sb-prog">
+    <div class="sb-prog-row"><span>Progression</span><span id="pct">0%</span></div>
+    <div class="sb-bar"><div class="sb-bar-fill" id="bar"></div></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-label">Introduction</div>
+    <div class="sb-item active" onclick="goto('hero')"><span class="ic">🏠</span> Accueil<span class="badge">·</span></div>
+
+```
+<div class="sb-label">LangChain Core</div>
+<div class="sb-item" onclick="goto('m1')"><span class="ic">🧱</span> M1 · Architecture<span class="badge">déb.</span></div>
+<div class="sb-item" onclick="goto('m2')"><span class="ic">⛓</span> M2 · LCEL & Chains<span class="badge">déb.</span></div>
+<div class="sb-item" onclick="goto('m3')"><span class="ic">💬</span> M3 · Prompts & Parsers<span class="badge">déb.</span></div>
+<div class="sb-item" onclick="goto('m4')"><span class="ic">🧠</span> M4 · Memory<span class="badge">int.</span></div>
+<div class="sb-item" onclick="goto('m5')"><span class="ic">🔍</span> M5 · RAG Complet<span class="badge">int.</span></div>
+<div class="sb-item" onclick="goto('m6')"><span class="ic">🤖</span> M6 · Agents & Tools<span class="badge">avancé</span></div>
+
+<div class="sb-label">LangGraph</div>
+<div class="sb-item" onclick="goto('m7')"><span class="ic">🔗</span> M7 · Fondamentaux<span class="badge">avancé</span></div>
+<div class="sb-item" onclick="goto('m8')"><span class="ic">🕸</span> M8 · Multi-Agents<span class="badge">expert</span></div>
+
+<div class="sb-label">LangSmith</div>
+<div class="sb-item" onclick="goto('m9')"><span class="ic">🔬</span> M9 · Tracing & Debug<span class="badge">int.</span></div>
+<div class="sb-item" onclick="goto('m10')"><span class="ic">📊</span> M10 · Évaluation<span class="badge">avancé</span></div>
+
+<div class="sb-label">Projet & Ressources</div>
+<div class="sb-item" onclick="goto('m11')"><span class="ic">🚀</span> M11 · Projet Final<span class="badge">expert</span></div>
+<div class="sb-item" onclick="goto('m12')"><span class="ic">📚</span> M12 · Annexes</div>
+```
+
+  </div>
+</nav>
+
+<button id="mob-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<!-- MAIN -->
+
+<main id="main">
+
+<div class="topbar">
+  <div class="tb-bc">Cursus <span class="sep">›</span><span class="cur" id="cur-sec">Accueil</span></div>
+  <div class="tb-actions">
+    <button class="tb-btn" onclick="window.print()">⬇ PDF</button>
+  </div>
+</div>
+
+<!-- ══════════════ HERO ══════════════ -->
+
+<section class="hero" id="hero">
+  <div class="page" style="padding-top:0;padding-bottom:0">
+    <div class="hero-pill">Pareto 80/20 · De débutant à expert</div>
+    <h1 class="hero-title">
+      <span class="hi">LangChain</span> ·
+      <span class="hg">LangGraph</span> ·
+      <span class="hp">LangSmith</span>
+    </h1>
+    <p class="hero-sub">Le cours complet pour maîtriser l'écosystème LangChain — chaînes, agents, graphes d'état et observabilité. L'essentiel en premier, sans surcharge inutile.</p>
+    <div class="hero-chips">
+      <span class="chip chip-b">LangChain</span>
+      <span class="chip chip-g">LangGraph</span>
+      <span class="chip chip-p">LangSmith</span>
+      <span class="chip chip-o">Ollama local</span>
+      <span class="chip chip-c">LCEL</span>
+      <span class="chip chip-b">RAG</span>
+      <span class="chip chip-g">Agents</span>
+      <span class="chip chip-p">Multi-Agents</span>
+      <span class="chip chip-o">Évaluation</span>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-n">12 <span>mod.</span></div><div class="stat-l">Modules progressifs</div></div>
+      <div class="stat"><div class="stat-n">70<span>+</span></div><div class="stat-l">Exemples de code</div></div>
+      <div class="stat"><div class="stat-n">8 <span>quiz</span></div><div class="stat-l">Auto-évaluation</div></div>
+      <div class="stat"><div class="stat-n">1 <span>proj.</span></div><div class="stat-l">Projet intégré final</div></div>
+    </div>
+
+```
+<h2 class="sh">Table des matières</h2>
+<div class="grid">
+  <div class="gcard" onclick="goto('m1')"><div class="gcard-top bt-b"></div><div class="gcard-ic">🧱</div><div class="gcard-title">M1 · Architecture</div><div class="gcard-text">Packages, primitives, philosophie LCEL</div></div>
+  <div class="gcard" onclick="goto('m2')"><div class="gcard-top bt-b"></div><div class="gcard-ic">⛓</div><div class="gcard-title">M2 · LCEL & Chains</div><div class="gcard-text">Opérateur |, invoke, stream, batch, async</div></div>
+  <div class="gcard" onclick="goto('m3')"><div class="gcard-top bt-b"></div><div class="gcard-ic">💬</div><div class="gcard-title">M3 · Prompts & Parsers</div><div class="gcard-text">Templates, FewShot, OutputParsers JSON</div></div>
+  <div class="gcard" onclick="goto('m4')"><div class="gcard-top bt-b"></div><div class="gcard-ic">🧠</div><div class="gcard-title">M4 · Memory</div><div class="gcard-text">RunnableWithHistory, SQLite, Redis</div></div>
+  <div class="gcard" onclick="goto('m5')"><div class="gcard-top bt-b"></div><div class="gcard-ic">🔍</div><div class="gcard-title">M5 · RAG Complet</div><div class="gcard-text">Loaders, Splitters, VectorStores, Retrievers</div></div>
+  <div class="gcard" onclick="goto('m6')"><div class="gcard-top bt-b"></div><div class="gcard-ic">🤖</div><div class="gcard-title">M6 · Agents & Tools</div><div class="gcard-text">@tool, AgentExecutor, Tool Calling</div></div>
+  <div class="gcard" onclick="goto('m7')"><div class="gcard-top bt-g"></div><div class="gcard-ic">🔗</div><div class="gcard-title">M7 · LangGraph Bases</div><div class="gcard-text">StateGraph, nœuds, arêtes, cycles</div></div>
+  <div class="gcard" onclick="goto('m8')"><div class="gcard-top bt-g"></div><div class="gcard-ic">🕸</div><div class="gcard-title">M8 · Multi-Agents</div><div class="gcard-text">Supervisor, collaboration, persistance</div></div>
+  <div class="gcard" onclick="goto('m9')"><div class="gcard-top bt-p"></div><div class="gcard-ic">🔬</div><div class="gcard-title">M9 · LangSmith Tracing</div><div class="gcard-text">Traces, runs, debugging en production</div></div>
+  <div class="gcard" onclick="goto('m10')"><div class="gcard-top bt-p"></div><div class="gcard-ic">📊</div><div class="gcard-title">M10 · Évaluation</div><div class="gcard-text">Datasets, evaluators, LLM-as-Judge</div></div>
+  <div class="gcard" onclick="goto('m11')"><div class="gcard-top bt-o"></div><div class="gcard-ic">🚀</div><div class="gcard-title">M11 · Projet Final</div><div class="gcard-text">Assistant complet RAG + Agent + Graph</div></div>
+  <div class="gcard" onclick="goto('m12')"><div class="gcard-top bt-o"></div><div class="gcard-ic">📚</div><div class="gcard-title">M12 · Annexes</div><div class="gcard-text">Cheatsheets, ressources, checklist</div></div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ M1 · ARCHITECTURE ══════════════ -->
+
+<div class="divider" id="m1"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-blue">M1</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 1 · LangChain Core</div>
+        <h1>Architecture LangChain</h1>
+        <p>Comprendre la structure en packages, les primitives de base et pourquoi LangChain est organisé comme il l'est.</p>
+        <span class="mod-level"><span class="dot"></span>Débutant</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">1.1 — Les 3 packages essentiels</h2>
+<div class="tw">
+  <table>
+    <thead><tr><th>Package</th><th>Rôle</th><th>Ce qu'il contient</th><th>Pareto</th></tr></thead>
+    <tbody>
+      <tr><td>langchain-core</td><td>Primitives de base</td><td>Runnable, BaseMessage, PromptTemplate, LCEL</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>langchain</td><td>Chaînes génériques</td><td>Agents, chains, retrievers, memory abstracts</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>langchain-community</td><td>Intégrations tierces</td><td>Ollama, ChromaDB, FAISS, PDF loaders…</td><td class="stars">⭐⭐⭐⭐</td></tr>
+      <tr><td>langchain-ollama</td><td>Ollama dédié</td><td>ChatOllama, OllamaEmbeddings</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>langgraph</td><td>Agents stateful</td><td>StateGraph, workflows multi-agents</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>langsmith</td><td>Observabilité</td><td>Tracing, évaluation, datasets</td><td class="stars">⭐⭐⭐⭐</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="sh">1.2 — L'interface Runnable (cœur de LCEL)</h2>
+<div class="callout ci">
+  <span class="callout-icon">💡</span>
+  <div class="callout-body">
+    <h4>Tout est Runnable</h4>
+    <p>Dans LangChain moderne, chaque composant (LLM, prompt, parser, retriever…) implémente l'interface <code>Runnable</code>. Cela garantit une API unifiée : <code>invoke</code>, <code>stream</code>, <code>batch</code>, <code>ainvoke</code>. L'opérateur <code>|</code> compose des Runnables en pipeline.</p>
+  </div>
+</div>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">01_architecture.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="cm"># Installation complète</span>
+```
+
+<span class="cm"># pip install langchain langchain-core langchain-community</span>
+<span class="cm"># pip install langchain-ollama langgraph langsmith</span>
+<span class="cm"># pip install chromadb faiss-cpu sentence-transformers</span>
+
+<span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> ChatOllama
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> <span class="im">langchain_core.output_parsers</span> <span class="kw">import</span> StrOutputParser
+<span class="kw">from</span> <span class="im">langchain_core.messages</span> <span class="kw">import</span> HumanMessage, SystemMessage, AIMessage
+
+<span class="cm"># ── LLM de base ─────────────────────────────────────────────</span>
+llm = <span class="cl">ChatOllama</span>(
+model=<span class="st">“llama3.2”</span>,
+temperature=<span class="nu">0.7</span>,
+num_ctx=<span class="nu">4096</span>,
+)
+
+<span class="cm"># invoke — synchrone, retourne un AIMessage</span>
+response = llm.invoke(<span class="st">“Qu’est-ce que LangChain?”</span>)
+<span class="kw">print</span>(response.content)
+
+<span class="cm"># stream — chunk par chunk</span>
+<span class="kw">for</span> chunk <span class="kw">in</span> llm.stream(<span class="st">“Explique le RAG en 3 points”</span>):
+<span class="kw">print</span>(chunk.content, end=<span class="st">””</span>, flush=<span class="kw">True</span>)
+
+<span class="cm"># Messages structurés</span>
+messages = [
+<span class="cl">SystemMessage</span>(content=<span class="st">“Tu es un expert IA. Réponds en français.”</span>),
+<span class="cl">HumanMessage</span>(content=<span class="st">“C’est quoi LCEL?”</span>),
+]
+r = llm.invoke(messages)
+<span class="kw">print</span>(r.content)
+
+<span class="cm"># ── Chaîne simple (LCEL) ────────────────────────────────────</span>
+chain = (
+<span class="cl">ChatPromptTemplate</span>.from_messages([(<span class="st">“human”</span>, <span class="st">”{q}”</span>)])
+| llm
+| <span class="cl">StrOutputParser</span>()
+)
+result = chain.invoke({<span class="st">“q”</span>: <span class="st">“Bonjour!”</span>})
+<span class="kw">print</span>(result)  <span class="cm"># str directement</span></code></pre>
+</div>
+
+```
+<h2 class="sh">1.3 — LLM vs ChatModel</h2>
+<div class="cmp">
+  <div class="cmp-col">
+    <div class="cmp-head bad">⚠ OllamaLLM (ancienne API)</div>
+    <div class="cmp-body"><ul>
+      <li>Entrée : <strong>string</strong></li>
+      <li>Sortie : <strong>string</strong></li>
+      <li>API "completion" style GPT-2</li>
+      <li>Pas de rôles System/Human/AI</li>
+    </ul></div>
+  </div>
+  <div class="cmp-col">
+    <div class="cmp-head good">✅ ChatOllama (recommandé)</div>
+    <div class="cmp-body"><ul>
+      <li>Entrée : <strong>liste de messages</strong></li>
+      <li>Sortie : <strong>AIMessage</strong></li>
+      <li>Supporte System / Human / AI</li>
+      <li>Standard moderne — toujours utiliser celui-ci</li>
+    </ul></div>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ M2 · LCEL ══════════════ -->
+
+<div class="divider" id="m2"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-blue">M2</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 2 · LangChain Core</div>
+        <h1>LCEL — LangChain Expression Language</h1>
+        <p>Maîtriser l'opérateur pipe <code>|</code> et toutes les primitives de composition pour construire des pipelines puissants.</p>
+        <span class="mod-level"><span class="dot"></span>Débutant</span>
+      </div>
+    </div>
+
+```
+<div class="callout cp2">
+  <span class="callout-icon">🎯</span>
+  <div class="callout-body">
+    <h4>Pareto 80/20 — Le concept le plus important</h4>
+    <p>LCEL est le cœur de LangChain moderne. <strong>Tout le reste s'appuie dessus.</strong> Maîtrisez ce module avant d'avancer. L'opérateur <code>|</code> connecte des Runnables : la sortie de gauche devient l'entrée de droite, comme Unix pipes.</p>
+  </div>
+</div>
+
+<h2 class="sh">2.1 — Le pipe | et les méthodes d'invocation</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">02_lcel.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> ChatOllama
+```
+
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> <span class="im">langchain_core.output_parsers</span> <span class="kw">import</span> StrOutputParser
+<span class="kw">from</span> <span class="im">langchain_core.runnables</span> <span class="kw">import</span> (
+RunnablePassthrough,
+RunnableLambda,
+RunnableParallel,
+RunnableBranch,
+)
+
+llm    = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>)
+prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">“Tu es un assistant concis.”</span>),
+(<span class="st">“human”</span>,  <span class="st">”{question}”</span>),
+])
+
+<span class="cm"># ── 1. Chain simple ─────────────────────────────────────────</span>
+chain = prompt | llm | <span class="cl">StrOutputParser</span>()
+
+chain.invoke({<span class="st">“question”</span>: <span class="st">“Qu’est-ce que Python?”</span>})   <span class="cm"># str</span>
+chain.batch([{<span class="st">“question”</span>: <span class="st">“Python?”</span>}, {<span class="st">“question”</span>: <span class="st">“Rust?”</span>}])  <span class="cm"># parallèle</span>
+<span class="kw">for</span> c <span class="kw">in</span> chain.stream({<span class="st">“question”</span>: <span class="st">“Explique les LLMs”</span>}):
+<span class="kw">print</span>(c, end=<span class="st">””</span>, flush=<span class="kw">True</span>)                       <span class="cm"># streaming</span>
+
+<span class="cm"># ── 2. RunnablePassthrough — passer sans modifier ────────────</span>
+chain_rag = {
+<span class="st">“contexte”</span>: RunnablePassthrough(),   <span class="cm"># garde la valeur intacte</span>
+<span class="st">“question”</span>: RunnablePassthrough(),
+}
+
+<span class="cm"># ── 3. RunnablePassthrough.assign — ajouter des clés ────────</span>
+enriched = (
+RunnablePassthrough.assign(
+topic_upper=<span class="kw">lambda</span> x: x[<span class="st">“topic”</span>].upper()
+)
+| prompt | llm | <span class="cl">StrOutputParser</span>()
+)
+
+<span class="cm"># ── 4. RunnableLambda — fonction Python classique ────────────</span>
+<span class="kw">def</span> <span class="fn">add_context</span>(x: dict) -> dict:
+x[<span class="st">“context”</span>] = <span class="st">f”Contexte: {x[‘topic’]}”</span>
+<span class="kw">return</span> x
+
+chain_with_fn = <span class="cl">RunnableLambda</span>(add_context) | prompt | llm | <span class="cl">StrOutputParser</span>()
+
+<span class="cm"># ── 5. RunnableParallel — deux branches simultanées ──────────</span>
+parallel = <span class="cl">RunnableParallel</span>({
+<span class="st">“resume”</span>:   chain,
+<span class="st">“question”</span>: RunnablePassthrough(),
+})
+r = parallel.invoke({<span class="st">“question”</span>: <span class="st">“Explique les LLMs”</span>})
+<span class="cm"># r = {“resume”: “…”, “question”: {“question”: “…”}}</span>
+
+<span class="cm"># ── 6. RunnableBranch — routing conditionnel ─────────────────</span>
+branch = <span class="cl">RunnableBranch</span>(
+(<span class="kw">lambda</span> x: <span class="st">“code”</span>  <span class="kw">in</span> x[<span class="st">“question”</span>].lower(), chain),
+(<span class="kw">lambda</span> x: <span class="st">“math”</span>  <span class="kw">in</span> x[<span class="st">“question”</span>].lower(), chain),
+chain,   <span class="cm"># default</span>
+)
+
+<span class="cm"># ── 7. Robustesse ────────────────────────────────────────────</span>
+safe_chain = chain.with_retry(stop_after_attempt=<span class="nu">3</span>)
+chain_fb   = chain.with_fallbacks([<span class="cl">ChatOllama</span>(model=<span class="st">“mistral”</span>) | <span class="cl">StrOutputParser</span>()])
+cached     = chain.with_config({<span class="st">“run_name”</span>: <span class="st">“mon_pipeline”</span>})  <span class="cm"># LangSmith</span></code></pre>
+</div>
+
+```
+<h2 class="sh">2.2 — Async et performance</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">02_async.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">import</span> asyncio
+```
+
+<span class="cm"># ainvoke — asynchrone</span>
+<span class="kw">async def</span> <span class="fn">run</span>():
+result = <span class="kw">await</span> chain.ainvoke({<span class="st">“question”</span>: <span class="st">“Bonjour”</span>})
+<span class="kw">return</span> result
+
+<span class="cm"># astream — streaming async (idéal pour FastAPI / WebSockets)</span>
+<span class="kw">async def</span> <span class="fn">stream_response</span>():
+<span class="kw">async for</span> chunk <span class="kw">in</span> chain.astream({<span class="st">“question”</span>: <span class="st">“Explique les transformers”</span>}):
+<span class="kw">yield</span> chunk   <span class="cm"># parfait pour SSE dans FastAPI</span>
+
+<span class="cm"># abatch — batch asynchrone avec limite de concurrence</span>
+<span class="kw">async def</span> <span class="fn">batch_async</span>():
+questions = [{<span class="st">“question”</span>: f<span class="st">“Qu’est-ce que {t}?”</span>} <span class="kw">for</span> t <span class="kw">in</span> [<span class="st">“Python”</span>, <span class="st">“Rust”</span>, <span class="st">“Go”</span>]]
+results = <span class="kw">await</span> chain.abatch(questions, config={<span class="st">“max_concurrency”</span>: <span class="nu">3</span>})
+<span class="kw">return</span> results
+
+asyncio.run(run())</code></pre>
+</div>
+
+```
+<div class="quiz" id="quiz-m2">
+  <div class="quiz-head"><span style="font-size:20px">⛓</span><h3>Quiz — Module 2 : LCEL</h3><span class="quiz-badge">3 questions</span></div>
+  <div class="qq">
+    <div class="qq-num">Q1 · QCM</div>
+    <div class="qq-text">Que retourne <code>chain.batch([input1, input2, input3])</code> par rapport à 3 appels <code>invoke</code> séparés ?</div>
+    <div class="opts" id="q2-1">
+      <div class="opt" onclick="qa('q2-1',this,false)"><span class="opt-l">A</span>Exactement la même chose</div>
+      <div class="opt" onclick="qa('q2-1',this,true)"><span class="opt-l">B</span>Exécute les 3 en parallèle — bien plus rapide</div>
+      <div class="opt" onclick="qa('q2-1',this,false)"><span class="opt-l">C</span>Les fusionne en un seul appel LLM</div>
+      <div class="opt" onclick="qa('q2-1',this,false)"><span class="opt-l">D</span>N'est utile que pour OpenAI</div>
+    </div>
+    <div class="qa" id="q2-1-a"><strong>✓ B.</strong> <code>batch()</code> utilise le threading pour paralléliser. Contrôlez le degré avec <code>max_concurrency</code> dans la config. Idéal pour traiter des listes de questions.</div>
+  </div>
+  <div class="qq">
+    <div class="qq-num">Q2 · QCM</div>
+    <div class="qq-text">Quel Runnable permet d'exécuter deux branches <strong>simultanément</strong> et de fusionner leurs résultats dans un dict ?</div>
+    <div class="opts" id="q2-2">
+      <div class="opt" onclick="qa('q2-2',this,false)"><span class="opt-l">A</span>RunnableLambda</div>
+      <div class="opt" onclick="qa('q2-2',this,false)"><span class="opt-l">B</span>RunnableBranch</div>
+      <div class="opt" onclick="qa('q2-2',this,true)"><span class="opt-l">C</span>RunnableParallel</div>
+      <div class="opt" onclick="qa('q2-2',this,false)"><span class="opt-l">D</span>RunnablePassthrough</div>
+    </div>
+    <div class="qa" id="q2-2-a"><strong>✓ C.</strong> <code>RunnableParallel({"a": chainA, "b": chainB})</code> exécute les deux branches en parallèle et retourne <code>{"a": résultatA, "b": résultatB}</code>.</div>
+  </div>
+  <div class="qq">
+    <div class="qq-num">Q3 · Ouverte</div>
+    <div class="qq-text">Quelle est la différence entre <code>RunnableBranch</code> et <code>RunnableParallel</code> ?</div>
+    <button class="show-btn" onclick="document.getElementById('q2-3-a').classList.toggle('show')">Voir correction</button>
+    <div class="qa" id="q2-3-a"><strong>✓</strong> <code>RunnableParallel</code> exécute <em>toutes</em> les branches simultanément et retourne tous les résultats. <code>RunnableBranch</code> évalue les conditions dans l'ordre et n'exécute que <em>la première branche</em> dont la condition est vraie — c'est du routing, pas du parallélisme.</div>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ M3 · PROMPTS & PARSERS ══════════════ -->
+
+<div class="divider" id="m3"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-blue">M3</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 3 · LangChain Core</div>
+        <h1>Prompts & OutputParsers</h1>
+        <p>Construire des prompts dynamiques et structurer les sorties LLM avec des schémas Pydantic.</p>
+        <span class="mod-level"><span class="dot"></span>Débutant</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">3.1 — ChatPromptTemplate</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">03_prompts.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> (
+ChatPromptTemplate,
+PromptTemplate,
+FewShotChatMessagePromptTemplate,
+MessagesPlaceholder,
+```
+
+)
+
+<span class="cm"># ── 1. Template de base ──────────────────────────────────────</span>
+prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">“Tu es un {role}. Réponds en {langue}.”</span>),
+<span class="cl">MessagesPlaceholder</span>(<span class="st">“history”</span>, optional=<span class="kw">True</span>),
+(<span class="st">“human”</span>, <span class="st">”{question}”</span>),
+])
+msgs = prompt.invoke({
+<span class="st">“role”</span>: <span class="st">“expert Python”</span>,
+<span class="st">“langue”</span>: <span class="st">“français”</span>,
+<span class="st">“history”</span>: [],
+<span class="st">“question”</span>: <span class="st">“Qu’est-ce qu’un décorateur?”</span>
+})
+
+<span class="cm"># ── 2. FewShot — apprendre par l’exemple ────────────────────</span>
+examples = [
+{<span class="st">“input”</span>: <span class="st">“France”</span>,    <span class="st">“output”</span>: <span class="st">“Paris”</span>},
+{<span class="st">“input”</span>: <span class="st">“Allemagne”</span>, <span class="st">“output”</span>: <span class="st">“Berlin”</span>},
+{<span class="st">“input”</span>: <span class="st">“Japon”</span>,     <span class="st">“output”</span>: <span class="st">“Tokyo”</span>},
+]
+ex_prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“human”</span>, <span class="st">“Capitale de {input}?”</span>),
+(<span class="st">“ai”</span>,    <span class="st">”{output}”</span>),
+])
+few_shot = <span class="cl">FewShotChatMessagePromptTemplate</span>(
+example_prompt=ex_prompt,
+examples=examples,
+)
+final_prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">“Expert géographie. Réponds avec UN seul mot.”</span>),
+few_shot,
+(<span class="st">“human”</span>, <span class="st">“Capitale de {pays}?”</span>),
+])
+
+<span class="cm"># ── 3. PromptTemplate simple (sans messages) ─────────────────</span>
+simple = <span class="cl">PromptTemplate</span>.from_template(
+<span class="st">“Explique {sujet} à un niveau {niveau} en {n} points.”</span>
+)
+p = simple.invoke({<span class="st">“sujet”</span>: <span class="st">“les LLMs”</span>, <span class="st">“niveau”</span>: <span class="st">“débutant”</span>, <span class="st">“n”</span>: <span class="st">“3”</span>})</code></pre>
+</div>
+
+```
+<h2 class="sh">3.2 — OutputParsers</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">03_parsers.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain_core.output_parsers</span> <span class="kw">import</span> (
+StrOutputParser,               <span class="cm"># string brut — le plus courant</span>
+JsonOutputParser,              <span class="cm"># JSON structuré</span>
+CommaSeparatedListOutputParser,<span class="cm"># liste CSV</span>
+```
+
+)
+<span class="kw">from</span> <span class="im">pydantic</span> <span class="kw">import</span> BaseModel, Field
+
+<span class="cm"># ── 1. JSON avec schéma Pydantic ─────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">Personne</span>(BaseModel):
+nom:         str       = <span class="cl">Field</span>(description=<span class="st">“Nom complet”</span>)
+age:         int       = <span class="cl">Field</span>(description=<span class="st">“Age en années”</span>)
+competences: list[str] = <span class="cl">Field</span>(description=<span class="st">“Compétences techniques”</span>)
+experience:  str       = <span class="cl">Field</span>(description=<span class="st">“junior/mid/senior”</span>)
+
+parser_json = <span class="cl">JsonOutputParser</span>(pydantic_object=<span class="cl">Personne</span>)
+
+chain_json = (
+<span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">“Extrais les informations structurées.”</span>),
+(<span class="st">“human”</span>,  <span class="st">”{texte}\n\n{format}”</span>),
+])
+| <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>)
+| parser_json
+)
+result = chain_json.invoke({
+<span class="st">“texte”</span>:  <span class="st">“Alice Martin, 29 ans, dev senior Python/FastAPI depuis 6 ans.”</span>,
+<span class="st">“format”</span>: parser_json.get_format_instructions()
+})
+<span class="cm"># result = {“nom”: “Alice Martin”, “age”: 29, “competences”: […], “experience”: “senior”}</span>
+
+<span class="cm"># ── 2. Liste simple ──────────────────────────────────────────</span>
+chain_list = (
+<span class="cl">ChatPromptTemplate</span>.from_template(
+<span class="st">“Liste 5 {categorie} populaires, séparés par des virgules.”</span>
+)
+| <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>)
+| <span class="cl">CommaSeparatedListOutputParser</span>()
+)
+langages = chain_list.invoke({<span class="st">“categorie”</span>: <span class="st">“frameworks Python”</span>})
+<span class="cm"># [“Django”, “Flask”, “FastAPI”, “SQLAlchemy”, “Pydantic”]</span>
+
+<span class="cm"># ── 3. with_structured_output — méthode moderne ──────────────</span>
+<span class="kw">class</span> <span class="cl">Analyse</span>(BaseModel):
+sentiment:  str   = <span class="cl">Field</span>(description=<span class="st">“positif/négatif/neutre”</span>)
+score:      float = <span class="cl">Field</span>(description=<span class="st">“score de -1.0 à 1.0”</span>)
+mots_cles: list[str] = <span class="cl">Field</span>(description=<span class="st">“mots importants”</span>)
+
+llm_struct = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>).with_structured_output(<span class="cl">Analyse</span>)
+analyse = llm_struct.invoke(<span class="st">“Ce produit est excellent, je l’adore!”</span>)
+<span class="kw">print</span>(analyse.sentiment, analyse.score)</code></pre>
+</div>
+
+  </div>
+</section>
+
+<!-- ══════════════ M4 · MEMORY ══════════════ -->
+
+<div class="divider" id="m4"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-blue">M4</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 4 · LangChain Core</div>
+        <h1>Memory & Historique</h1>
+        <p>Gérer l'état conversationnel entre les appels LLM avec persistance multi-sessions.</p>
+        <span class="mod-level inter"><span class="dot"></span>Intermédiaire</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">4.1 — RunnableWithMessageHistory</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">04_memory.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> ChatOllama
+```
+
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="kw">from</span> <span class="im">langchain_core.output_parsers</span> <span class="kw">import</span> StrOutputParser
+<span class="kw">from</span> <span class="im">langchain_core.chat_history</span> <span class="kw">import</span> InMemoryChatMessageHistory
+<span class="kw">from</span> <span class="im">langchain_core.runnables.history</span> <span class="kw">import</span> RunnableWithMessageHistory
+
+llm = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>)
+
+prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">“Tu es un assistant serviable. Utilise l’historique.”</span>),
+<span class="cl">MessagesPlaceholder</span>(<span class="st">“history”</span>),   <span class="cm"># historique injecté ici</span>
+(<span class="st">“human”</span>,  <span class="st">”{input}”</span>),
+])
+chain = prompt | llm | <span class="cl">StrOutputParser</span>()
+
+<span class="cm"># ── Stockage en mémoire par session ─────────────────────────</span>
+store: dict[str, <span class="cl">InMemoryChatMessageHistory</span>] = {}
+
+<span class="kw">def</span> <span class="fn">get_history</span>(session_id: str) -> <span class="cl">InMemoryChatMessageHistory</span>:
+<span class="kw">if</span> session_id <span class="kw">not in</span> store:
+store[session_id] = <span class="cl">InMemoryChatMessageHistory</span>()
+<span class="kw">return</span> store[session_id]
+
+chain_mem = <span class="cl">RunnableWithMessageHistory</span>(
+chain,
+get_history,
+input_messages_key=<span class="st">“input”</span>,
+history_messages_key=<span class="st">“history”</span>,
+)
+
+<span class="cm"># ── Utilisation ──────────────────────────────────────────────</span>
+cfg_alice = {<span class="st">“configurable”</span>: {<span class="st">“session_id”</span>: <span class="st">“alice”</span>}}
+cfg_bob   = {<span class="st">“configurable”</span>: {<span class="st">“session_id”</span>: <span class="st">“bob”</span>}}
+
+r1 = chain_mem.invoke({<span class="st">“input”</span>: <span class="st">“Je m’appelle Alice.”</span>}, cfg_alice)
+r2 = chain_mem.invoke({<span class="st">“input”</span>: <span class="st">“Quel est mon prénom?”</span>}, cfg_alice)
+<span class="kw">print</span>(r2)  <span class="cm"># “Tu t’appelles Alice.”</span>
+
+r3 = chain_mem.invoke({<span class="st">“input”</span>: <span class="st">“Je m’appelle Bob.”</span>}, cfg_bob)
+r4 = chain_mem.invoke({<span class="st">“input”</span>: <span class="st">“Quel est mon prénom?”</span>}, cfg_bob)
+<span class="kw">print</span>(r4)  <span class="cm"># “Tu t’appelles Bob.” — indépendant d’Alice</span></code></pre>
+</div>
+
+```
+<h2 class="sh">4.2 — Persistance SQLite & Redis</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">04_persistence.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain_community.chat_message_histories</span> <span class="kw">import</span> (
+SQLChatMessageHistory,
+RedisChatMessageHistory,
+```
+
+)
+
+<span class="cm"># ── SQLite — simple, persiste entre redémarrages ─────────────</span>
+<span class="kw">def</span> <span class="fn">get_sql_history</span>(session_id: str) -> <span class="cl">SQLChatMessageHistory</span>:
+<span class="kw">return</span> <span class="cl">SQLChatMessageHistory</span>(
+session_id=session_id,
+connection_string=<span class="st">“sqlite:///conversations.db”</span>
+)
+
+<span class="cm"># ── Redis — production multi-instances avec TTL ──────────────</span>
+<span class="kw">def</span> <span class="fn">get_redis_history</span>(session_id: str) -> <span class="cl">RedisChatMessageHistory</span>:
+<span class="kw">return</span> <span class="cl">RedisChatMessageHistory</span>(
+session_id=session_id,
+url=<span class="st">“redis://localhost:6379”</span>,
+ttl=<span class="nu">86400</span>  <span class="cm"># expire après 24h</span>
+)
+
+<span class="cm"># Remplacer get_history par get_sql_history ou get_redis_history</span>
+chain_sql = <span class="cl">RunnableWithMessageHistory</span>(
+chain, get_sql_history,
+input_messages_key=<span class="st">“input”</span>,
+history_messages_key=<span class="st">“history”</span>,
+)
+
+<span class="cm"># ── Stratégie hybride — résumé + fenêtre récente ─────────────</span>
+<span class="kw">class</span> <span class="cl">WindowHistory</span>(<span class="cl">InMemoryChatMessageHistory</span>):
+<span class="st">””“Conserve les K derniers messages.”””</span>
+<span class="kw">def</span> <span class="fn">**init**</span>(self, k: int = <span class="nu">20</span>):
+<span class="kw">super</span>().**init**()
+self.k = k
+<span class="kw">def</span> <span class="fn">add_messages</span>(self, msgs):
+<span class="kw">super</span>().add_messages(msgs)
+<span class="kw">if</span> <span class="fn">len</span>(self.messages) > self.k:
+self.messages = self.messages[-self.k:]</code></pre>
+</div>
+
+```
+<div class="tw">
+  <table>
+    <thead><tr><th>Stratégie</th><th>Mécanisme</th><th>Avantage</th><th>Quand l'utiliser</th></tr></thead>
+    <tbody>
+      <tr><td>InMemory</td><td>Dict Python</td><td>Ultra simple</td><td>Dev / tests</td></tr>
+      <tr><td>Window (K tours)</td><td>Garde les K derniers</td><td>Prévisible</td><td>80% des cas</td></tr>
+      <tr><td>SQLite</td><td>Fichier local</td><td>Persiste les redémarrages</td><td>App solo</td></tr>
+      <tr><td>Redis</td><td>Store externe TTL</td><td>Multi-instances</td><td>Production</td></tr>
+      <tr><td>Summary Buffer</td><td>Résumé + fenêtre</td><td>Longues conversations</td><td>Chatbots longs</td></tr>
+    </tbody>
+  </table>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ M5 · RAG ══════════════ -->
+
+<div class="divider" id="m5"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-orange">M5</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 5 · LangChain Core</div>
+        <h1>RAG — Retrieval-Augmented Generation</h1>
+        <p>Construire un système complet permettant au LLM de répondre sur la base de vos propres documents.</p>
+        <span class="mod-level inter"><span class="dot"></span>Intermédiaire</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">5.1 — Pipeline complet en 6 étapes</h2>
+<div class="tw">
+  <table>
+    <thead><tr><th>Étape</th><th>Composant</th><th>Pareto</th></tr></thead>
+    <tbody>
+      <tr><td>1. Chargement</td><td>DirectoryLoader, PDFPlumberLoader, WebBaseLoader</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>2. Découpage</td><td>RecursiveCharacterTextSplitter(1000, 200)</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>3. Embeddings</td><td>OllamaEmbeddings("nomic-embed-text")</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>4. Stockage</td><td>Chroma (persist) ou FAISS (rapide)</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>5. Récupération</td><td>as_retriever(mmr) + EnsembleRetriever</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>6. Génération</td><td>ChatPromptTemplate + LLM + StrOutputParser</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="sh">5.2 — Indexation (étapes 1-4)</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">05_indexing.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain_community.document_loaders</span> <span class="kw">import</span> (
+DirectoryLoader, TextLoader, PDFPlumberLoader, WebBaseLoader
+```
+
+)
+<span class="kw">from</span> <span class="im">langchain_text_splitters</span> <span class="kw">import</span> RecursiveCharacterTextSplitter
+<span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> OllamaEmbeddings
+<span class="kw">from</span> <span class="im">langchain_community.vectorstores</span> <span class="kw">import</span> Chroma, FAISS
+<span class="kw">import</span> os
+
+<span class="cm"># ── 1. Charger ───────────────────────────────────────────────</span>
+loader = <span class="cl">DirectoryLoader</span>(<span class="st">”./data”</span>, glob=<span class="st">”**/*.txt”</span>, loader_cls=<span class="cl">TextLoader</span>)
+docs   = loader.load()
+<span class="kw">print</span>(f<span class="st">”{len(docs)} documents chargés”</span>)
+
+<span class="cm"># ── 2. Découper ──────────────────────────────────────────────</span>
+splitter = <span class="cl">RecursiveCharacterTextSplitter</span>(
+chunk_size=<span class="nu">1000</span>,    <span class="cm"># taille max en caractères</span>
+chunk_overlap=<span class="nu">200</span>,  <span class="cm"># chevauchement (20%) — évite les coupures</span>
+separators=[<span class="st">”\n\n”</span>, <span class="st">”\n”</span>, <span class="st">”. “</span>, <span class="st">” “</span>, <span class="st">””</span>],
+)
+chunks = splitter.split_documents(docs)
+<span class="kw">print</span>(f<span class="st">”{len(docs)} docs → {len(chunks)} chunks”</span>)
+
+<span class="cm"># ── 3. Embeddings locaux ─────────────────────────────────────</span>
+embeddings = <span class="cl">OllamaEmbeddings</span>(model=<span class="st">“nomic-embed-text”</span>)
+
+<span class="cm"># ── 4a. Chroma — persistant, filtres avancés ─────────────────</span>
+<span class="kw">if</span> <span class="kw">not</span> os.path.exists(<span class="st">”./chroma_db”</span>):
+vectorstore = <span class="cl">Chroma</span>.from_documents(
+documents=chunks, embedding=embeddings,
+persist_directory=<span class="st">”./chroma_db”</span>,
+)
+<span class="kw">else</span>:
+vectorstore = <span class="cl">Chroma</span>(
+persist_directory=<span class="st">”./chroma_db”</span>,
+embedding_function=embeddings,
+)
+
+<span class="cm"># ── 4b. FAISS — ultra-rapide en mémoire ──────────────────────</span>
+faiss_store = <span class="cl">FAISS</span>.from_documents(chunks, embeddings)
+faiss_store.save_local(<span class="st">“faiss_index”</span>)
+<span class="cm"># FAISS.load_local(“faiss_index”, embeddings, allow_dangerous_deserialization=True)</span>
+
+<span class="cm"># ── Ajouter des documents dynamiquement ──────────────────────</span>
+<span class="kw">from</span> <span class="im">langchain_core.documents</span> <span class="kw">import</span> Document
+vectorstore.add_documents([
+<span class="cl">Document</span>(page_content=<span class="st">“Nouveau contenu.”</span>, metadata={<span class="st">“source”</span>: <span class="st">“update”</span>})
+])</code></pre>
+</div>
+
+```
+<h2 class="sh">5.3 — Retrievers avancés (étape 5)</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">05_retrievers.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain.retrievers</span> <span class="kw">import</span> MultiQueryRetriever, EnsembleRetriever
+```
+
+<span class="kw">from</span> <span class="im">langchain_community.retrievers</span> <span class="kw">import</span> BM25Retriever
+
+<span class="cm"># ── Basique ──────────────────────────────────────────────────</span>
+r_base = vectorstore.as_retriever(search_kwargs={<span class="st">“k”</span>: <span class="nu">4</span>})
+
+<span class="cm"># ── MMR — pertinence + diversité ⭐ ─────────────────────────</span>
+r_mmr = vectorstore.as_retriever(
+search_type=<span class="st">“mmr”</span>,
+search_kwargs={<span class="st">“k”</span>: <span class="nu">4</span>, <span class="st">“fetch_k”</span>: <span class="nu">20</span>, <span class="st">“lambda_mult”</span>: <span class="nu">0.5</span>}
+)
+
+<span class="cm"># ── MultiQuery — reformule la question ──────────────────────</span>
+r_multi = <span class="cl">MultiQueryRetriever</span>.from_llm(
+retriever=r_base,
+llm=<span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>),
+)
+<span class="cm"># Génère 3 variantes → meilleur rappel</span>
+
+<span class="cm"># ── Ensemble hybride BM25 + vectoriel ⭐ ─────────────────────</span>
+bm25 = <span class="cl">BM25Retriever</span>.from_documents(chunks); bm25.k = <span class="nu">4</span>
+r_hybrid = <span class="cl">EnsembleRetriever</span>(
+retrievers=[bm25, r_base],
+weights=[<span class="nu">0.4</span>, <span class="nu">0.6</span>]  <span class="cm"># 40% mots-clés + 60% sémantique</span>
+)
+<span class="cm"># Meilleur des deux mondes — recommandé en production</span>
+
+<span class="cm"># ── Seuil de score ───────────────────────────────────────────</span>
+r_thresh = vectorstore.as_retriever(
+search_type=<span class="st">“similarity_score_threshold”</span>,
+search_kwargs={<span class="st">“score_threshold”</span>: <span class="nu">0.6</span>}
+)</code></pre>
+</div>
+
+```
+<h2 class="sh">5.4 — Pipeline RAG complet (étape 6)</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">05_rag_chain.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain_core.runnables</span> <span class="kw">import</span> RunnablePassthrough, RunnableParallel
+```
+
+retriever = r_hybrid  <span class="cm"># ou r_mmr, r_base…</span>
+
+<span class="kw">def</span> <span class="fn">fmt</span>(docs) -> str:
+<span class="kw">return</span> <span class="st">”\n\n—\n\n”</span>.join(
+f<span class="st">”[{d.metadata.get(‘source’,’?’)}]\n{d.page_content}”</span> <span class="kw">for</span> d <span class="kw">in</span> docs
+)
+
+RAG_PROMPT = <span class="cl">ChatPromptTemplate</span>.from_template(<span class="st">”””
+Réponds UNIQUEMENT en te basant sur le contexte ci-dessous.
+Si l’information est absente, dis-le clairement. Cite les sources.
+
+Contexte:
+{context}
+
+Question: {question}
+
+Réponse:”””</span>)
+
+<span class="cm"># ── Chain RAG simple ─────────────────────────────────────────</span>
+rag_chain = (
+{<span class="st">“context”</span>: retriever | fmt, <span class="st">“question”</span>: RunnablePassthrough()}
+| RAG_PROMPT | llm | <span class="cl">StrOutputParser</span>()
+)
+answer = rag_chain.invoke(<span class="st">“Comment fonctionne le RAG?”</span>)
+
+<span class="cm"># ── RAG avec sources retournées ──────────────────────────────</span>
+rag_with_src = <span class="cl">RunnableParallel</span>(
+docs=retriever,
+question=RunnablePassthrough()
+).assign(
+answer=<span class="kw">lambda</span> x: (RAG_PROMPT | llm | <span class="cl">StrOutputParser</span>()).invoke({
+<span class="st">“context”</span>: fmt(x[<span class="st">“docs”</span>]), <span class="st">“question”</span>: x[<span class="st">“question”</span>]
+})
+)
+r = rag_with_src.invoke(<span class="st">“Qu’est-ce que le RAG?”</span>)
+<span class="kw">print</span>(r[<span class="st">“answer”</span>])
+<span class="kw">print</span>([d.metadata[<span class="st">“source”</span>] <span class="kw">for</span> d <span class="kw">in</span> r[<span class="st">“docs”</span>]])
+
+<span class="cm"># ── RAG conversationnel (avec historique) ─────────────────────</span>
+<span class="kw">from</span> <span class="im">langchain.chains</span> <span class="kw">import</span> create_history_aware_retriever, create_retrieval_chain
+<span class="kw">from</span> <span class="im">langchain.chains.combine_documents</span> <span class="kw">import</span> create_stuff_documents_chain
+
+ctx_prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">“Reformule la question en tenant compte de l’historique.”</span>),
+<span class="cl">MessagesPlaceholder</span>(<span class="st">“chat_history”</span>),
+(<span class="st">“human”</span>, <span class="st">”{input}”</span>),
+])
+hist_retriever = create_history_aware_retriever(llm, retriever, ctx_prompt)
+qa_chain       = create_stuff_documents_chain(llm, RAG_PROMPT)
+conv_rag       = create_retrieval_chain(hist_retriever, qa_chain)</code></pre>
+</div>
+
+```
+<div class="quiz">
+  <div class="quiz-head"><span style="font-size:20px">🔍</span><h3>Quiz — Module 5 : RAG</h3><span class="quiz-badge">2 questions</span></div>
+  <div class="qq">
+    <div class="qq-num">Q1 · QCM</div>
+    <div class="qq-text">Pourquoi l'<strong>EnsembleRetriever</strong> (BM25 + vectoriel) est-il souvent meilleur que chaque méthode seule ?</div>
+    <div class="opts" id="q5-1">
+      <div class="opt" onclick="qa('q5-1',this,false)"><span class="opt-l">A</span>Il est plus rapide que chaque méthode</div>
+      <div class="opt" onclick="qa('q5-1',this,true)"><span class="opt-l">B</span>BM25 capture les mots-clés exacts, le vectoriel capture la sémantique</div>
+      <div class="opt" onclick="qa('q5-1',this,false)"><span class="opt-l">C</span>Il génère automatiquement de meilleurs embeddings</div>
+      <div class="opt" onclick="qa('q5-1',this,false)"><span class="opt-l">D</span>Il ne nécessite pas de base vectorielle</div>
+    </div>
+    <div class="qa" id="q5-1-a"><strong>✓ B.</strong> BM25 (TF-IDF) excelle pour les termes rares et précis. La recherche vectorielle capture les synonymes et la sémantique. Combinés via Reciprocal Rank Fusion, ils couvrent les cas où chaque méthode échoue seule.</div>
+  </div>
+  <div class="qq">
+    <div class="qq-num">Q2 · Ouverte</div>
+    <div class="qq-text">Expliquez le rôle de <code>chunk_overlap</code> et donnez la valeur empirique recommandée.</div>
+    <button class="show-btn" onclick="document.getElementById('q5-2-a').classList.toggle('show')">Voir correction</button>
+    <div class="qa" id="q5-2-a"><strong>✓</strong> Sans overlap, une phrase coupée entre deux chunks perd son sens à la jonction. Avec overlap, chaque chunk partage du texte avec son voisin — la continuité sémantique est préservée. Règle empirique : <strong>10-20% du chunk_size</strong>. Pour chunk_size=1000, utilisez chunk_overlap=200.</div>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ M6 · AGENTS ══════════════ -->
+
+<div class="divider" id="m6"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-cyan">M6</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 6 · LangChain Core</div>
+        <h1>Agents & Tools</h1>
+        <p>Créer des agents qui raisonnent dynamiquement et utilisent des outils pour accomplir des tâches complexes.</p>
+        <span class="mod-level adv"><span class="dot"></span>Avancé</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">6.1 — Créer des Tools</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">06_tools.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain_core.tools</span> <span class="kw">import</span> tool, StructuredTool
+```
+
+<span class="kw">from</span> <span class="im">pydantic</span> <span class="kw">import</span> BaseModel, Field
+<span class="kw">from</span> <span class="im">datetime</span> <span class="kw">import</span> datetime
+<span class="kw">import</span> math, os
+
+<span class="cm"># ── @tool — décorateur simple (recommandé) ───────────────────</span>
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">calculatrice</span>(expression: str) -> str:
+<span class="st">””“Évalue une expression mathématique Python sécurisée.
+Exemples: “2 + 2”, “100 * 0.15”, “sqrt(144)”
+“””</span>
+<span class="kw">try</span>:
+env = {k: getattr(math, k) <span class="kw">for</span> k <span class="kw">in</span> dir(math) <span class="kw">if not</span> k.startswith(<span class="st">”_”</span>)}
+env[<span class="st">”**builtins**”</span>] = {}
+<span class="kw">return</span> str(eval(expression, env))
+<span class="kw">except Exception</span> <span class="kw">as</span> e:
+<span class="kw">return</span> f<span class="st">“Erreur: {e}”</span>
+
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">date_heure</span>() -> str:
+<span class="st">””“Retourne la date et heure actuelles.”””</span>
+<span class="kw">return</span> datetime.now().strftime(<span class="st">”%A %d %B %Y à %H:%M”</span>)
+
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">lire_fichier</span>(chemin: str) -> str:
+<span class="st">””“Lit le contenu d’un fichier texte local.
+Args: chemin — chemin relatif du fichier
+“””</span>
+<span class="kw">try</span>:
+<span class="kw">with</span> open(chemin, encoding=<span class="st">“utf-8”</span>) <span class="kw">as</span> f: <span class="kw">return</span> f.read()[:<span class="nu">2000</span>]
+<span class="kw">except</span>: <span class="kw">return</span> f<span class="st">“Fichier non trouvé: {chemin}”</span>
+
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">ecrire_fichier</span>(chemin: str, contenu: str) -> str:
+<span class="st">””“Écrit du contenu dans un fichier. Crée les répertoires si nécessaire.”””</span>
+os.makedirs(os.path.dirname(chemin) <span class="kw">or</span> <span class="st">”.”</span>, exist_ok=<span class="kw">True</span>)
+<span class="kw">with</span> open(chemin, <span class="st">“w”</span>, encoding=<span class="st">“utf-8”</span>) <span class="kw">as</span> f: f.write(contenu)
+<span class="kw">return</span> f<span class="st">“✅ Écrit: {chemin} ({len(contenu)} chars)”</span>
+
+<span class="cm"># ── StructuredTool — schéma Pydantic explicite ───────────────</span>
+<span class="kw">class</span> <span class="cl">ConvertInput</span>(BaseModel):
+valeur:     float = <span class="cl">Field</span>(description=<span class="st">“Valeur à convertir”</span>)
+de_unite:   str   = <span class="cl">Field</span>(description=<span class="st">“Unité source (km/miles/kg/lbs)”</span>)
+vers_unite: str   = <span class="cl">Field</span>(description=<span class="st">“Unité cible”</span>)
+
+<span class="kw">def</span> <span class="fn">_convert</span>(valeur, de_unite, vers_unite):
+table = {(<span class="st">“km”</span>,<span class="st">“miles”</span>):<span class="nu">.621</span>,(<span class="st">“miles”</span>,<span class="st">“km”</span>):<span class="nu">1.609</span>,(<span class="st">“kg”</span>,<span class="st">“lbs”</span>):<span class="nu">2.205</span>,(<span class="st">“lbs”</span>,<span class="st">“kg”</span>):<span class="nu">.454</span>}
+f = table.get((de_unite.lower(), vers_unite.lower()))
+<span class="kw">return</span> f<span class="st">”{valeur*f:.3f} {vers_unite}”</span> <span class="kw">if</span> f <span class="kw">else</span> <span class="st">“Conversion non supportée”</span>
+
+conversion = <span class="cl">StructuredTool</span>.from_function(
+func=_convert, name=<span class="st">“conversion”</span>,
+description=<span class="st">“Convertit entre unités (km/miles, kg/lbs)”</span>,
+args_schema=<span class="cl">ConvertInput</span>
+)
+
+<span class="cm"># Inspecter un tool</span>
+<span class="kw">print</span>(calculatrice.name, calculatrice.description)
+<span class="kw">print</span>(calculatrice.invoke({<span class="st">“expression”</span>: <span class="st">“sqrt(144)”</span>}))  <span class="cm"># “12.0”</span></code></pre>
+</div>
+
+```
+<h2 class="sh">6.2 — Agent Tool Calling</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">06_agent.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langchain.agents</span> <span class="kw">import</span> create_tool_calling_agent, AgentExecutor
+```
+
+<span class="kw">from</span> <span class="im">langchain_core.prompts</span> <span class="kw">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="kw">from</span> <span class="im">langchain_core.runnables.history</span> <span class="kw">import</span> RunnableWithMessageHistory
+
+tools = [calculatrice, date_heure, lire_fichier, ecrire_fichier, conversion]
+llm   = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>, temperature=<span class="nu">0</span>)
+
+prompt = <span class="cl">ChatPromptTemplate</span>.from_messages([
+(<span class="st">“system”</span>, <span class="st">””“Tu es un assistant expert et polyvalent.
+Utilise les outils disponibles avec précision.
+Réponds toujours en français.”””</span>),
+<span class="cl">MessagesPlaceholder</span>(<span class="st">“chat_history”</span>, optional=<span class="kw">True</span>),
+(<span class="st">“human”</span>, <span class="st">”{input}”</span>),
+<span class="cl">MessagesPlaceholder</span>(<span class="st">“agent_scratchpad”</span>),
+])
+
+agent    = create_tool_calling_agent(llm, tools, prompt)
+executor = <span class="cl">AgentExecutor</span>(
+agent=agent,
+tools=tools,
+verbose=<span class="kw">True</span>,          <span class="cm"># affiche le raisonnement</span>
+max_iterations=<span class="nu">10</span>,     <span class="cm"># évite les boucles infinies</span>
+handle_parsing_errors=<span class="kw">True</span>,
+return_intermediate_steps=<span class="kw">True</span>,
+)
+
+<span class="cm"># Utilisation simple</span>
+r = executor.invoke({<span class="st">“input”</span>: <span class="st">“Quelle date sommes-nous? Et calcule sqrt(256).”</span>})
+<span class="kw">print</span>(r[<span class="st">“output”</span>])
+
+<span class="cm"># Agent avec mémoire</span>
+store = {}
+agent_mem = <span class="cl">RunnableWithMessageHistory</span>(
+executor, <span class="kw">lambda</span> sid: store.setdefault(sid, <span class="cl">InMemoryChatMessageHistory</span>()),
+input_messages_key=<span class="st">“input”</span>,
+history_messages_key=<span class="st">“chat_history”</span>,
+)
+cfg = {<span class="st">“configurable”</span>: {<span class="st">“session_id”</span>: <span class="st">“u1”</span>}}
+agent_mem.invoke({<span class="st">“input”</span>: <span class="st">“Mon budget est 1000€”</span>}, cfg)
+r = agent_mem.invoke({<span class="st">“input”</span>: <span class="st">“Calcule 15% de mon budget”</span>}, cfg)
+<span class="kw">print</span>(r[<span class="st">“output”</span>])  <span class="cm"># “15% de 1000€ = 150€”</span></code></pre>
+</div>
+
+```
+<div class="quiz">
+  <div class="quiz-head"><span style="font-size:20px">🤖</span><h3>Quiz — Module 6 : Agents</h3><span class="quiz-badge">2 questions</span></div>
+  <div class="qq">
+    <div class="qq-num">Q1 · QCM</div>
+    <div class="qq-text">Pourquoi faut-il impérativement définir <code>max_iterations</code> dans <code>AgentExecutor</code> ?</div>
+    <div class="opts" id="q6-1">
+      <div class="opt" onclick="qa('q6-1',this,false)"><span class="opt-l">A</span>Pour limiter le nombre de tokens générés</div>
+      <div class="opt" onclick="qa('q6-1',this,true)"><span class="opt-l">B</span>Pour éviter les boucles infinies si l'agent tourne en rond</div>
+      <div class="opt" onclick="qa('q6-1',this,false)"><span class="opt-l">C</span>Pour contrôler le nombre de threads parallèles</div>
+      <div class="opt" onclick="qa('q6-1',this,false)"><span class="opt-l">D</span>C'est optionnel, juste une bonne pratique</div>
+    </div>
+    <div class="qa" id="q6-1-a"><strong>✓ B.</strong> Sans limite, un agent mal guidé peut appeler un outil, lire son résultat, rappeler le même outil indéfiniment. En production, 5-15 itérations couvrent 99% des cas légitimes.</div>
+  </div>
+  <div class="qq">
+    <div class="qq-num">Q2 · Ouverte</div>
+    <div class="qq-text">Expliquez la différence clé entre une <strong>Chain</strong> et un <strong>Agent</strong> en une phrase chacun.</div>
+    <button class="show-btn" onclick="document.getElementById('q6-2-a').classList.toggle('show')">Voir correction</button>
+    <div class="qa" id="q6-2-a"><strong>✓ Chain :</strong> suit un flux prédéfini et déterministe — A→B→C, sans décision dynamique.<br><strong>Agent :</strong> utilise un LLM pour décider à chaque étape quels outils appeler, dans quel ordre, et quand s'arrêter — comportement non-déterministe et adaptatif.</div>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ M7 · LANGGRAPH FONDAMENTAUX ══════════════ -->
+
+<div class="divider" id="m7"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-green">M7</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 7 · LangGraph</div>
+        <h1>LangGraph — Fondamentaux</h1>
+        <p>Modéliser des workflows d'agents comme des graphes d'états pour un contrôle total du flux d'exécution.</p>
+        <span class="mod-level adv"><span class="dot"></span>Avancé</span>
+      </div>
+    </div>
+
+```
+<div class="callout ci">
+  <span class="callout-icon">🔗</span>
+  <div class="callout-body">
+    <h4>Pourquoi LangGraph plutôt qu'AgentExecutor ?</h4>
+    <p>AgentExecutor est une boucle opaque. LangGraph vous donne le contrôle total : définissez explicitement les nœuds (fonctions Python), les arêtes (transitions conditionnelles), l'état partagé, et les cycles. Indispensable pour les workflows complexes et la production.</p>
+  </div>
+</div>
+
+<h2 class="sh">7.1 — Concepts fondamentaux</h2>
+<div class="tw">
+  <table>
+    <thead><tr><th>Concept</th><th>Description</th><th>Analogie</th></tr></thead>
+    <tbody>
+      <tr><td>StateGraph</td><td>Graphe avec état partagé entre les nœuds</td><td>Machine à états finis</td></tr>
+      <tr><td>State (TypedDict)</td><td>Dict typé partagé entre tous les nœuds</td><td>Base de données en mémoire</td></tr>
+      <tr><td>Node</td><td>Fonction Python qui reçoit et retourne l'état</td><td>Étape de traitement</td></tr>
+      <tr><td>Edge</td><td>Transition fixe entre deux nœuds</td><td>Flèche dans un diagramme</td></tr>
+      <tr><td>Conditional Edge</td><td>Transition conditionnelle basée sur l'état</td><td>if/elif dans le flux</td></tr>
+      <tr><td>Checkpointer</td><td>Persistance de l'état entre les runs</td><td>Save game</td></tr>
+      <tr><td>Interrupt</td><td>Pause pour intervention humaine</td><td>Human-in-the-loop</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="sh">7.2 — Agent ReAct avec LangGraph</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">07_langgraph_basic.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="cm"># pip install langgraph</span>
+```
+
+<span class="kw">from</span> <span class="im">langgraph.graph</span> <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> <span class="im">langgraph.prebuilt</span> <span class="kw">import</span> ToolNode, tools_condition
+<span class="kw">from</span> <span class="im">langchain_ollama</span> <span class="kw">import</span> ChatOllama
+<span class="kw">from</span> <span class="im">langchain_core.messages</span> <span class="kw">import</span> BaseMessage, HumanMessage
+<span class="kw">from</span> <span class="im">typing</span> <span class="kw">import</span> TypedDict, Annotated
+<span class="kw">import</span> operator
+
+<span class="cm"># ── 1. Définir l’état partagé ────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">AgentState</span>(TypedDict):
+<span class="cm"># operator.add → les messages s’accumulent (pas de remplacement)</span>
+messages: Annotated[list[<span class="cl">BaseMessage</span>], operator.add]
+
+<span class="cm"># ── 2. LLM avec tools bindés ─────────────────────────────────</span>
+llm   = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>)
+tools = [calculatrice, date_heure, lire_fichier]
+llm_t = llm.bind_tools(tools)
+
+<span class="cm"># ── 3. Nœud agent ────────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">call_agent</span>(state: <span class="cl">AgentState</span>) -> dict:
+<span class="kw">return</span> {<span class="st">“messages”</span>: [llm_t.invoke(state[<span class="st">“messages”</span>])]}
+
+<span class="cm"># ── 4. Nœud tools (automatique) ──────────────────────────────</span>
+tool_node = <span class="cl">ToolNode</span>(tools)
+
+<span class="cm"># ── 5. Construire le graphe ───────────────────────────────────</span>
+graph_builder = <span class="cl">StateGraph</span>(<span class="cl">AgentState</span>)
+graph_builder.add_node(<span class="st">“agent”</span>, call_agent)
+graph_builder.add_node(<span class="st">“tools”</span>, tool_node)
+
+graph_builder.set_entry_point(<span class="st">“agent”</span>)
+
+<span class="cm"># Condition: si le LLM veut un tool → “tools”, sinon → END</span>
+graph_builder.add_conditional_edges(
+<span class="st">“agent”</span>, tools_condition,
+{<span class="st">“tools”</span>: <span class="st">“tools”</span>, END: END}
+)
+graph_builder.add_edge(<span class="st">“tools”</span>, <span class="st">“agent”</span>)  <span class="cm"># après tools → retour agent</span>
+
+graph = graph_builder.compile()
+
+<span class="cm"># ── 6. Exécuter ──────────────────────────────────────────────</span>
+result = graph.invoke({
+<span class="st">“messages”</span>: [<span class="cl">HumanMessage</span>(<span class="st">“Quelle date? Et calcule sqrt(196).”</span>)]
+})
+<span class="kw">print</span>(result[<span class="st">“messages”</span>][-<span class="nu">1</span>].content)</code></pre>
+</div>
+
+```
+<h2 class="sh">7.3 — Persistance avec Checkpointer</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">07_checkpointer.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langgraph.checkpoint.memory</span> <span class="kw">import</span> MemorySaver
+```
+
+<span class="kw">from</span> <span class="im">langgraph.checkpoint.sqlite</span> <span class="kw">import</span> SqliteSaver
+
+<span class="cm"># ── Mémoire (dev) ────────────────────────────────────────────</span>
+memory  = <span class="cl">MemorySaver</span>()
+graph_p = graph_builder.compile(checkpointer=memory)
+
+<span class="cm"># ── SQLite (production locale) ───────────────────────────────</span>
+<span class="kw">with</span> <span class="cl">SqliteSaver</span>.from_conn_string(<span class="st">“checkpoints.db”</span>) <span class="kw">as</span> saver:
+graph_sql = graph_builder.compile(checkpointer=saver)
+
+<span class="cm"># ── Chaque thread_id = une conversation indépendante ─────────</span>
+cfg_u1 = {<span class="st">“configurable”</span>: {<span class="st">“thread_id”</span>: <span class="st">“user_alice”</span>}}
+cfg_u2 = {<span class="st">“configurable”</span>: {<span class="st">“thread_id”</span>: <span class="st">“user_bob”</span>}}
+
+r1 = graph_p.invoke({<span class="st">“messages”</span>: [<span class="cl">HumanMessage</span>(<span class="st">“Mon budget est 500€”</span>)]}, cfg_u1)
+r2 = graph_p.invoke({<span class="st">“messages”</span>: [<span class="cl">HumanMessage</span>(<span class="st">“Calcule 15% de mon budget”</span>)]}, cfg_u1)
+<span class="kw">print</span>(r2[<span class="st">“messages”</span>][-<span class="nu">1</span>].content)  <span class="cm"># “15% de 500€ = 75€”</span>
+
+<span class="cm"># ── Inspecter l’état d’un thread ────────────────────────────</span>
+state = graph_p.get_state(cfg_u1)
+<span class="kw">print</span>(state.values[<span class="st">“messages”</span>])   <span class="cm"># historique complet</span>
+
+<span class="cm"># ── Human-in-the-loop — pause avant une action ───────────────</span>
+graph_hitl = graph_builder.compile(
+checkpointer=memory,
+interrupt_before=[<span class="st">“tools”</span>]   <span class="cm"># pause avant chaque appel d’outil</span>
+)
+<span class="cm"># L’agent s’arrête, vous validez, puis reprenez:</span>
+<span class="cm"># graph_hitl.invoke(None, cfg)  # reprendre depuis où on s’est arrêté</span></code></pre>
+</div>
+
+```
+<h2 class="sh">7.4 — Graphe personnalisé avec état enrichi</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">07_custom_graph.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="cm"># Workflow : question → classifier → spécialiste → réponse</span>
+```
+
+<span class="kw">from</span> <span class="im">typing</span> <span class="kw">import</span> Literal
+
+<span class="kw">class</span> <span class="cl">RouterState</span>(TypedDict):
+question:  str
+categorie: str
+reponse:   str
+
+<span class="cm"># ── Nœuds ────────────────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">classifier</span>(state: <span class="cl">RouterState</span>) -> dict:
+<span class="st">””“Classifie la question.”””</span>
+prompt = f<span class="st">“Classifie en UN mot (code/math/general): {state[‘question’]}”</span>
+result = llm.invoke(prompt).content.strip().lower()
+<span class="kw">return</span> {<span class="st">“categorie”</span>: result}
+
+<span class="kw">def</span> <span class="fn">expert_code</span>(state: <span class="cl">RouterState</span>) -> dict:
+r = llm.invoke(f<span class="st">“Expert Python. {state[‘question’]}”</span>)
+<span class="kw">return</span> {<span class="st">“reponse”</span>: r.content}
+
+<span class="kw">def</span> <span class="fn">expert_math</span>(state: <span class="cl">RouterState</span>) -> dict:
+r = llm.invoke(f<span class="st">“Expert maths. Explique chaque étape. {state[‘question’]}”</span>)
+<span class="kw">return</span> {<span class="st">“reponse”</span>: r.content}
+
+<span class="kw">def</span> <span class="fn">expert_general</span>(state: <span class="cl">RouterState</span>) -> dict:
+r = llm.invoke(state[<span class="st">“question”</span>])
+<span class="kw">return</span> {<span class="st">“reponse”</span>: r.content}
+
+<span class="cm"># ── Condition de routage ──────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">route</span>(state: <span class="cl">RouterState</span>) -> Literal[<span class="st">“expert_code”</span>, <span class="st">“expert_math”</span>, <span class="st">“expert_general”</span>]:
+cat = state[<span class="st">“categorie”</span>]
+<span class="kw">if</span> <span class="st">“code”</span>   <span class="kw">in</span> cat: <span class="kw">return</span> <span class="st">“expert_code”</span>
+<span class="kw">if</span> <span class="st">“math”</span>   <span class="kw">in</span> cat: <span class="kw">return</span> <span class="st">“expert_math”</span>
+<span class="kw">return</span> <span class="st">“expert_general”</span>
+
+<span class="cm"># ── Construction ─────────────────────────────────────────────</span>
+g = <span class="cl">StateGraph</span>(<span class="cl">RouterState</span>)
+<span class="kw">for</span> name, fn <span class="kw">in</span> [(<span class="st">“classifier”</span>,classifier),(<span class="st">“expert_code”</span>,expert_code),
+(<span class="st">“expert_math”</span>,expert_math),(<span class="st">“expert_general”</span>,expert_general)]:
+g.add_node(name, fn)
+
+g.set_entry_point(<span class="st">“classifier”</span>)
+g.add_conditional_edges(<span class="st">“classifier”</span>, route)
+g.add_edge(<span class="st">“expert_code”</span>,    END)
+g.add_edge(<span class="st">“expert_math”</span>,    END)
+g.add_edge(<span class="st">“expert_general”</span>, END)
+
+router_graph = g.compile()
+r = router_graph.invoke({<span class="st">“question”</span>: <span class="st">“Écris une fonction de tri en Python”</span>})
+<span class="kw">print</span>(r[<span class="st">“reponse”</span>])</code></pre>
+</div>
+
+  </div>
+</section>
+
+<!-- ══════════════ M8 · MULTI-AGENTS ══════════════ -->
+
+<div class="divider" id="m8"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-green">M8</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 8 · LangGraph</div>
+        <h1>Multi-Agents & Supervision</h1>
+        <p>Orchestrer plusieurs agents spécialisés avec un superviseur via LangGraph.</p>
+        <span class="mod-level exp"><span class="dot"></span>Expert</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">8.1 — Architecture Supervisor</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">08_supervisor.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="cm"># Pattern: Supervisor → délègue à des sous-agents spécialisés</span>
+```
+
+<span class="kw">from</span> <span class="im">langgraph.graph</span> <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> <span class="im">langgraph.prebuilt</span> <span class="kw">import</span> create_react_agent
+<span class="kw">from</span> <span class="im">langchain_core.messages</span> <span class="kw">import</span> HumanMessage, AIMessage
+<span class="kw">from</span> <span class="im">typing</span> <span class="kw">import</span> TypedDict, Annotated, Literal
+<span class="kw">import</span> operator
+
+<span class="cm"># ── Sous-agents spécialisés ──────────────────────────────────</span>
+agent_recherche = create_react_agent(llm, [lire_fichier],   <span class="cm"># accès docs</span>
+state_modifier=<span class="st">“Tu es un spécialiste en recherche documentaire.”</span>)
+agent_calcul    = create_react_agent(llm, [calculatrice],   <span class="cm"># calculs</span>
+state_modifier=<span class="st">“Tu es un expert en analyse chiffrée.”</span>)
+agent_redaction = create_react_agent(llm, [ecrire_fichier], <span class="cm"># rédaction</span>
+state_modifier=<span class="st">“Tu es un expert en rédaction de rapports.”</span>)
+
+<span class="cm"># ── État partagé ─────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">SuperState</span>(TypedDict):
+messages: Annotated[list, operator.add]
+next:     str   <span class="cm"># prochain agent à appeler</span>
+
+<span class="cm"># ── Superviseur ──────────────────────────────────────────────</span>
+AGENTS = [<span class="st">“recherche”</span>, <span class="st">“calcul”</span>, <span class="st">“redaction”</span>, <span class="st">“FINISH”</span>]
+
+<span class="kw">def</span> <span class="fn">supervisor</span>(state: <span class="cl">SuperState</span>) -> dict:
+<span class="st">””“Décide quel agent appeler ou si on a terminé.”””</span>
+history = <span class="st">”\n”</span>.join(m.content <span class="kw">for</span> m <span class="kw">in</span> state[<span class="st">“messages”</span>][-<span class="nu">5</span>:])
+decision = llm.invoke(f<span class="st">”””
+Agents: {AGENTS}
+Historique: {history}
+Réponds avec UN seul agent à appeler (ou FINISH si terminé).
+Agent:”””</span>).content.strip()
+
+```
+next_agent = <span class="kw">next</span>((a <span class="kw">for</span> a <span class="kw">in</span> AGENTS <span class="kw">if</span> a.lower() <span class="kw">in</span> decision.lower()), <span class="st">"FINISH"</span>)
+<span class="kw">return</span> {<span class="st">"next"</span>: next_agent}
+```
+
+<span class="kw">def</span> <span class="fn">make_agent_node</span>(agent, name: str):
+<span class="kw">def</span> <span class="fn">node</span>(state: <span class="cl">SuperState</span>) -> dict:
+result = agent.invoke({<span class="st">“messages”</span>: state[<span class="st">“messages”</span>]})
+<span class="kw">return</span> {<span class="st">“messages”</span>: [<span class="cl">AIMessage</span>(content=result[<span class="st">“messages”</span>][-<span class="nu">1</span>].content,
+name=name)]}
+<span class="kw">return</span> node
+
+<span class="cm"># ── Construire le graphe superviseur ─────────────────────────</span>
+g = <span class="cl">StateGraph</span>(<span class="cl">SuperState</span>)
+g.add_node(<span class="st">“supervisor”</span>,  supervisor)
+g.add_node(<span class="st">“recherche”</span>,   make_agent_node(agent_recherche, <span class="st">“recherche”</span>))
+g.add_node(<span class="st">“calcul”</span>,      make_agent_node(agent_calcul,    <span class="st">“calcul”</span>))
+g.add_node(<span class="st">“redaction”</span>,   make_agent_node(agent_redaction,  <span class="st">“redaction”</span>))
+
+g.set_entry_point(<span class="st">“supervisor”</span>)
+
+<span class="cm"># Le superviseur route vers le bon agent</span>
+g.add_conditional_edges(<span class="st">“supervisor”</span>, <span class="kw">lambda</span> x: x[<span class="st">“next”</span>], {
+<span class="st">“recherche”</span>: <span class="st">“recherche”</span>,
+<span class="st">“calcul”</span>:    <span class="st">“calcul”</span>,
+<span class="st">“redaction”</span>: <span class="st">“redaction”</span>,
+<span class="st">“FINISH”</span>:    END,
+})
+<span class="cm"># Chaque agent renvoie au superviseur</span>
+<span class="kw">for</span> node <span class="kw">in</span> [<span class="st">“recherche”</span>, <span class="st">“calcul”</span>, <span class="st">“redaction”</span>]:
+g.add_edge(node, <span class="st">“supervisor”</span>)
+
+super_graph = g.compile(checkpointer=<span class="cl">MemorySaver</span>())
+
+cfg = {<span class="st">“configurable”</span>: {<span class="st">“thread_id”</span>: <span class="st">“task_1”</span>}}
+result = super_graph.invoke({
+<span class="st">“messages”</span>: [<span class="cl">HumanMessage</span>(<span class="st">“Recherche les ventes Q3, calcule la croissance vs Q2, puis rédige un résumé.”</span>)]
+}, cfg)
+<span class="kw">print</span>(result[<span class="st">“messages”</span>][-<span class="nu">1</span>].content)</code></pre>
+</div>
+
+```
+<div class="quiz">
+  <div class="quiz-head"><span style="font-size:20px">🕸</span><h3>Quiz — Module 7&amp;8 : LangGraph</h3><span class="quiz-badge">2 questions</span></div>
+  <div class="qq">
+    <div class="qq-num">Q1 · QCM</div>
+    <div class="qq-text">Pourquoi utilise-t-on <code>Annotated[list, operator.add]</code> pour le champ <code>messages</code> dans l'état LangGraph ?</div>
+    <div class="opts" id="q7-1">
+      <div class="opt" onclick="qa('q7-1',this,false)"><span class="opt-l">A</span>Pour typer la liste avec Pydantic</div>
+      <div class="opt" onclick="qa('q7-1',this,true)"><span class="opt-l">B</span>Pour que les nouveaux messages s'accumulent au lieu de remplacer l'existant</div>
+      <div class="opt" onclick="qa('q7-1',this,false)"><span class="opt-l">C</span>Pour trier les messages automatiquement</div>
+      <div class="opt" onclick="qa('q7-1',this,false)"><span class="opt-l">D</span>C'est optionnel, n'a aucun effet</div>
+    </div>
+    <div class="qa" id="q7-1-a"><strong>✓ B.</strong> Par défaut, LangGraph remplace la valeur d'une clé d'état. Avec <code>operator.add</code>, il <em>ajoute</em> à la liste existante. Sans ça, chaque nœud écraserait les messages des nœuds précédents.</div>
+  </div>
+  <div class="qq">
+    <div class="qq-num">Q2 · Ouverte</div>
+    <div class="qq-text">Expliquez l'utilité d'un <strong>Checkpointer</strong> dans LangGraph et citez deux cas d'usage.</div>
+    <button class="show-btn" onclick="document.getElementById('q7-2-a').classList.toggle('show')">Voir correction</button>
+    <div class="qa" id="q7-2-a"><strong>✓</strong> Le Checkpointer persiste l'état du graphe après chaque étape, identifié par un <code>thread_id</code>.<br><br><strong>Cas 1 — Conversations multi-sessions :</strong> l'historique survit aux redémarrages du serveur.<br><strong>Cas 2 — Human-in-the-loop :</strong> on peut mettre en pause le graphe (<code>interrupt_before</code>), laisser un humain valider, puis reprendre exactement où on s'était arrêté.</div>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ M9 · LANGSMITH TRACING ══════════════ -->
+
+<div class="divider" id="m9"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-purple">M9</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 9 · LangSmith</div>
+        <h1>LangSmith — Tracing & Debugging</h1>
+        <p>Observer, comprendre et déboguer toutes vos applications LangChain en temps réel.</p>
+        <span class="mod-level inter"><span class="dot"></span>Intermédiaire</span>
+      </div>
+    </div>
+
+```
+<div class="callout ct">
+  <span class="callout-icon">🔬</span>
+  <div class="callout-body">
+    <h4>Pourquoi LangSmith est essentiel</h4>
+    <p>Vous ne pouvez pas améliorer ce que vous ne mesurez pas. LangSmith trace <strong>chaque appel LLM, chaque tool, chaque étape de chain</strong> — avec les inputs, outputs, latences et coûts. La plateforme freemium est disponible sur smith.langchain.com.</p>
+  </div>
+</div>
+
+<h2 class="sh">9.1 — Configuration</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">.env + 09_tracing.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="cm"># ── .env — activer le tracing ────────────────────────────────</span>
+```
+
+<span class="cm"># LANGCHAIN_TRACING_V2=true</span>
+<span class="cm"># LANGCHAIN_API_KEY=lsv2_pt_…  (smith.langchain.com)</span>
+<span class="cm"># LANGCHAIN_PROJECT=mon-projet</span>
+
+<span class="kw">import</span> os
+os.environ[<span class="st">“LANGCHAIN_TRACING_V2”</span>]  = <span class="st">“true”</span>
+os.environ[<span class="st">“LANGCHAIN_API_KEY”</span>]       = <span class="st">“lsv2_pt_…”</span>
+os.environ[<span class="st">“LANGCHAIN_PROJECT”</span>]       = <span class="st">“mon-projet-rag”</span>
+
+<span class="cm"># Maintenant TOUTES les invocations sont tracées automatiquement</span>
+result = chain.invoke({<span class="st">“question”</span>: <span class="st">“Bonjour”</span>})
+<span class="cm"># → Visible sur smith.langchain.com/projects/mon-projet-rag</span>
+
+<span class="cm"># ── Tracer manuellement avec @traceable ──────────────────────</span>
+<span class="kw">from</span> <span class="im">langsmith</span> <span class="kw">import</span> traceable, Client
+
+<span class="dc">@traceable</span>(name=<span class="st">“pipeline_rag”</span>, tags=[<span class="st">“rag”</span>, <span class="st">“production”</span>])
+<span class="kw">def</span> <span class="fn">run_rag</span>(question: str) -> str:
+<span class="kw">return</span> rag_chain.invoke(question)
+
+<span class="dc">@traceable</span>(run_type=<span class="st">“chain”</span>, metadata={<span class="st">“version”</span>: <span class="st">“2.1”</span>})
+<span class="kw">async def</span> <span class="fn">async_pipeline</span>(input: str) -> str:
+<span class="kw">return</span> <span class="kw">await</span> chain.ainvoke({<span class="st">“question”</span>: input})
+
+<span class="cm"># ── Contexte de run — grouper des traces ─────────────────────</span>
+<span class="kw">from</span> <span class="im">langsmith.run_helpers</span> <span class="kw">import</span> get_current_run_tree
+
+<span class="dc">@traceable</span>
+<span class="kw">def</span> <span class="fn">pipeline_complet</span>(user_id: str, question: str):
+run_tree = get_current_run_tree()
+<span class="kw">if</span> run_tree:
+run_tree.metadata[<span class="st">“user_id”</span>] = user_id  <span class="cm"># ajouter des métadonnées</span>
+<span class="kw">return</span> rag_chain.invoke(question)</code></pre>
+</div>
+
+```
+<h2 class="sh">9.2 — Client LangSmith — Lire les traces</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">09_client.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langsmith</span> <span class="kw">import</span> Client
+```
+
+client = <span class="cl">Client</span>()
+
+<span class="cm"># ── Lister les runs d’un projet ──────────────────────────────</span>
+runs = client.list_runs(
+project_name=<span class="st">“mon-projet-rag”</span>,
+run_type=<span class="st">“chain”</span>,
+limit=<span class="nu">50</span>,
+)
+<span class="kw">for</span> run <span class="kw">in</span> runs:
+<span class="kw">print</span>(f<span class="st">”{run.name} | {run.status} | {run.total_tokens} tokens | {run.total_cost:.4f}$”</span>)
+
+<span class="cm"># ── Runs en erreur — debugging ───────────────────────────────</span>
+erreurs = client.list_runs(
+project_name=<span class="st">“mon-projet-rag”</span>,
+error=<span class="kw">True</span>,
+limit=<span class="nu">20</span>,
+)
+<span class="kw">for</span> run <span class="kw">in</span> erreurs:
+<span class="kw">print</span>(f<span class="st">“ERREUR: {run.name}\n{run.error}\nInput: {run.inputs}”</span>)
+
+<span class="cm"># ── Statistiques agrégées ────────────────────────────────────</span>
+stats = client.get_run_stats(project_name=<span class="st">“mon-projet-rag”</span>)
+<span class="kw">print</span>(f<span class="st">“Runs: {stats[‘count’]} | Latence moy: {stats[‘latency_p50’]:.2f}s”</span>)
+<span class="kw">print</span>(f<span class="st">“Coût total: {stats[‘total_cost’]:.2f}$”</span>)</code></pre>
+</div>
+
+  </div>
+</section>
+
+<!-- ══════════════ M10 · ÉVALUATION ══════════════ -->
+
+<div class="divider" id="m10"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-purple">M10</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 10 · LangSmith</div>
+        <h1>Évaluation — LLM-as-Judge</h1>
+        <p>Mesurer la qualité de vos systèmes RAG et agents avec des datasets et des évaluateurs automatisés.</p>
+        <span class="mod-level adv"><span class="dot"></span>Avancé</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">10.1 — Datasets et évaluateurs</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">10_evaluation.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">from</span> <span class="im">langsmith</span> <span class="kw">import</span> Client
+```
+
+<span class="kw">from</span> <span class="im">langsmith.evaluation</span> <span class="kw">import</span> evaluate, LangChainStringEvaluator
+
+client = <span class="cl">Client</span>()
+
+<span class="cm"># ── 1. Créer un dataset (golden set) ────────────────────────</span>
+dataset = client.create_dataset(
+dataset_name=<span class="st">“rag-qa-dataset”</span>,
+description=<span class="st">“Questions-réponses pour évaluer le RAG”</span>
+)
+examples = [
+{<span class="st">“input”</span>: <span class="st">“Quelle est la durée de garantie?”</span>, <span class="st">“output”</span>: <span class="st">“2 ans”</span>},
+{<span class="st">“input”</span>: <span class="st">“Comment contacter le support?”</span>,    <span class="st">“output”</span>: <span class="st">“support@…”</span>},
+{<span class="st">“input”</span>: <span class="st">“Quels paiements sont acceptés?”</span>,   <span class="st">“output”</span>: <span class="st">“CB, PayPal…”</span>},
+]
+client.create_examples(
+inputs=[{<span class="st">“question”</span>: e[<span class="st">“input”</span>]} <span class="kw">for</span> e <span class="kw">in</span> examples],
+outputs=[{<span class="st">“answer”</span>: e[<span class="st">“output”</span>]} <span class="kw">for</span> e <span class="kw">in</span> examples],
+dataset_id=dataset.id
+)
+
+<span class="cm"># ── 2. Évaluateurs pré-construits ────────────────────────────</span>
+evaluators = [
+<span class="cl">LangChainStringEvaluator</span>(<span class="st">“cot_qa”</span>),          <span class="cm"># pertinence avec CoT</span>
+<span class="cl">LangChainStringEvaluator</span>(<span class="st">“labeled_criteria”</span>,  <span class="cm"># critère custom</span>
+config={<span class="st">“criteria”</span>: <span class="st">“conciseness”</span>}),
+]
+
+<span class="cm"># ── 3. Lancer l’évaluation ───────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">pipeline</span>(inputs: dict) -> dict:
+<span class="kw">return</span> {<span class="st">“answer”</span>: rag_chain.invoke(inputs[<span class="st">“question”</span>])}
+
+results = evaluate(
+pipeline,
+data=<span class="st">“rag-qa-dataset”</span>,
+evaluators=evaluators,
+experiment_prefix=<span class="st">“rag-v2”</span>,
+num_repetitions=<span class="nu">1</span>,
+)
+<span class="kw">print</span>(results.to_pandas())  <span class="cm"># DataFrame avec scores</span>
+
+<span class="cm"># ── 4. LLM-as-Judge — évaluateur personnalisé ───────────────</span>
+<span class="kw">from</span> <span class="im">pydantic</span> <span class="kw">import</span> BaseModel, Field
+
+<span class="kw">class</span> <span class="cl">RAGScore</span>(BaseModel):
+faithfulness:  int  = <span class="cl">Field</span>(description=<span class="st">“1-10: réponse fidèle au contexte?”</span>)
+relevance:     int  = <span class="cl">Field</span>(description=<span class="st">“1-10: répond à la question?”</span>)
+justification: str  = <span class="cl">Field</span>(description=<span class="st">“Explication des scores”</span>)
+
+judge_llm  = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>).with_structured_output(<span class="cl">RAGScore</span>)
+
+<span class="kw">def</span> <span class="fn">rag_evaluator</span>(run, example):
+score = judge_llm.invoke(f<span class="st">”””
+Question: {example.inputs[‘question’]}
+Réponse générée: {run.outputs[‘answer’]}
+Réponse attendue: {example.outputs[‘answer’]}
+Évalue la fidélité et la pertinence (1-10).”””</span>)
+<span class="kw">return</span> {
+<span class="st">“key”</span>: <span class="st">“rag_quality”</span>,
+<span class="st">“score”</span>: (score.faithfulness + score.relevance) / <span class="nu">20</span>,
+<span class="st">“comment”</span>: score.justification
+}
+
+results = evaluate(pipeline, data=<span class="st">“rag-qa-dataset”</span>, evaluators=[rag_evaluator])</code></pre>
+</div>
+
+```
+<div class="quiz">
+  <div class="quiz-head"><span style="font-size:20px">📊</span><h3>Quiz — Modules 9&amp;10 : LangSmith</h3><span class="quiz-badge">2 questions</span></div>
+  <div class="qq">
+    <div class="qq-num">Q1 · QCM</div>
+    <div class="qq-text">Comment activer le tracing LangSmith pour <strong>toutes</strong> les invocations LangChain sans modifier le code ?</div>
+    <div class="opts" id="q9-1">
+      <div class="opt" onclick="qa('q9-1',this,true)"><span class="opt-l">A</span>Définir LANGCHAIN_TRACING_V2=true et LANGCHAIN_API_KEY dans l'environnement</div>
+      <div class="opt" onclick="qa('q9-1',this,false)"><span class="opt-l">B</span>Appeler langsmith.enable() au début du script</div>
+      <div class="opt" onclick="qa('q9-1',this,false)"><span class="opt-l">C</span>Importer langsmith dans chaque fichier</div>
+      <div class="opt" onclick="qa('q9-1',this,false)"><span class="opt-l">D</span>Utiliser uniquement @traceable sur chaque fonction</div>
+    </div>
+    <div class="qa" id="q9-1-a"><strong>✓ A.</strong> LangChain lit automatiquement <code>LANGCHAIN_TRACING_V2=true</code> et <code>LANGCHAIN_API_KEY</code> dans les variables d'environnement. Une fois définis (dans .env ou l'OS), <strong>toutes</strong> les invocations sont tracées sans modification de code.</div>
+  </div>
+  <div class="qq">
+    <div class="qq-num">Q2 · Ouverte</div>
+    <div class="qq-text">Qu'est-ce qu'un <strong>golden dataset</strong> et pourquoi est-il critique pour l'évaluation d'un système RAG ?</div>
+    <button class="show-btn" onclick="document.getElementById('q9-2-a').classList.toggle('show')">Voir correction</button>
+    <div class="qa" id="q9-2-a"><strong>✓</strong> Un golden dataset est un ensemble de paires question/réponse-attendue créées et validées <em>manuellement</em> par des experts du domaine. Il sert de référence absolue pour mesurer la qualité du système.<br><br>Sans lui, on ne peut pas comparer objectivement deux versions, détecter des régressions lors des mises à jour, ou justifier les choix techniques (chunk_size, retriever, modèle…) avec des données réelles.</div>
+  </div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- ══════════════ M11 · PROJET FINAL ══════════════ -->
+
+<div class="divider" id="m11"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-orange">M11</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 11 · Projet Final</div>
+        <h1>Projet Final — Assistant RAG + LangGraph</h1>
+        <p>Assembler un assistant complet intégrant RAG, agents LangGraph, tracing LangSmith — 100% local avec Ollama.</p>
+        <span class="mod-level exp"><span class="dot"></span>Expert</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">11.1 — Architecture</h2>
+<div class="arch">
+```
+
+<span class="d">assistant/</span>
+<span class="s">├──</span> <span class="f">main.py</span>           <span class="c"># Point d’entrée CLI</span>
+<span class="s">├──</span> <span class="f">config.py</span>         <span class="c"># Settings Pydantic (env-driven)</span>
+<span class="s">├──</span> <span class="f">.env</span>              <span class="c"># LANGCHAIN_TRACING, modèles…</span>
+<span class="s">│</span>
+<span class="s">├──</span> <span class="d">rag/</span>
+<span class="s">│   ├──</span> <span class="f">indexer.py</span>    <span class="c"># DocumentIndexer → Chroma</span>
+<span class="s">│   └──</span> <span class="f">pipeline.py</span>   <span class="c"># RAGPipeline (MMR + hybrid)</span>
+<span class="s">│</span>
+<span class="s">├──</span> <span class="d">graph/</span>
+<span class="s">│   ├──</span> <span class="f">state.py</span>      <span class="c"># AssistantState TypedDict</span>
+<span class="s">│   ├──</span> <span class="f">nodes.py</span>      <span class="c"># Nœuds du graphe</span>
+<span class="s">│   └──</span> <span class="f">graph.py</span>      <span class="c"># Compilation du graphe</span>
+<span class="s">│</span>
+<span class="s">├──</span> <span class="d">tools/</span>
+<span class="s">│   └──</span> <span class="f">tools.py</span>      <span class="c"># calculatrice, fichiers, rag_tool…</span>
+<span class="s">│</span>
+<span class="s">└──</span> <span class="d">data/</span>
+<span class="s">    ├──</span> <span class="d">docs/</span>         <span class="c"># Documents à indexer</span>
+<span class="s">    └──</span> <span class="d">chroma_db/</span>   <span class="c"># Base vectorielle (auto)</span>
+</div>
+
+```
+<h2 class="sh">11.2 — graph/state.py + graph/graph.py</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">graph/state.py + graph/graph.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="cm"># ── graph/state.py ───────────────────────────────────────────</span>
+```
+
+<span class="kw">from</span> <span class="im">typing</span> <span class="kw">import</span> TypedDict, Annotated
+<span class="kw">from</span> <span class="im">langchain_core.messages</span> <span class="kw">import</span> BaseMessage
+<span class="kw">import</span> operator
+
+<span class="kw">class</span> <span class="cl">AssistantState</span>(TypedDict):
+messages:   Annotated[list[<span class="cl">BaseMessage</span>], operator.add]
+session_id: str
+user_name:  str   <span class="cm"># enrichi depuis la mémoire utilisateur</span>
+
+<span class="cm"># ── graph/nodes.py ───────────────────────────────────────────</span>
+<span class="kw">from</span> <span class="im">langsmith</span> <span class="kw">import</span> traceable
+
+<span class="dc">@traceable</span>(name=<span class="st">“agent_node”</span>)
+<span class="kw">def</span> <span class="fn">agent_node</span>(state: <span class="cl">AssistantState</span>) -> dict:
+<span class="st">””“Nœud principal — appelle le LLM avec les tools.”””</span>
+response = llm_with_tools.invoke(state[<span class="st">“messages”</span>])
+<span class="kw">return</span> {<span class="st">“messages”</span>: [response]}
+
+<span class="cm"># ── graph/graph.py ────────────────────────────────────────────</span>
+<span class="kw">from</span> <span class="im">langgraph.graph</span> <span class="kw">import</span> StateGraph, END
+<span class="kw">from</span> <span class="im">langgraph.prebuilt</span> <span class="kw">import</span> ToolNode, tools_condition
+<span class="kw">from</span> <span class="im">langgraph.checkpoint.sqlite</span> <span class="kw">import</span> SqliteSaver
+
+<span class="kw">def</span> <span class="fn">build_graph</span>(tools: list) -> <span class="kw">any</span>:
+llm_t = <span class="cl">ChatOllama</span>(model=<span class="st">“llama3.2”</span>).bind_tools(tools)
+
+```
+<span class="kw">def</span> <span class="fn">agent</span>(state): <span class="kw">return</span> {<span class="st">"messages"</span>: [llm_t.invoke(state[<span class="st">"messages"</span>])]}
+
+g = <span class="cl">StateGraph</span>(<span class="cl">AssistantState</span>)
+g.add_node(<span class="st">"agent"</span>, agent)
+g.add_node(<span class="st">"tools"</span>, <span class="cl">ToolNode</span>(tools))
+g.set_entry_point(<span class="st">"agent"</span>)
+g.add_conditional_edges(<span class="st">"agent"</span>, tools_condition, {<span class="st">"tools"</span>:<span class="st">"tools"</span>, END:END})
+g.add_edge(<span class="st">"tools"</span>, <span class="st">"agent"</span>)
+
+<span class="kw">with</span> <span class="cl">SqliteSaver</span>.from_conn_string(<span class="st">"data/checkpoints.db"</span>) <span class="kw">as</span> saver:
+    <span class="kw">return</span> g.compile(checkpointer=saver)</code></pre>
+</div>
+
+<h2 class="sh">11.3 — main.py</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">main.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="kw">import</span> os
+```
+
+<span class="kw">from</span> <span class="im">dotenv</span> <span class="kw">import</span> load_dotenv
+<span class="kw">from</span> <span class="im">langchain_core.messages</span> <span class="kw">import</span> HumanMessage
+<span class="kw">from</span> <span class="im">langchain_core.tools</span> <span class="kw">import</span> tool
+<span class="kw">from</span> <span class="im">rag.indexer</span> <span class="kw">import</span> DocumentIndexer
+<span class="kw">from</span> <span class="im">rag.pipeline</span> <span class="kw">import</span> RAGPipeline
+<span class="kw">from</span> <span class="im">tools.tools</span> <span class="kw">import</span> calculatrice, date_heure, lire_fichier, ecrire_fichier
+<span class="kw">from</span> <span class="im">graph.graph</span> <span class="kw">import</span> build_graph
+
+load_dotenv()
+
+<span class="kw">def</span> <span class="fn">setup</span>():
+<span class="cm"># RAG</span>
+idx = <span class="cl">DocumentIndexer</span>()
+vs  = idx.load_existing() <span class="kw">if</span> os.path.exists(<span class="st">“data/chroma_db”</span>) <span class="kw">else</span> idx.index_directory(<span class="st">“data/docs”</span>)
+rag = <span class="cl">RAGPipeline</span>(vs)
+
+```
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">recherche_docs</span>(question: str) -> str:
+    <span class="st">"""Recherche dans la documentation interne. Utilise pour les questions sur nos produits/procédures."""</span>
+    r = rag.query(question)
+    <span class="kw">return</span> f<span class="st">"{r['answer']}\nSources: {', '.join(r['sources'])}"</span>
+
+tools = [calculatrice, date_heure, lire_fichier, ecrire_fichier, recherche_docs]
+<span class="kw">return</span> build_graph(tools)
+```
+
+<span class="kw">def</span> <span class="fn">main</span>():
+<span class="kw">print</span>(<span class="st">“═”*50 + “\n🤖 Assistant IA — LangChain + LangGraph\n” + <span class="st">“═”*50</span>)
+graph  = setup()
+sid    = input(<span class="st">“Session ID [défaut: main]: “</span>).strip() <span class="kw">or</span> <span class="st">“main”</span>
+cfg    = {<span class="st">“configurable”</span>: {<span class="st">“thread_id”</span>: sid}}
+
+```
+<span class="kw">print</span>(<span class="st">"\n✅ Prêt. /quit pour quitter\n"</span>)
+<span class="kw">while</span> <span class="kw">True</span>:
+    q = input(<span class="st">"Vous: "</span>).strip()
+    <span class="kw">if</span> q <span class="kw">in</span> [<span class="st">"/quit"</span>, <span class="st">"q"</span>]: <span class="kw">break</span>
+    <span class="kw">if</span> <span class="kw">not</span> q: <span class="kw">continue</span>
+    r = graph.invoke({<span class="st">"messages"</span>: [<span class="cl">HumanMessage</span>(q)], <span class="st">"session_id"</span>: sid}, cfg)
+    <span class="kw">print</span>(f<span class="st">"Assistant: {r['messages'][-1].content}\n"</span>)
+```
+
+<span class="kw">if</span> **name** == <span class="st">”**main**”</span>:
+main()</code></pre>
+</div>
+
+  </div>
+</section>
+
+<!-- ══════════════ M12 · ANNEXES ══════════════ -->
+
+<div class="divider" id="m12"></div>
+<section class="mod-section">
+  <div class="page">
+    <div class="mod-head">
+      <div class="mod-badge mb-red">M12</div>
+      <div class="mod-info">
+        <div class="mod-tag">Module 12 · Ressources</div>
+        <h1>Annexes & Cheatsheets</h1>
+        <p>Références rapides, tableau Pareto final, ressources et checklist de compétences.</p>
+        <span class="mod-level"><span class="dot"></span>Tous niveaux</span>
+      </div>
+    </div>
+
+```
+<h2 class="sh">12.1 — Cheatsheet LCEL</h2>
+<div class="cb">
+  <div class="cb-head">
+    <span class="cb-name">lcel_cheatsheet.py</span>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span class="cb-lang">python</span>
+      <button class="cp-btn" onclick="cp(this)">⧉ Copier</button>
+    </div>
+  </div>
+  <pre><code><span class="cm"># ═══════════════ LCEL CHEATSHEET ═══════════════════════════</span>
+```
+
+<span class="cm"># Composition</span>
+chain = A | B | C                         <span class="cm"># A → B → C</span>
+
+<span class="cm"># Invocations</span>
+chain.invoke(input)                       <span class="cm"># sync</span>
+<span class="kw">await</span> chain.ainvoke(input)                <span class="cm"># async</span>
+chain.stream(input)                       <span class="cm"># générateur streaming</span>
+chain.batch([i1, i2])                     <span class="cm"># parallèle</span>
+
+<span class="cm"># Primitives</span>
+RunnablePassthrough()                     <span class="cm"># passe sans modifier</span>
+RunnablePassthrough.assign(k=fn)          <span class="cm"># ajoute une clé au dict</span>
+RunnableLambda(fn)                        <span class="cm"># wrap une fonction Python</span>
+RunnableParallel({<span class="st">“a”</span>: rA, <span class="st">“b”</span>: rB})      <span class="cm"># parallèle → merge dict</span>
+RunnableBranch((cond, chain), default)    <span class="cm"># routing conditionnel</span>
+
+<span class="cm"># Robustesse</span>
+chain.with_retry(stop_after_attempt=<span class="nu">3</span>)   <span class="cm"># retry auto</span>
+chain.with_fallbacks([backup_chain])      <span class="cm"># fallback</span>
+chain.with_config({<span class="st">“run_name”</span>: <span class="st">”…”</span>})   <span class="cm"># LangSmith tag</span>
+chain.bind(temperature=<span class="nu">0</span>)               <span class="cm"># fixer paramètres</span>
+
+<span class="cm"># Pattern RAG</span>
+rag = ({<span class="st">“context”</span>: retriever | fmt, <span class="st">“question”</span>: RunnablePassthrough()}
+| prompt | llm | StrOutputParser())
+
+<span class="cm"># Debug</span>
+chain.get_graph().print_ascii()           <span class="cm"># visualiser le graphe</span></code></pre>
+</div>
+
+```
+<h2 class="sh">12.2 — Tableau Pareto — Ce qui compte vraiment</h2>
+<div class="tw">
+  <table>
+    <thead><tr><th>Concept</th><th>Package</th><th>Valeur</th><th>Priorité</th></tr></thead>
+    <tbody>
+      <tr><td>LCEL / opérateur |</td><td>langchain-core</td><td>Compose tout le reste</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>ChatPromptTemplate</td><td>langchain-core</td><td>Interface avec les LLMs</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>RunnableWithMessageHistory</td><td>langchain-core</td><td>Mémoire conversationnelle</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>EnsembleRetriever (MMR+BM25)</td><td>langchain</td><td>RAG de qualité production</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>@tool + AgentExecutor</td><td>langchain</td><td>Agents basiques</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>StateGraph + checkpointer</td><td>langgraph</td><td>Agents production</td><td class="stars">⭐⭐⭐⭐⭐</td></tr>
+      <tr><td>LANGCHAIN_TRACING_V2</td><td>langsmith</td><td>Debugger sans code</td><td class="stars">⭐⭐⭐⭐</td></tr>
+      <tr><td>evaluate() + golden dataset</td><td>langsmith</td><td>Mesurer la qualité</td><td class="stars">⭐⭐⭐⭐</td></tr>
+      <tr><td>SqliteSaver / MemorySaver</td><td>langgraph</td><td>Persistance état</td><td class="stars">⭐⭐⭐⭐</td></tr>
+      <tr><td>with_structured_output()</td><td>langchain-core</td><td>JSON fiable sans parser</td><td class="stars">⭐⭐⭐⭐</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="sh">12.3 — Ressources</h2>
+<div class="grid">
+  <div class="gcard"><div class="gcard-top bt-b"></div><div class="gcard-ic">📖</div><div class="gcard-title">LangChain Docs</div><div class="gcard-text">python.langchain.com — référence complète avec exemples live</div></div>
+  <div class="gcard"><div class="gcard-top bt-g"></div><div class="gcard-ic">🔗</div><div class="gcard-title">LangGraph Docs</div><div class="gcard-text">langchain-ai.github.io/langgraph — tutoriels agents stateful</div></div>
+  <div class="gcard"><div class="gcard-top bt-p"></div><div class="gcard-ic">🔬</div><div class="gcard-title">LangSmith</div><div class="gcard-text">smith.langchain.com — tracing gratuit jusqu'à 5000 traces/mois</div></div>
+  <div class="gcard"><div class="gcard-top bt-o"></div><div class="gcard-ic">🦙</div><div class="gcard-title">Ollama Library</div><div class="gcard-text">ollama.com/library — catalogue de modèles locaux avec benchmarks</div></div>
+</div>
+
+<h2 class="sh">12.4 — Checklist de compétences</h2>
+<h3 class="shs">LangChain Core</h3>
+<div class="cl-list">
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je maîtrise LCEL : invoke, stream, batch, ainvoke</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je compose des chains avec RunnablePassthrough, RunnableParallel, RunnableLambda</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je crée des ChatPromptTemplates avec MessagesPlaceholder et FewShot</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je parse les sorties en JSON Pydantic avec with_structured_output()</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'implémente une mémoire persistante multi-sessions avec SQLite</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je construis un pipeline RAG complet avec EnsembleRetriever</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je crée des agents Tool Calling avec @tool et AgentExecutor</span></div>
+</div>
+<h3 class="shs">LangGraph</h3>
+<div class="cl-list">
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je comprends StateGraph, nœuds, arêtes conditionnelles</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'utilise Annotated[list, operator.add] pour l'état des messages</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je persiste l'état avec SqliteSaver et gère les threads</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je construis un superviseur multi-agents fonctionnel</span></div>
+</div>
+<h3 class="shs">LangSmith</h3>
+<div class="cl-list">
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'active le tracing avec les variables d'environnement</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">J'utilise @traceable pour annoter mes fonctions clés</span></div>
+  <div class="cl-item" onclick="ck(this)"><div class="cl-box"></div><span class="cl-label">Je crée un golden dataset et lance une évaluation automatisée</span></div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+
+<div class="divider"></div>
+<div class="footer">
+  <p style="font-size:24px;margin-bottom:8px">🎓</p>
+  <p style="color:var(--white);font-size:16px;font-weight:700;margin-bottom:6px">Cursus terminé — félicitations !</p>
+  <p>Vous maîtrisez maintenant l'écosystème LangChain · LangGraph · LangSmith.</p>
+  <p style="margin-top:12px;color:var(--blue)">🚀 Construisez, itérez, mesurez — c'est la seule vraie formation.</p>
+</div>
+
+</main>
+
+<button id="stb" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ── Copy button ──────────────────────────────────────────────────
+function cp(btn) {
+  var pre = btn.closest('.cb').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(function() {
+    btn.textContent = '✓ Copié';
+    btn.classList.add('ok');
+    setTimeout(function(){ btn.textContent='⧉ Copier'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+
+// ── Scroll to section ────────────────────────────────────────────
+function goto(id) {
+  var el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Quiz ─────────────────────────────────────────────────────────
+function qa(gId, el, correct) {
+  var group = document.getElementById(gId);
+  if (group.dataset.done) return;
+  group.dataset.done = '1';
+  el.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) {
+    var opts = group.querySelectorAll('.opt');
+    opts.forEach(function(o) {
+      if ((o.getAttribute('onclick')||'').indexOf('true') > -1) o.classList.add('correct');
+    });
+  }
+  var ans = document.getElementById(gId + '-a');
+  if (ans) ans.classList.add('show');
+}
+
+// ── Checklist ────────────────────────────────────────────────────
+function ck(el) {
+  el.classList.toggle('done');
+  if (el.classList.contains('done')) el.querySelector('.cl-box').textContent = '✓';
+  else el.querySelector('.cl-box').textContent = '';
+  updateProgress();
+}
+
+// ── Progress bar ─────────────────────────────────────────────────
+function updateProgress() {
+  var all     = document.querySelectorAll('.cl-item').length;
+  var done    = document.querySelectorAll('.cl-item.done').length;
+  var pct     = all ? Math.round(done / all * 100) : 0;
+  var fill    = document.getElementById('bar');
+  var pctEl   = document.getElementById('pct');
+  if (fill)  fill.style.width  = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+// ── Active nav on scroll ─────────────────────────────────────────
+var sectionMap = {
+  'hero':'Accueil','m1':'M1 · Architecture','m2':'M2 · LCEL',
+  'm3':'M3 · Prompts','m4':'M4 · Memory','m5':'M5 · RAG',
+  'm6':'M6 · Agents','m7':'M7 · LangGraph','m8':'M8 · Multi-Agents',
+  'm9':'M9 · LangSmith','m10':'M10 · Évaluation',
+  'm11':'M11 · Projet','m12':'M12 · Annexes'
+};
+var sections  = Object.keys(sectionMap).map(function(id){ return document.getElementById(id); }).filter(Boolean);
+var navItems  = document.querySelectorAll('.sb-item');
+var curSecEl  = document.getElementById('cur-sec');
+
+var io = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      var id = e.target.id;
+      navItems.forEach(function(item) {
+        var oc = item.getAttribute('onclick') || '';
+        item.classList.toggle('active', oc.indexOf("'"+id+"'") > -1);
+      });
+      if (curSecEl && sectionMap[id]) curSecEl.textContent = sectionMap[id];
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+
+sections.forEach(function(s){ io.observe(s); });
+
+// ── Scroll top button ─────────────────────────────────────────────
+var stb = document.getElementById('stb');
+window.addEventListener('scroll', function() {
+  stb.classList.toggle('vis', window.scrollY > 400);
+});
+
+// ── Mobile sidebar close on nav click ────────────────────────────
+navItems.forEach(function(item) {
+  item.addEventListener('click', function() {
+    if (window.innerWidth <= 800) document.getElementById('sidebar').classList.remove('open');
+  });
+});
+
+updateProgress();
+</script>
+
+</body>
+</html>

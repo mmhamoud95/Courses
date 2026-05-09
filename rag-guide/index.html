@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG & AI Agent — Guide Débutant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --rag: #00d4aa;
+    --rag-dim: rgba(0,212,170,0.12);
+    --agent: #f97316;
+    --agent-dim: rgba(249,115,22,0.12);
+    --accent: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --border: rgba(255,255,255,0.07);
+  }
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+font-size: 16px;
+line-height: 1.7;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* Background grid */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: 0;
+}
+
+.container {
+max-width: 860px;
+margin: 0 auto;
+padding: 60px 24px;
+position: relative;
+z-index: 1;
+}
+
+/* HEADER */
+header {
+text-align: center;
+margin-bottom: 72px;
+animation: fadeUp 0.7s ease both;
+}
+
+.badge {
+display: inline-block;
+background: rgba(167,139,250,0.15);
+border: 1px solid rgba(167,139,250,0.3);
+color: var(–accent);
+font-family: ‘Syne’, sans-serif;
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+padding: 5px 14px;
+border-radius: 99px;
+margin-bottom: 20px;
+}
+
+h1 {
+font-family: ‘Syne’, sans-serif;
+font-size: clamp(2.4rem, 5vw, 3.8rem);
+font-weight: 800;
+line-height: 1.1;
+margin-bottom: 18px;
+}
+
+h1 span.rag { color: var(–rag); }
+h1 span.agent { color: var(–agent); }
+
+header p {
+color: var(–muted);
+font-size: 1.05rem;
+max-width: 480px;
+margin: 0 auto;
+}
+
+/* SECTION TITLES */
+.section-label {
+display: flex;
+align-items: center;
+gap: 12px;
+margin-bottom: 32px;
+}
+
+.section-label .dot {
+width: 10px; height: 10px;
+border-radius: 50%;
+flex-shrink: 0;
+}
+
+.section-label h2 {
+font-family: ‘Syne’, sans-serif;
+font-size: 1.6rem;
+font-weight: 700;
+}
+
+/* CONCEPT CARD */
+.concept-card {
+background: var(–surface);
+border-radius: 20px;
+padding: 36px;
+margin-bottom: 24px;
+border: 1px solid var(–border);
+position: relative;
+overflow: hidden;
+animation: fadeUp 0.6s ease both;
+}
+
+.concept-card::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 3px;
+border-radius: 20px 20px 0 0;
+}
+
+.concept-card.rag-card::before { background: var(–rag); }
+.concept-card.agent-card::before { background: var(–agent); }
+
+/* ANALOGY BOX */
+.analogy {
+display: flex;
+gap: 16px;
+background: var(–surface2);
+border-radius: 14px;
+padding: 20px 24px;
+margin: 28px 0;
+border: 1px solid var(–border);
+}
+
+.analogy-icon {
+font-size: 2rem;
+flex-shrink: 0;
+line-height: 1;
+margin-top: 2px;
+}
+
+.analogy-content strong {
+display: block;
+font-family: ‘Syne’, sans-serif;
+font-size: 0.78rem;
+font-weight: 700;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: var(–muted);
+margin-bottom: 6px;
+}
+
+.analogy-content p {
+color: var(–text);
+font-size: 0.97rem;
+}
+
+/* FLOW DIAGRAM */
+.flow {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+align-items: center;
+margin: 28px 0;
+}
+
+.flow-step {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 6px;
+text-align: center;
+}
+
+.flow-step .step-box {
+background: var(–surface2);
+border-radius: 12px;
+padding: 12px 16px;
+font-size: 0.82rem;
+font-weight: 500;
+min-width: 100px;
+border: 1px solid var(–border);
+position: relative;
+}
+
+.rag-card .flow-step .step-box { border-color: rgba(0,212,170,0.25); }
+.agent-card .flow-step .step-box { border-color: rgba(249,115,22,0.25); }
+
+.flow-step .step-num {
+width: 22px; height: 22px;
+border-radius: 50%;
+font-size: 0.7rem;
+font-weight: 700;
+font-family: ‘Syne’, sans-serif;
+display: flex; align-items: center; justify-content: center;
+}
+
+.rag-card .step-num { background: var(–rag); color: #000; }
+.agent-card .step-num { background: var(–agent); color: #000; }
+
+.flow-arrow {
+font-size: 1.2rem;
+color: var(–muted);
+flex-shrink: 0;
+margin-bottom: 28px;
+}
+
+/* COMPARISON TABLE */
+.compare {
+background: var(–surface);
+border-radius: 20px;
+padding: 36px;
+margin-bottom: 24px;
+border: 1px solid var(–border);
+animation: fadeUp 0.6s ease both;
+animation-delay: 0.1s;
+}
+
+.compare table {
+width: 100%;
+border-collapse: collapse;
+margin-top: 24px;
+}
+
+.compare th {
+font-family: ‘Syne’, sans-serif;
+font-size: 0.8rem;
+font-weight: 700;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+padding: 10px 16px;
+text-align: left;
+border-bottom: 1px solid var(–border);
+}
+
+.compare th:nth-child(2) { color: var(–rag); }
+.compare th:nth-child(3) { color: var(–agent); }
+
+.compare td {
+padding: 13px 16px;
+font-size: 0.92rem;
+border-bottom: 1px solid var(–border);
+vertical-align: top;
+}
+
+.compare td:first-child { color: var(–muted); font-size: 0.85rem; }
+
+.compare tr:last-child td { border-bottom: none; }
+
+/* CODE SECTION */
+.code-section {
+margin-bottom: 24px;
+animation: fadeUp 0.6s ease both;
+}
+
+.tabs {
+display: flex;
+gap: 4px;
+margin-bottom: 0;
+}
+
+.tab-btn {
+padding: 10px 20px;
+border-radius: 10px 10px 0 0;
+border: 1px solid var(–border);
+border-bottom: none;
+background: var(–surface);
+color: var(–muted);
+font-family: ‘Syne’, sans-serif;
+font-size: 0.8rem;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+.tab-btn.active.rag { color: var(–rag); background: var(–surface2); border-color: rgba(0,212,170,0.2); }
+.tab-btn.active.agent { color: var(–agent); background: var(–surface2); border-color: rgba(249,115,22,0.2); }
+
+.tab-content {
+display: none;
+background: var(–surface2);
+border-radius: 0 14px 14px 14px;
+border: 1px solid var(–border);
+overflow: hidden;
+}
+
+.tab-content.active { display: block; }
+
+.code-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 12px 20px;
+background: rgba(255,255,255,0.03);
+border-bottom: 1px solid var(–border);
+font-size: 0.75rem;
+color: var(–muted);
+font-family: ‘Syne’, sans-serif;
+}
+
+.lang-badge {
+font-size: 0.68rem;
+font-weight: 700;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+padding: 2px 8px;
+border-radius: 4px;
+background: rgba(255,255,255,0.06);
+}
+
+pre {
+padding: 24px;
+overflow-x: auto;
+font-family: ‘Fira Code’, ‘Cascadia Code’, monospace;
+font-size: 0.82rem;
+line-height: 1.7;
+white-space: pre;
+}
+
+.c-comment { color: #4ade80; opacity: 0.7; }
+.c-keyword { color: #a78bfa; }
+.c-string { color: #fbbf24; }
+.c-fn { color: #60a5fa; }
+.c-var { color: #f0abfc; }
+.c-num { color: var(–rag); }
+
+/* TIPS GRID */
+.tips-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+gap: 16px;
+margin-top: 16px;
+}
+
+.tip-card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 14px;
+padding: 20px;
+animation: fadeUp 0.6s ease both;
+}
+
+.tip-icon { font-size: 1.6rem; margin-bottom: 10px; }
+.tip-card h4 {
+font-family: ‘Syne’, sans-serif;
+font-size: 0.9rem;
+font-weight: 700;
+margin-bottom: 6px;
+color: var(–text);
+}
+.tip-card p { font-size: 0.83rem; color: var(–muted); line-height: 1.5; }
+
+/* FOOTER */
+.footer-note {
+text-align: center;
+color: var(–muted);
+font-size: 0.82rem;
+margin-top: 60px;
+padding-top: 32px;
+border-top: 1px solid var(–border);
+}
+
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(22px); }
+to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger children */
+.concept-card:nth-child(1) { animation-delay: 0.05s; }
+.concept-card:nth-child(2) { animation-delay: 0.15s; }
+
+@media (max-width: 600px) {
+.flow { flex-direction: column; }
+.flow-arrow { transform: rotate(90deg); }
+.compare td, .compare th { padding: 10px 10px; font-size: 0.82rem; }
+pre { font-size: 0.72rem; }
+}
+</style>
+
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+
+  <header>
+    <div class="badge">Guide pour débutants</div>
+    <h1><span class="rag">RAG</span> &amp; <span class="agent">AI Agent</span></h1>
+    <p>Deux concepts fondamentaux de l'IA moderne, expliqués simplement avec du code concret.</p>
+  </header>
+
+  <!-- ===== RAG ===== -->
+
+  <div class="section-label">
+    <div class="dot" style="background: var(--rag); box-shadow: 0 0 8px var(--rag)"></div>
+    <h2 style="color: var(--rag)">RAG — Retrieval-Augmented Generation</h2>
+  </div>
+
+  <div class="concept-card rag-card">
+    <p style="font-size:1.05rem;">Le <strong style="color:var(--rag)">RAG</strong> est une technique qui donne à un modèle IA la capacité de <strong>chercher dans des documents</strong> avant de répondre — au lieu de se baser uniquement sur ce qu'il a appris lors de son entraînement.</p>
+
+```
+<div class="analogy">
+  <div class="analogy-icon">📚</div>
+  <div class="analogy-content">
+    <strong>Analogie simple</strong>
+    <p>Imagine un étudiant qui passe un examen. Un LLM classique répond <em>de mémoire</em>. Un LLM avec RAG peut <em>ouvrir ses notes et chercher la bonne page</em> avant de répondre. Le résultat est bien plus précis et à jour.</p>
+  </div>
+</div>
+
+<p style="margin-bottom:20px; color:var(--muted);">Le flux de fonctionnement :</p>
+
+<div class="flow">
+  <div class="flow-step">
+    <div class="step-num">1</div>
+    <div class="step-box">❓ Question<br>de l'utilisateur</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">2</div>
+    <div class="step-box">🔍 Recherche<br>dans la base docs</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">3</div>
+    <div class="step-box">📄 Extraits<br>pertinents récupérés</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">4</div>
+    <div class="step-box">🤖 LLM génère<br>une réponse ciblée</div>
+  </div>
+</div>
+
+<p style="color:var(--muted); font-size:0.9rem;">💡 <strong style="color:var(--text)">Cas d'usage :</strong> chatbot sur tes propres documents PDF, base de connaissances interne d'entreprise, assistant juridique/médical sur des textes spécifiques.</p>
+```
+
+  </div>
+
+  <!-- ===== AI AGENT ===== -->
+
+  <div class="section-label" style="margin-top: 56px;">
+    <div class="dot" style="background: var(--agent); box-shadow: 0 0 8px var(--agent)"></div>
+    <h2 style="color: var(--agent)">AI Agent — Agent Autonome</h2>
+  </div>
+
+  <div class="concept-card agent-card">
+    <p style="font-size:1.05rem;">Un <strong style="color:var(--agent)">AI Agent</strong> est un système IA capable de <strong>prendre des décisions et d'agir</strong> de façon autonome pour accomplir un objectif. Il peut utiliser des outils, exécuter du code, naviguer sur le web, et enchaîner plusieurs étapes.</p>
+
+```
+<div class="analogy">
+  <div class="analogy-icon">🤖</div>
+  <div class="analogy-content">
+    <strong>Analogie simple</strong>
+    <p>Un LLM classique = un conseiller qui te donne des recommandations. Un AI Agent = un assistant personnel qui <em>exécute réellement les tâches</em> à ta place : il réserve le vol, envoie l'email, met à jour le tableau de bord.</p>
+  </div>
+</div>
+
+<p style="margin-bottom:20px; color:var(--muted);">La boucle de raisonnement (ReAct loop) :</p>
+
+<div class="flow">
+  <div class="flow-step">
+    <div class="step-num">1</div>
+    <div class="step-box">🎯 Objectif<br>défini</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">2</div>
+    <div class="step-box">🧠 Réflexion :<br>quelle action ?</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">3</div>
+    <div class="step-box">🔧 Appel<br>d'un outil</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">4</div>
+    <div class="step-box">📊 Observation<br>du résultat</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="step-num">5</div>
+    <div class="step-box">🔁 Répète<br>jusqu'au but</div>
+  </div>
+</div>
+
+<p style="color:var(--muted); font-size:0.9rem;">💡 <strong style="color:var(--text)">Cas d'usage :</strong> agent de recherche qui cherche sur le web et résume, agent DevOps qui déploie et monitore, agent commercial qui lit des emails et met à jour un CRM.</p>
+```
+
+  </div>
+
+  <!-- ===== COMPARAISON ===== -->
+
+  <div style="margin-top:56px;" class="section-label">
+    <div class="dot" style="background: var(--accent);"></div>
+    <h2 style="color: var(--accent)">RAG vs AI Agent — Quelle différence ?</h2>
+  </div>
+
+  <div class="compare">
+    <table>
+      <thead>
+        <tr>
+          <th>Critère</th>
+          <th>🟢 RAG</th>
+          <th>🟠 AI Agent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Rôle principal</td>
+          <td>Chercher & répondre</td>
+          <td>Planifier & agir</td>
+        </tr>
+        <tr>
+          <td>Autonomie</td>
+          <td>Faible — réactif</td>
+          <td>Élevée — proactif</td>
+        </tr>
+        <tr>
+          <td>Outils utilisés</td>
+          <td>Moteur de recherche vectoriel</td>
+          <td>Web, code, API, fichiers…</td>
+        </tr>
+        <tr>
+          <td>Complexité</td>
+          <td>Modérée</td>
+          <td>Élevée</td>
+        </tr>
+        <tr>
+          <td>Idéal pour</td>
+          <td>Questions sur des documents</td>
+          <td>Tâches multi-étapes</td>
+        </tr>
+        <tr>
+          <td>Peut contenir un RAG ?</td>
+          <td>—</td>
+          <td>✅ Oui, souvent !</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== CODE ===== -->
+
+  <div style="margin-top:56px;" class="section-label">
+    <div class="dot" style="background: #60a5fa;"></div>
+    <h2 style="color: #60a5fa">Comment les créer — Code Python</h2>
+  </div>
+
+  <div class="code-section">
+    <div class="tabs">
+      <button class="tab-btn active rag" onclick="showTab('rag')">RAG simple</button>
+      <button class="tab-btn agent" onclick="showTab('agent')">AI Agent simple</button>
+    </div>
+
+```
+<!-- RAG CODE -->
+<div class="tab-content active" id="tab-rag">
+  <div class="code-header">
+    <span>rag_simple.py — LangChain + ChromaDB</span>
+    <span class="lang-badge">Python</span>
+  </div>
+  <pre><span class="c-comment"># ─────────────────────────────────────────────
+```
+
+# ÉTAPE 1 : Installer les dépendances
+
+# pip install langchain chromadb openai langchain-openai
+
+# ─────────────────────────────────────────────</span>
+
+<span class="c-keyword">from</span> langchain.document_loaders <span class="c-keyword">import</span> TextLoader
+<span class="c-keyword">from</span> langchain.text_splitter <span class="c-keyword">import</span> RecursiveCharacterTextSplitter
+<span class="c-keyword">from</span> langchain.vectorstores <span class="c-keyword">import</span> Chroma
+<span class="c-keyword">from</span> langchain_openai <span class="c-keyword">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="c-keyword">from</span> langchain.chains <span class="c-keyword">import</span> RetrievalQA
+
+<span class="c-comment"># ─── 1. Charger ton document ───────────────────</span>
+<span class="c-var">loader</span> = <span class="c-fn">TextLoader</span>(<span class="c-string">“mon_document.txt”</span>)
+<span class="c-var">documents</span> = <span class="c-var">loader</span>.load()
+
+<span class="c-comment"># ─── 2. Découper en morceaux (chunks) ──────────</span>
+<span class="c-var">splitter</span> = <span class="c-fn">RecursiveCharacterTextSplitter</span>(
+chunk_size=<span class="c-num">500</span>,      <span class="c-comment"># 500 caractères par morceau</span>
+chunk_overlap=<span class="c-num">50</span>     <span class="c-comment"># chevauchement pour ne rien perdre</span>
+)
+<span class="c-var">chunks</span> = <span class="c-var">splitter</span>.<span class="c-fn">split_documents</span>(<span class="c-var">documents</span>)
+
+<span class="c-comment"># ─── 3. Créer la base vectorielle ──────────────</span>
+<span class="c-comment"># Les embeddings transforment le texte en vecteurs numériques</span>
+<span class="c-var">vectordb</span> = <span class="c-fn">Chroma</span>.from_documents(
+documents=<span class="c-var">chunks</span>,
+embedding=<span class="c-fn">OpenAIEmbeddings</span>()
+)
+
+<span class="c-comment"># ─── 4. Créer la chaîne RAG ────────────────────</span>
+<span class="c-var">llm</span> = <span class="c-fn">ChatOpenAI</span>(model=<span class="c-string">“gpt-4o-mini”</span>)
+
+<span class="c-var">rag_chain</span> = <span class="c-fn">RetrievalQA</span>.from_chain_type(
+llm=<span class="c-var">llm</span>,
+retriever=<span class="c-var">vectordb</span>.<span class="c-fn">as_retriever</span>(search_kwargs={<span class="c-string">“k”</span>: <span class="c-num">3</span>}),
+)
+
+<span class="c-comment"># ─── 5. Poser une question ! ───────────────────</span>
+<span class="c-var">question</span> = <span class="c-string">“Quelles sont les principales conclusions du document ?”</span>
+<span class="c-var">reponse</span> = <span class="c-var">rag_chain</span>.<span class="c-fn">invoke</span>(<span class="c-var">question</span>)
+<span class="c-fn">print</span>(<span class="c-var">reponse</span>[<span class="c-string">“result”</span>])
+<span class="c-comment"># → Le modèle cherche dans tes docs et répond précisément !</span></pre>
+</div>
+
+```
+<!-- AGENT CODE -->
+<div class="tab-content" id="tab-agent">
+  <div class="code-header">
+    <span>agent_simple.py — LangChain Agent avec outils</span>
+    <span class="lang-badge">Python</span>
+  </div>
+  <pre><span class="c-comment"># ─────────────────────────────────────────────
+```
+
+# ÉTAPE 1 : Installer les dépendances
+
+# pip install langchain langchain-openai duckduckgo-search
+
+# ─────────────────────────────────────────────</span>
+
+<span class="c-keyword">from</span> langchain_openai <span class="c-keyword">import</span> ChatOpenAI
+<span class="c-keyword">from</span> langchain.agents <span class="c-keyword">import</span> create_react_agent, AgentExecutor
+<span class="c-keyword">from</span> langchain.tools <span class="c-keyword">import</span> Tool
+<span class="c-keyword">from</span> langchain_community.tools <span class="c-keyword">import</span> DuckDuckGoSearchRun
+<span class="c-keyword">from</span> langchain <span class="c-keyword">import</span> hub
+
+<span class="c-comment"># ─── 1. Définir les outils de l’agent ──────────</span>
+<span class="c-var">search_tool</span> = <span class="c-fn">DuckDuckGoSearchRun</span>()
+
+<span class="c-comment"># Tu peux aussi créer des outils personnalisés !</span>
+<span class="c-keyword">def</span> <span class="c-fn">calculer</span>(<span class="c-var">expression</span>: str) -> str:
+<span class="c-keyword">try</span>:
+<span class="c-keyword">return</span> <span class="c-fn">str</span>(<span class="c-fn">eval</span>(<span class="c-var">expression</span>))
+<span class="c-keyword">except</span>:
+<span class="c-keyword">return</span> <span class="c-string">“Erreur de calcul”</span>
+
+<span class="c-var">tools</span> = [
+<span class="c-fn">Tool</span>(
+name=<span class="c-string">“Recherche Web”</span>,
+func=<span class="c-var">search_tool</span>.run,
+description=<span class="c-string">“Cherche des infos actuelles sur internet”</span>
+),
+<span class="c-fn">Tool</span>(
+name=<span class="c-string">“Calculatrice”</span>,
+func=<span class="c-fn">calculer</span>,
+description=<span class="c-string">“Calcule une expression mathématique”</span>
+),
+]
+
+<span class="c-comment"># ─── 2. Charger le prompt ReAct ────────────────</span>
+<span class="c-comment"># ReAct = Reason + Act (raisonner puis agir en boucle)</span>
+<span class="c-var">prompt</span> = <span class="c-var">hub</span>.<span class="c-fn">pull</span>(<span class="c-string">“hwchase17/react”</span>)
+
+<span class="c-comment"># ─── 3. Créer l’agent ──────────────────────────</span>
+<span class="c-var">llm</span> = <span class="c-fn">ChatOpenAI</span>(model=<span class="c-string">“gpt-4o-mini”</span>, temperature=<span class="c-num">0</span>)
+
+<span class="c-var">agent</span> = <span class="c-fn">create_react_agent</span>(<span class="c-var">llm</span>, <span class="c-var">tools</span>, <span class="c-var">prompt</span>)
+<span class="c-var">executor</span> = <span class="c-fn">AgentExecutor</span>(
+agent=<span class="c-var">agent</span>,
+tools=<span class="c-var">tools</span>,
+verbose=<span class="c-keyword">True</span>,    <span class="c-comment"># affiche le raisonnement étape par étape</span>
+max_iterations=<span class="c-num">5</span>
+)
+
+<span class="c-comment"># ─── 4. Lancer l’agent sur une tâche ───────────</span>
+<span class="c-var">tache</span> = <span class="c-string">“Trouve le prix actuel du Bitcoin et calcule combien
+vaut 0.5 BTC en dollars.”</span>
+
+<span class="c-var">resultat</span> = <span class="c-var">executor</span>.<span class="c-fn">invoke</span>({<span class="c-string">“input”</span>: <span class="c-var">tache</span>})
+<span class="c-fn">print</span>(<span class="c-var">resultat</span>[<span class="c-string">“output”</span>])
+<span class="c-comment"># → L’agent cherche, calcule, et te donne la réponse finale !</span></pre>
+</div>
+
+  </div>
+
+  <!-- ===== TIPS ===== -->
+
+  <div style="margin-top:56px;" class="section-label">
+    <div class="dot" style="background: #fbbf24;"></div>
+    <h2 style="color: #fbbf24">Conseils pour bien démarrer</h2>
+  </div>
+
+  <div class="tips-grid">
+    <div class="tip-card">
+      <div class="tip-icon">🧱</div>
+      <h4>Commence par RAG</h4>
+      <p>Plus simple à mettre en place. Idéal comme premier projet concret avec un LLM.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">🔑</div>
+      <h4>Clé API OpenAI</h4>
+      <p>Les exemples utilisent OpenAI. Tu peux aussi utiliser Mistral, Claude (Anthropic), ou des modèles locaux (Ollama).</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">📦</div>
+      <h4>LangChain = le couteau suisse</h4>
+      <p>C'est la lib Python de référence pour connecter LLMs, outils, bases vectorielles et agents.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">🗄️</div>
+      <h4>Bases vectorielles</h4>
+      <p>ChromaDB (local), Pinecone (cloud), Qdrant. Elles stockent les embeddings pour la recherche sémantique du RAG.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">🚀</div>
+      <h4>Frameworks Agents</h4>
+      <p>LangGraph, CrewAI, AutoGen pour des agents plus avancés avec plusieurs rôles et collaborations.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">⚠️</div>
+      <h4>Attention aux coûts</h4>
+      <p>Les appels API OpenAI sont payants. Commence avec <code>gpt-4o-mini</code> (moins cher) pour tester.</p>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    RAG & AI Agent — Guide débutant · Généré avec Claude
+  </div>
+
+</div>
+
+<script>
+  function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active', 'rag', 'agent'));
+
+    document.getElementById('tab-' + name).classList.add('active');
+    const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.textContent.toLowerCase().includes(name === 'rag' ? 'rag' : 'agent'));
+    btn.classList.add('active', name);
+  }
+</script>
+
+</body>
+</html>
